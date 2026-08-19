@@ -17,6 +17,10 @@ LINE LIFF + Google Apps Script (GAS) + Spreadsheet で作る、Botなし日程�
 - `js/views/*.js`: 画面単位（`ListView`/`CreateView`/`DetailView`/`CalendarView`）。
 - `js/views/optionCard.js` (`OptionCard`): 画面をまたいで再利用される「イベントカード」コンポーネント（表示・編集フォーム・インライン回答・カラーリング）。
 
+### 分割の原則（画面系・GAS系共通）
+
+**UIに限らず、処理のまとまりも扱いやすい単位に分割しておくこと。** 1ファイル・1関数が複数の役割を兼ねてきたら、責務ごとに独立させる。フロントは「コンポーネント」単位（下記）、GASは「ドメイン」単位（検索/権限、CRUD、集計、通知、など）で分ける。分割の目安は「同じパターンが2〜3箇所に出てきたら共通化」「1ファイルが150〜200行を超えて役割が混ざってきたら分割」。
+
 ### 画面系コードのルール
 
 **UIの要素は、画面（view）に直書きせず、扱いやすいコンポーネント単位に切り出すこと。** 同じ見た目・同じ振る舞いが2箇所以上で必要になったら、view専用ファイルに置いたままにせず `js/views/<component>.js` として切り出し、`return {...}` で必要な関数だけ公開する（`OptionCard` が実例）。全画面共通の1回きりの処理はview側に残してよいが、「カード」「フォーム」「モーダル」など再利用されうる単位は独立させる。
@@ -27,8 +31,17 @@ LINE LIFF + Google Apps Script (GAS) + Spreadsheet で作る、Botなし日程�
 
 ## バックエンド（GAS）
 
+GASはファイル名に関係なく全ファイルが1つのグローバルスコープにまとまるため、ファイル分割は純粋に整理目的（実行順序に依存するロジックを書かないこと）。
+
+- `gas/03_routing.js`: `routeAction_` のディスパッチのみ。ロジックは書かない。
+- `gas/07_lookups.js`: 検索・権限判定の共有ヘルパー（`findEventById_`/`isEditorOrCreator_`など）。
+- `gas/08_eventActions.js`: 予定・イベント本体のCRUD（`createEvent_`/`updateOption_`/`deleteEvent_`など）。
+- `gas/09_responseActions.js`: 回答の登録・集計・一覧（`submitAnswer_`/`getSummary_`/`listMyOptions_`など）。
+- `gas/06_message.js` / `05_flexParts.js`: Flex Message組み立て。
+- 新しいドメイン（例: 通知まわり、集計まわり）が増えたら、既存ファイルに詰め込まず `10_xxx.js` のように新ファイルへ切り出す。1ファイルが150〜200行を超えて役割が混ざってきたら分割を検討する。
+
 - `gas/04_sheetStore.js` の `SCHEMA` がスプレッドシートの列定義。**スキーマ変更は必ず既存配列の末尾に追記する**（途中への挿入や削除は既存データの列がズレるため禁止）。`ensureSheetSchema_` は末尾に足りない列だけを安全に追記する設計になっている。
-- 新しいactionを追加したら `gas/03_routing.js` の `routeAction_` swtich と `js/api.js` の `AppApi` 側エクスポートの**両方**を必ず更新すること（`AppApi`側だけ漏れて実装済みのactionが呼べない、という事故が過去に発生している）。
+- 新しいactionを追加したら `gas/03_routing.js` の `routeAction_` switch と `js/api.js` の `AppApi` 側エクスポートの**両方**を必ず更新すること（`AppApi`側だけ漏れて実装済みのactionが呼べない、という事故が過去に発生している）。
 - GASは無認証（誰でもeventIdを知っていれば操作可能）という前提の設計。新しいactionが外部URLや秘匿情報をクライアントから受け取らないよう注意する。
 
 ## デプロイ

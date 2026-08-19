@@ -235,7 +235,6 @@ const DetailView = (() => {
       <section>
         <p class="event-meta">回答者数: ${summaryData.totalRespondents}人</p>
         <div class="summary-list">${rows}</div>
-        <button id="edit-answer" class="btn">回答を変更する</button>
       </section>
       ${canEdit ? `
         <section>
@@ -257,10 +256,6 @@ const DetailView = (() => {
             ${deleteButtonHtml()}` : ''}
         </section>` : ''}
     `;
-
-    root.querySelector('#edit-answer').addEventListener('click', () => {
-      renderAnswerForm(root, ctx, data, refresh);
-    });
 
     wireRemindButtons(root, data.event.title, ctx.eventId);
     OptionCard.wireInlineAnswerToggles(root, ctx, refresh);
