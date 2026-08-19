@@ -87,13 +87,13 @@ const DetailView = (() => {
       return `
         <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}">
           ${OptionCard.metaHtml(row.option, canEdit, myAnswers[row.option.optionId])}
+          <div class="summary-counts">
+            <span>${OptionCard.answerIcon('○')} ${row.counts['○']}</span>
+            <span>${OptionCard.answerIcon('△')} ${row.counts['△']}</span>
+            <span>${OptionCard.answerIcon('×')} ${row.counts['×']}</span>
+          </div>
           <details>
-            <summary>回答状況を見る（${totalCount}人）</summary>
-            <div class="summary-counts">
-              <span>${OptionCard.answerIcon('○')} ${row.counts['○']}</span>
-              <span>${OptionCard.answerIcon('△')} ${row.counts['△']}</span>
-              <span>${OptionCard.answerIcon('×')} ${row.counts['×']}</span>
-            </div>
+            <summary>回答者を見る（${totalCount}人）</summary>
             <p class="respondent-label">○</p>${respondentsHtml('○')}
             <p class="respondent-label">△</p>${respondentsHtml('△')}
             <p class="respondent-label">×</p>${respondentsHtml('×')}
