@@ -151,7 +151,10 @@ const OptionCard = (() => {
         if (!btn) return;
         const optionId = wrap.dataset.optionId;
         const value = btn.dataset.value;
-        choices.querySelectorAll('.choice-btn').forEach((b) => { b.disabled = true; });
+        choices.querySelectorAll('.choice-btn').forEach((b) => {
+          b.classList.toggle('selected', b === btn);
+          b.disabled = true;
+        });
         try {
           await AppApi.submitAnswer({
             eventId: ctx.eventId,
