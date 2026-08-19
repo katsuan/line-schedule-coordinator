@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日程調整</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    --primary: #06C755;
+    --text: #111111;
+    --sub-text: #8C8C8C;
+    --border: #EEEEEE;
+    --bg: #FAFAFA;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+    min-height: 100vh;
+    background: #fff;
+  }
+  h1 { font-size: 1.25rem; margin: 8px 0; }
+  h2 { font-size: 1rem; color: var(--sub-text); margin: 20px 0 8px; }
+  .page-header { margin-bottom: 16px; }
+  .btn-back { color: var(--sub-text); text-decoration: none; font-size: 0.85rem; }
+  .btn {
+    display: inline-block;
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    width: 100%;
+    text-align: center;
+    margin-top: 12px;
+  }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  form label {
+    display: block;
+    margin-bottom: 14px;
+    font-size: 0.85rem;
+    color: var(--sub-text);
+  }
+  form input[type="text"], form input[type="datetime-local"], form textarea {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--text);
+  }
+  .option-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .option-row .option-start { flex: 1; }
+  .event-row { list-style: none; }
+  .event-row a {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+  }
+  .event-meta { color: var(--sub-text); font-size: 0.8rem; }
+  ul { padding: 0; margin: 0; }
+  .empty { color: var(--sub-text); text-align: center; margin-top: 40px; }
+  .answer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .answer-choices { display: flex; gap: 12px; }
+  .choice { display: flex; align-items: center; gap: 4px; font-size: 1.1rem; }
+  .summary-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .summary-date { font-weight: bold; }
+  .summary-counts { display: flex; gap: 16px; margin: 4px 0; }
+  .loading, .error { text-align: center; color: var(--sub-text); margin-top: 40px; }
+  .event-description { color: var(--sub-text); font-size: 0.9rem; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="js/util.js"></script>
+<script src="js/config.js"></script>
+<script src="js/platform.js"></script>
+<script src="js/api.js"></script>
+<script src="js/router.js"></script>
+<script src="js/share.js"></script>
+<script src="js/views/list.js"></script>
+<script src="js/views/create.js"></script>
+<script src="js/views/detail.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
