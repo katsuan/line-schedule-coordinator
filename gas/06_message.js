@@ -90,16 +90,16 @@ function buildReminderFlex_(eventId, answerLabel, names, optionTitle, optionStar
       type: 'box',
       layout: 'vertical',
       contents: [
-        _createFlexHeader_(event.title, '回答の更新をお願いします🙏'),
+        _createFlexHeader_(event.title, '回答状況のご連絡です'),
         _createSeparator_(),
         { type: 'box', layout: 'vertical', margin: 'md', contents: [_createFlexBody_(rows)] },
       ],
     },
-    footer: answerUrl ? _createFlexButtonFooter_('回答を更新する', answerUrl) : undefined,
+    footer: answerUrl ? _createFlexButtonFooter_('回答を確認する', answerUrl) : undefined,
   };
 
   return {
-    altText: nameList + '様への回答更新のお願い（' + targetTitle + '）',
+    altText: nameList + 'への連絡（' + targetTitle + '）',
     contents: bubble,
   };
 }
