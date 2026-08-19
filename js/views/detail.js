@@ -78,7 +78,7 @@ const DetailView = (() => {
       return `
         <div class="summary-row">
           <div class="summary-date-block">
-            <div class="summary-date">${AppUtil.formatDateTimeLocal(row.option.startAt)}</div>
+            <div class="summary-date">${AppUtil.formatDateRange(row.option.startAt, row.option.endAt)}</div>
             ${AppUtil.calendarLinkHtml(event.title, event.description, row.option.startAt, row.option.endAt)}
           </div>
           <div class="summary-counts">
@@ -100,7 +100,7 @@ const DetailView = (() => {
     const rows = data.options.map((opt) => `
       <div class="answer-row" data-option-id="${opt.optionId}">
         <span class="answer-date-block">
-          <span class="answer-date">${AppUtil.formatDateTimeLocal(opt.startAt)}</span>
+          <span class="answer-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</span>
           ${AppUtil.calendarLinkHtml(data.event.title, data.event.description, opt.startAt, opt.endAt)}
         </span>
         <span class="answer-choices">
@@ -193,7 +193,7 @@ const DetailView = (() => {
     const myAnswerRows = data.options.map((opt) => `
       <div class="answer-row readonly">
         <span class="answer-date-block">
-          <span class="answer-date">${AppUtil.formatDateTimeLocal(opt.startAt)}</span>
+          <span class="answer-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</span>
           ${AppUtil.calendarLinkHtml(data.event.title, data.event.description, opt.startAt, opt.endAt)}
         </span>
         <span class="answer-value">${AppUtil.escapeHtml(data.myAnswers[opt.optionId] || '-')}</span>

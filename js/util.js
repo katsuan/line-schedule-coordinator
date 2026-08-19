@@ -13,6 +13,22 @@ const AppUtil = (() => {
     return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
+  function formatDateRange(startAt, endAt) {
+    if (!startAt) return '';
+    if (!endAt) return formatDateTimeLocal(startAt);
+    const start = new Date(startAt);
+    const end = new Date(endAt);
+    const pad = (n) => String(n).padStart(2, '0');
+    const sameDay = start.getFullYear() === end.getFullYear() &&
+      start.getMonth() === end.getMonth() &&
+      start.getDate() === end.getDate();
+    const startText = formatDateTimeLocal(startAt);
+    const endText = sameDay
+      ? `${pad(end.getHours())}:${pad(end.getMinutes())}`
+      : formatDateTimeLocal(endAt);
+    return `${startText} 〜 ${endText}`;
+  }
+
   function toGCalStamp(value) {
     const date = value instanceof Date ? value : new Date(value);
     const pad = (n) => String(n).padStart(2, '0');
@@ -42,5 +58,5 @@ const AppUtil = (() => {
     return `<a class="cal-link" href="${url}" target="_blank" rel="noopener">${CALENDAR_ICON_SVG}<span>カレンダーに追加</span></a>`;
   }
 
-  return { escapeHtml, formatDateTimeLocal, buildGoogleCalendarUrl, calendarLinkHtml };
+  return { escapeHtml, formatDateTimeLocal, formatDateRange, buildGoogleCalendarUrl, calendarLinkHtml };
 })();

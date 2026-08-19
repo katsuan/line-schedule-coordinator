@@ -75,8 +75,10 @@
     font-size: 1rem;
     color: var(--text);
   }
-  .option-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-  .option-row .option-start { flex: 1; }
+  .option-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; }
+  .option-range { display: flex; gap: 8px; flex: 1; }
+  .option-sublabel { flex: 1; font-size: 0.7rem; color: var(--sub-text); margin-bottom: 0; }
+  .option-row .btn-remove-option { flex-shrink: 0; }
   .event-row { list-style: none; }
   .event-row a {
     display: flex;
