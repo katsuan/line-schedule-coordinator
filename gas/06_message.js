@@ -21,10 +21,21 @@ function buildEventShareFlex_(eventId) {
   const optionRows = options.map((opt) => {
     const optResponses = responses.filter((r) => r.optionId === opt.optionId);
     const count = (a) => optResponses.filter((r) => r.answer === a).length;
-    return _createInfoRow_(
-      formatDateTime_(opt.startAt),
-      (opt.title || '(タイトルなし)') + `  ○${count(ANSWER.OK)} △${count(ANSWER.MAYBE)} ×${count(ANSWER.NG)}`
-    );
+    return {
+      type: 'box',
+      layout: 'vertical',
+      margin: 'sm',
+      contents: [
+        {
+          type: 'text',
+          size: 'sm',
+          color: COLOR.TEXT,
+          wrap: true,
+          text: (opt.title || '(タイトルなし)') + `  ○${count(ANSWER.OK)} △${count(ANSWER.MAYBE)} ×${count(ANSWER.NG)}`,
+        },
+        _createEventTimeRow_('日時', opt.startAt, opt.endAt),
+      ],
+    };
   });
 
   const liffUrl = getLiffUrl_();

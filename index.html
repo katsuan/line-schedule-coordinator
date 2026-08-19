@@ -208,6 +208,18 @@
   .respondent.me .avatar { outline: 2px solid var(--primary); outline-offset: 1px; }
   .respondent.me span:last-child { font-weight: bold; }
   .summary-counts { display: flex; gap: 16px; margin: 8px 0 4px; font-size: 0.9rem; }
+  .my-answer-highlight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .my-answer-label { font-size: 0.8rem; font-weight: bold; color: var(--text); }
+  .my-answer-highlight .answer-icon { width: 28px; height: 28px; font-size: 0.9rem; }
+  details summary { font-size: 0.8rem; color: var(--sub-text); cursor: pointer; }
   .remind-btn {
     border: none;
     background: none;
@@ -367,6 +379,29 @@
   }
   .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
   .modal-close { border: none; background: none; font-size: 1.3rem; cursor: pointer; color: var(--sub-text); }
+  .flex-preview {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    background: var(--bg);
+  }
+  .flex-preview-line { margin: 4px 0; font-size: 0.85rem; }
+  .flex-preview-sep { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
+  .preview-comment-label {
+    display: block;
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: var(--sub-text);
+  }
+  .preview-comment-input {
+    width: 100%;
+    margin-top: 4px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+  }
 </style>
 </head>
 <body>

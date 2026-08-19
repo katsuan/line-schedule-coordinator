@@ -178,7 +178,8 @@ const DetailView = (() => {
     return `<span class="avatar"${style}>${pictureUrl ? '' : initial}</span>`;
   }
 
-  function summaryRowsHtml(event, summary, canEdit, myUserId) {
+  function summaryRowsHtml(event, summary, canEdit, myUserId, myAnswers) {
+    myAnswers = myAnswers || {};
     return summary.map((row, rowIndex) => {
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
@@ -189,16 +190,21 @@ const DetailView = (() => {
           <button type="button" class="remind-btn" data-answer="${answer}" data-row="${rowIndex}" data-names="${AppUtil.escapeHtml(names)}">催促する</button>
         </div>`;
       };
+      const totalCount = row.counts['○'] + row.counts['△'] + row.counts['×'];
       return `
         <div class="summary-row" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}">
           ${optionMetaHtml(row.option, canEdit)}
-          <div class="summary-counts">
-            <span>${answerIconHtml('○')} ${row.counts['○']}</span>
-            <span>${answerIconHtml('△')} ${row.counts['△']}</span>
-            <span>${answerIconHtml('×')} ${row.counts['×']}</span>
+          <div class="my-answer-highlight">
+            <span class="my-answer-label">自分の回答</span>
+            ${answerIconHtml(myAnswers[row.option.optionId])}
           </div>
           <details>
-            <summary>回答者を見る</summary>
+            <summary>回答状況を見る（${totalCount}人）</summary>
+            <div class="summary-counts">
+              <span>${answerIconHtml('○')} ${row.counts['○']}</span>
+              <span>${answerIconHtml('△')} ${row.counts['△']}</span>
+              <span>${answerIconHtml('×')} ${row.counts['×']}</span>
+            </div>
             <p class="respondent-label">○</p>${respondentsHtml('○')}
             <p class="respondent-label">△</p>${respondentsHtml('△')}
             <p class="respondent-label">×</p>${respondentsHtml('×')}
@@ -288,7 +294,7 @@ const DetailView = (() => {
         previewBox.innerHTML = AppUtil.loadingHtml();
         try {
           const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
-          previewBox.innerHTML = summaryRowsHtml(data.event, summaryData.summary, false, ctx.identity.userId);
+          previewBox.innerHTML = summaryRowsHtml(data.event, summaryData.summary, false, ctx.identity.userId, data.myAnswers);
           wireRemindButtons(previewBox, data.event.title, ctx.eventId);
           previewLoaded = true;
         } catch (err) {
@@ -338,25 +344,14 @@ const DetailView = (() => {
 
     const canEdit = data.isCreator || data.isEditor;
 
-    const myAnswerRows = data.options.map((opt) => `
-      <div class="answer-row readonly">
-        ${optionMetaHtml(opt, canEdit)}
-        ${answerIconHtml(data.myAnswers[opt.optionId])}
-      </div>`).join('');
-
-    const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId);
+    const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId, data.myAnswers);
 
     root.innerHTML = `
       ${headerHtml(data.event)}
       <section>
-        <h2>自分の回答</h2>
-        <div class="my-answers">${myAnswerRows}</div>
-        <button id="edit-answer" class="btn">回答を変更する</button>
-      </section>
-      <section>
-        <h2>回答集計</h2>
         <p class="event-meta">回答者数: ${summaryData.totalRespondents}人</p>
         <div class="summary-list">${rows}</div>
+        <button id="edit-answer" class="btn">回答を変更する</button>
       </section>
       ${canEdit ? `
         <section>
