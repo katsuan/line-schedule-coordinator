@@ -49,3 +49,4 @@ GASはファイル名に関係なく全ファイルが1つのグローバルス�
 - `cd gas && clasp push -f` でGASへ反映。`.clasp.json` はgitignore対象。
 - フロントは `git push` するとGitHub Pagesへ自動反映。
 - 動作確認は `python3 -m http.server <port>` + Browserツールで行う。ローカルではLIFF未初期化のままデバッグユーザーにフォールバックするが、`config.json` の `gasUrl` が設定されていれば実際のGASバックエンドと通信する。**テストで作成したイベントは `AppApi.deleteEvent` で必ず削除してから終える。**
+- `test/scenario.js`: パラメータ化された手動シナリオテスト（作成→回答を自動でクリックして流す）。DevToolsコンソールに貼り付けて実行する専用スクリプトで、`index.html` からは読み込まれない。予定作成でページ遷移が入るため `runCreatePhase` → （遷移後に再度貼り付けて）`runAnswerPhase` の2フェーズに分かれている。クリックした要素をハイライト表示する機能付き。
