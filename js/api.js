@@ -33,5 +33,6 @@ const AppApi = (() => {
     listMyOptions: (payload) => call('listMyOptions', payload),
     buildReminderFlex: (payload) => call('buildReminderFlex', payload),
     buildEditorInviteFlex: (payload) => call('buildEditorInviteFlex', payload),
+    buildChangeNotificationFlex: (payload) => call('buildChangeNotificationFlex', payload),
   };
 })();

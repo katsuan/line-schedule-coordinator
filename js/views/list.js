@@ -15,13 +15,23 @@ const ListView = (() => {
       { key: 'created', label: '自分が作成', list: groups.created },
     ];
 
+    const statusBadge = (e) => {
+      if (e.isCreator) return '<span class="status-badge status-creator">作成者</span>';
+      return e.hasAnswered
+        ? '<span class="status-badge status-answered">✓ 回答済み</span>'
+        : '<span class="status-badge status-pending">未回答</span>';
+    };
+
     const itemsHtml = (list) => {
       if (!list.length) return '<p class="empty">該当する予定はありません。</p>';
       return `<ul>${list.map((e) => `
         <li class="event-row">
           <a href="?event=${encodeURIComponent(e.eventId)}">
             <span class="event-title">${AppUtil.titleIconHtml(e.title)}</span>
-            <span class="event-meta">${e.deadline ? '期限 ' + AppUtil.formatDateTimeLocal(e.deadline) : ''}</span>
+            <span class="event-row-right">
+              ${statusBadge(e)}
+              <span class="event-meta">${e.deadline ? '期限 ' + AppUtil.formatDateTimeLocal(e.deadline) : ''}</span>
+            </span>
           </a>
         </li>`).join('')}</ul>`;
     };

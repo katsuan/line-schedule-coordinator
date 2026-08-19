@@ -38,12 +38,13 @@ const DetailView = (() => {
       </div>`;
   }
 
-  function optionMetaHtml(opt, canEdit) {
+  function optionMetaHtml(opt, canEdit, myAnswer) {
     return `
       <div class="option-meta" data-option-id="${opt.optionId}">
         <div class="option-meta-view">
           <div class="option-meta-title-row">
             <div class="option-meta-title">${AppUtil.titleIconHtml(opt.title || '(タイトルなし)')}</div>
+            ${myAnswer !== undefined ? answerIconHtml(myAnswer) : ''}
             ${canEdit ? `<button type="button" class="edit-option-btn" aria-label="編集">✏️</button>` : ''}
           </div>
           <div class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</div>
@@ -97,13 +98,32 @@ const DetailView = (() => {
           return;
         }
         e.target.disabled = true;
+        const optionId = meta.dataset.optionId;
         try {
+          const summaryBefore = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
+          const rowBefore = summaryBefore.summary.find((r) => r.option.optionId === optionId);
+          const respondentNames = rowBefore
+            ? Array.from(new Set(['○', '△', '×'].flatMap((a) => (rowBefore.respondents[a] || []).map((r) => r.displayName))))
+            : [];
+
           await AppApi.updateOption({
             eventId: ctx.eventId,
             userId: ctx.identity.userId,
-            optionId: meta.dataset.optionId,
+            optionId,
             title, startAt, endAt, location,
           });
+
+          if (respondentNames.length && confirm(`この予定には既に${respondentNames.length}件の回答があります。変更を回答者に知らせますか？`)) {
+            try {
+              await AppShare.notifyChange({
+                eventId: ctx.eventId, optionTitle: title, optionStartAt: startAt, optionEndAt: endAt,
+                optionLocation: location, names: respondentNames,
+              });
+            } catch (notifyErr) {
+              alert('通知の送信に失敗しました: ' + notifyErr.message);
+            }
+          }
+
           await render(root, ctx, { silent: true });
         } catch (err) {
           alert('更新に失敗しました: ' + err.message);
@@ -193,11 +213,7 @@ const DetailView = (() => {
       const totalCount = row.counts['○'] + row.counts['△'] + row.counts['×'];
       return `
         <div class="summary-row" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}">
-          ${optionMetaHtml(row.option, canEdit)}
-          <div class="my-answer-highlight">
-            <span class="my-answer-label">自分の回答</span>
-            ${answerIconHtml(myAnswers[row.option.optionId])}
-          </div>
+          ${optionMetaHtml(row.option, canEdit, myAnswers[row.option.optionId])}
           <details>
             <summary>回答状況を見る（${totalCount}人）</summary>
             <div class="summary-counts">

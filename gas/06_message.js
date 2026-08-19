@@ -104,6 +104,45 @@ function buildReminderFlex_(eventId, answerLabel, names, optionTitle, optionStar
   };
 }
 
+function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optionEndAt, optionLocation, names) {
+  const event = findEventById_(eventId);
+  if (!event) {
+    throw new Error('イベントが見つかりません: ' + eventId);
+  }
+
+  const nameList = names.length > 3
+    ? names.slice(0, 3).join('さん、') + `さん他${names.length - 3}名`
+    : names.join('さん、') + 'さん';
+  const liffUrl = getLiffUrl_();
+  const answerUrl = liffUrl ? (liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId)) : '';
+
+  const rows = [
+    _createInfoRow_('イベント名', optionTitle || event.title),
+  ];
+  if (optionStartAt) rows.push(_createEventTimeRow_('新しい日時', optionStartAt, optionEndAt));
+  if (optionLocation) rows.push(_createInfoRow_('新しい場所', optionLocation));
+  rows.push(_createInfoRow_('宛先', nameList + '一同'));
+
+  const bubble = {
+    type: 'bubble',
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      contents: [
+        _createFlexHeader_(event.title, '🔔 予定の内容が変更されました。ご確認ください。'),
+        _createSeparator_(),
+        { type: 'box', layout: 'vertical', margin: 'md', contents: [_createFlexBody_(rows)] },
+      ],
+    },
+    footer: answerUrl ? _createFlexButtonFooter_('内容を確認する', answerUrl) : undefined,
+  };
+
+  return {
+    altText: '【変更あり】' + (optionTitle || event.title),
+    contents: bubble,
+  };
+}
+
 function buildEditorInviteFlex_(eventId) {
   const event = findEventById_(eventId);
   if (!event) {

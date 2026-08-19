@@ -103,7 +103,11 @@ const AppShare = (() => {
     }
 
     if (available) {
-      await liff.shareTargetPicker([message]);
+      const result = await liff.shareTargetPicker([message]);
+      console.log('shareTargetPicker result', result);
+      if (result && result.status === 'cancel') {
+        return false;
+      }
       if ((!opts || opts.closeAfter !== false) && liff.isInClient && liff.isInClient()) {
         liff.closeWindow();
       }
@@ -130,5 +134,10 @@ const AppShare = (() => {
     return sendFlexMessage(flex, { closeAfter: false });
   }
 
-  return { shareEvent, remindRespondents, inviteEditor };
+  async function notifyChange(params) {
+    const flex = await AppApi.buildChangeNotificationFlex(params);
+    return sendFlexMessage(flex, { closeAfter: false });
+  }
+
+  return { shareEvent, remindRespondents, inviteEditor, notifyChange };
 })();
