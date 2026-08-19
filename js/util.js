@@ -114,5 +114,34 @@ const AppUtil = (() => {
       </div>`;
   }
 
-  return { escapeHtml, formatDateTimeLocal, formatDateRange, toDatetimeLocalValue, buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml, titleIconHtml, extractIcon, shortTime };
+  function validateEventFields({ title, startAt, endAt }) {
+    if (!title || !startAt || !endAt) {
+      return 'タイトル・開始・完了を入力してください';
+    }
+    if (new Date(endAt) <= new Date(startAt)) {
+      return '完了は開始より後の日時にしてください';
+    }
+    return null;
+  }
+
+  function wireAsyncButton(btn, action, { confirmMessage, errorPrefix } = {}) {
+    if (!btn) return;
+    btn.addEventListener('click', async (e) => {
+      if (confirmMessage && !confirm(confirmMessage)) return;
+      e.target.disabled = true;
+      try {
+        await action(e);
+      } catch (err) {
+        alert((errorPrefix || '処理に失敗しました') + ': ' + err.message);
+      } finally {
+        e.target.disabled = false;
+      }
+    });
+  }
+
+  return {
+    escapeHtml, formatDateTimeLocal, formatDateRange, toDatetimeLocalValue,
+    buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml, titleIconHtml,
+    extractIcon, shortTime, validateEventFields, wireAsyncButton,
+  };
 })();

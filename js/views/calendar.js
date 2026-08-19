@@ -1,6 +1,4 @@
 const CalendarView = (() => {
-  const ANSWERS = ['○', '△', '×'];
-  const ANSWER_CLASS = { '○': 'choice-ok', '△': 'choice-maybe', '×': 'choice-ng' };
   const STATUS_CLASS = { '○': 'dot-ok', '△': 'dot-maybe', '×': 'dot-ng' };
   const STATUS_LABEL = { '○': '○ 参加', '△': '△ 未定', '×': '× 不参加' };
 
@@ -84,7 +82,7 @@ const CalendarView = (() => {
             ${it.location ? `<div class="option-meta-location">📍 ${AppUtil.escapeHtml(it.location)}</div>` : ''}
           </div>
           <span class="answer-choices" data-option-id="${it.optionId}">
-            ${ANSWERS.map((a) => `<button type="button" class="choice-btn ${ANSWER_CLASS[a]} ${it.myAnswer === a ? 'selected' : ''}" data-value="${a}">${a}</button>`).join('')}
+            ${OptionCard.choiceButtonsHtml(it.optionId, { [it.optionId]: it.myAnswer })}
           </span>
           <a class="cal-item-status" style="text-decoration:none;display:block;margin-top:6px" href="?event=${encodeURIComponent(it.eventId)}">この予定を開く →</a>
         </div>`;
