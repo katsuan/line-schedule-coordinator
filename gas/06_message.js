@@ -52,22 +52,26 @@ function buildEventShareFlex_(eventId) {
   };
 }
 
-function buildReminderFlex_(eventId, answerLabel, names, optionTitle, optionStartAt) {
+function buildReminderFlex_(eventId, answerLabel, names, optionTitle, optionStartAt, optionEndAt, optionLocation) {
   const event = findEventById_(eventId);
   if (!event) {
     throw new Error('イベントが見つかりません: ' + eventId);
   }
 
-  const nameList = names.join('さん、') + 'さん';
+  const nameList = names.length > 3
+    ? names.slice(0, 3).join('さん、') + `さん他${names.length - 3}名`
+    : names.join('さん、') + 'さん';
   const liffUrl = getLiffUrl_();
   const answerUrl = liffUrl ? (liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId)) : '';
-  const targetLabel = (optionTitle || event.title) + (optionStartAt ? '（' + formatDateTime_(optionStartAt) + '）' : '');
+  const targetTitle = optionTitle || event.title;
 
   const rows = [
-    _createInfoRow_('対象', targetLabel),
-    _createInfoRow_('宛先', nameList),
-    _createInfoRow_('現在の回答', answerLabel),
+    _createInfoRow_('イベント名', targetTitle),
   ];
+  if (optionStartAt) rows.push(_createEventTimeRow_('日時', optionStartAt, optionEndAt));
+  if (optionLocation) rows.push(_createInfoRow_('場所', optionLocation));
+  rows.push(_createInfoRow_('宛先', nameList + '一同'));
+  rows.push(_createInfoRow_('現在の回答', answerLabel));
 
   const bubble = {
     type: 'bubble',
@@ -84,7 +88,7 @@ function buildReminderFlex_(eventId, answerLabel, names, optionTitle, optionStar
   };
 
   return {
-    altText: nameList + '様への回答更新のお願い（' + targetLabel + '）',
+    altText: nameList + '様への回答更新のお願い（' + targetTitle + '）',
     contents: bubble,
   };
 }

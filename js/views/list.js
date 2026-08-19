@@ -31,7 +31,10 @@ const ListView = (() => {
     root.innerHTML = `
       <div class="page-header">
         <h1>自分の予定</h1>
-        <a class="btn btn-primary" href="?view=create">＋ 新規作成</a>
+        <div class="header-actions">
+          <a class="btn" href="?view=calendar">📅 カレンダー</a>
+          <a class="btn btn-primary" href="?view=create">＋ 新規作成</a>
+        </div>
       </div>
       ${events.length ? `
         <div class="tab-bar" role="tablist">

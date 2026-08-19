@@ -39,6 +39,12 @@ const AppUtil = (() => {
 
   const EMOJI_REGEX = /\p{Extended_Pictographic}/u;
 
+  function extractIcon(title) {
+    const trimmed = String(title || '').trim();
+    const firstChar = Array.from(trimmed)[0] || '';
+    return (firstChar && EMOJI_REGEX.test(firstChar)) ? firstChar : '📅';
+  }
+
   function titleIconHtml(title) {
     const trimmed = String(title || '').trim();
     const firstChar = Array.from(trimmed)[0] || '';
@@ -47,6 +53,14 @@ const AppUtil = (() => {
       return `${firstChar} ${escapeHtml(rest || trimmed)}`;
     }
     return `📅 ${escapeHtml(trimmed)}`;
+  }
+
+  function shortTime(isoLike) {
+    if (!isoLike) return '';
+    const d = new Date(isoLike);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   function toGCalStamp(value) {
@@ -100,5 +114,5 @@ const AppUtil = (() => {
       </div>`;
   }
 
-  return { escapeHtml, formatDateTimeLocal, formatDateRange, toDatetimeLocalValue, buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml, titleIconHtml };
+  return { escapeHtml, formatDateTimeLocal, formatDateRange, toDatetimeLocalValue, buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml, titleIconHtml, extractIcon, shortTime };
 })();

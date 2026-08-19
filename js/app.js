@@ -10,6 +10,8 @@
       await DetailView.render(root, ctx);
     } else if (view === 'create') {
       CreateView.render(root, ctx);
+    } else if (view === 'calendar') {
+      await CalendarView.render(root, ctx);
     } else {
       await ListView.render(root, ctx);
     }

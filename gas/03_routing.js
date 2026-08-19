@@ -15,7 +15,7 @@ function routeAction_(action, payload) {
     case 'updateOption': return updateOption_(payload);
     case 'claimEditor': return claimEditor_(payload);
     case 'listMyOptions': return listMyOptions_(payload);
-    case 'buildReminderFlex': return buildReminderFlex_(payload.eventId, payload.answerLabel, payload.names, payload.optionTitle, payload.optionStartAt);
+    case 'buildReminderFlex': return buildReminderFlex_(payload.eventId, payload.answerLabel, payload.names, payload.optionTitle, payload.optionStartAt, payload.optionEndAt, payload.optionLocation);
     case 'buildEditorInviteFlex': return buildEditorInviteFlex_(payload.eventId);
     default:
       throw new Error('未対応のactionです: ' + action);

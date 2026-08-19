@@ -31,8 +31,8 @@ const AppShare = (() => {
     return sendFlexMessage(flex);
   }
 
-  async function remindRespondents(optionTitle, optionStartAt, eventId, answerLabel, names) {
-    const flex = await AppApi.buildReminderFlex({ eventId, answerLabel, names, optionTitle, optionStartAt });
+  async function remindRespondents(params) {
+    const flex = await AppApi.buildReminderFlex(params);
     return sendFlexMessage(flex, { closeAfter: false });
   }
 

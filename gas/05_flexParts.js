@@ -55,6 +55,42 @@ function _createFlexButtonFooter_(label, uri) {
   };
 }
 
+function _weekdayColor_(date) {
+  const day = date.getDay();
+  if (day === 0) return '#D93025';
+  if (day === 6) return '#2563EB';
+  return COLOR.TEXT;
+}
+
+function _createEventTimeRow_(label, startAt, endAt) {
+  const start = new Date(startAt);
+  const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
+  const datePart = Utilities.formatDate(start, 'Asia/Tokyo', 'M/d');
+  const weekday = weekdayNames[start.getDay()];
+  let timePart = Utilities.formatDate(start, 'Asia/Tokyo', 'HH:mm');
+  if (endAt) {
+    timePart += ' 〜 ' + Utilities.formatDate(new Date(endAt), 'Asia/Tokyo', 'HH:mm');
+  }
+  return {
+    type: 'box',
+    layout: 'baseline',
+    spacing: 'sm',
+    contents: [
+      { type: 'text', text: label, size: 'sm', color: COLOR.SUB_TEXT, flex: 2 },
+      {
+        type: 'box',
+        layout: 'horizontal',
+        flex: 5,
+        contents: [
+          { type: 'text', text: datePart, size: 'sm', color: COLOR.TEXT },
+          { type: 'text', text: '(' + weekday + ')', size: 'sm', color: _weekdayColor_(start), margin: 'xs' },
+          { type: 'text', text: ' ' + timePart, size: 'sm', color: COLOR.TEXT, margin: 'xs', wrap: true },
+        ],
+      },
+    ],
+  };
+}
+
 function _createSeparator_() {
   return { type: 'separator', margin: 'md', color: COLOR.BORDER };
 }

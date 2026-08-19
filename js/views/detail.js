@@ -185,7 +185,7 @@ const DetailView = (() => {
         </div>`;
       };
       return `
-        <div class="summary-row" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}">
+        <div class="summary-row" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}">
           ${optionMetaHtml(row.option, canEdit)}
           <div class="summary-counts">
             <span>○ ${row.counts['○']}</span>
@@ -210,10 +210,15 @@ const DetailView = (() => {
         const rowEl = btn.closest('.summary-row');
         const optionTitle = rowEl ? rowEl.dataset.optionTitle : eventTitle;
         const optionStartAt = rowEl ? rowEl.dataset.optionStart : '';
+        const optionEndAt = rowEl ? rowEl.dataset.optionEnd : '';
+        const optionLocation = rowEl ? rowEl.dataset.optionLocation : '';
         btn.disabled = true;
         btn.textContent = '送信中...';
         try {
-          await AppShare.remindRespondents(optionTitle, optionStartAt, eventId, btn.dataset.answer, names);
+          await AppShare.remindRespondents({
+            eventId, answerLabel: btn.dataset.answer, names,
+            optionTitle, optionStartAt, optionEndAt, optionLocation,
+          });
           btn.textContent = '送信しました';
           setTimeout(() => { btn.textContent = '催促する'; btn.disabled = false; }, 2000);
         } catch (err) {
