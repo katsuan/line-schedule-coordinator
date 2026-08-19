@@ -12,7 +12,11 @@ function routeAction_(action, payload) {
     case 'buildShareFlex': return buildShareFlex_(payload);
     case 'deleteEvent': return deleteEvent_(payload);
     case 'addOptions': return addOptions_(payload);
+    case 'updateOption': return updateOption_(payload);
     case 'claimEditor': return claimEditor_(payload);
+    case 'listMyOptions': return listMyOptions_(payload);
+    case 'buildReminderFlex': return buildReminderFlex_(payload.eventId, payload.answerLabel, payload.names, payload.optionTitle);
+    case 'buildEditorInviteFlex': return buildEditorInviteFlex_(payload.eventId);
     default:
       throw new Error('未対応のactionです: ' + action);
   }
@@ -23,6 +27,11 @@ function routeAction_(action, payload) {
 function findEventById_(eventId) {
   const { rows } = sheetRowsAsObjects_(SHEET.EVENTS);
   return rows.find((r) => r.eventId === eventId) || null;
+}
+
+function findOptionById_(eventId, optionId) {
+  const { rows } = sheetRowsAsObjects_(SHEET.EVENT_OPTIONS);
+  return rows.find((r) => r.eventId === eventId && r.optionId === optionId) || null;
 }
 
 function getEventOptions_(eventId) {
@@ -54,12 +63,12 @@ function isEditorOrCreator_(event, userId) {
 /** ========= actions ========= */
 
 function createEvent_(payload) {
-  const { title, description, deadline, options, creatorUserId, creatorDisplayName, creatorPictureUrl } = payload;
+  const { title, description, deadline, options, creatorUserId, creatorDisplayName, creatorPictureUrl, icon } = payload;
   if (!title || !creatorUserId) {
     throw new Error('title / creatorUserId は必須です');
   }
   if (!options || !options.length) {
-    throw new Error('候補日時を1件以上指定してください');
+    throw new Error('予定枠を1件以上指定してください');
   }
 
   upsertUser_(creatorUserId, creatorDisplayName, creatorPictureUrl);
@@ -77,6 +86,7 @@ function createEvent_(payload) {
     createdAt: now,
     updatedAt: now,
     editorUserIds: '',
+    icon: icon || '📅',
   });
 
   options.forEach((opt, index) => {
@@ -104,7 +114,7 @@ function addOptions_(payload) {
     throw new Error('イベントが見つかりません');
   }
   if (!isEditorOrCreator_(event, userId)) {
-    throw new Error('候補日を追加できるのは作成者・編集者のみです');
+    throw new Error('予定枠を追加できるのは作成者・編集者のみです');
   }
 
   const existingOptions = getEventOptions_(eventId);
@@ -120,6 +130,34 @@ function addOptions_(payload) {
       title: opt.title || '',
       location: opt.location || '',
     });
+  });
+
+  return { ok: true };
+}
+
+function updateOption_(payload) {
+  const { eventId, userId, optionId, title, startAt, endAt, location } = payload;
+  if (!eventId || !optionId) {
+    throw new Error('eventId / optionId は必須です');
+  }
+  const event = findEventById_(eventId);
+  if (!event) {
+    throw new Error('イベントが見つかりません');
+  }
+  if (!isEditorOrCreator_(event, userId)) {
+    throw new Error('予定枠を編集できるのは作成者・編集者のみです');
+  }
+  const option = findOptionById_(eventId, optionId);
+  if (!option) {
+    throw new Error('予定枠が見つかりません');
+  }
+
+  updateRowObject_(SHEET.EVENT_OPTIONS, option._rowIndex, {
+    ...option,
+    title: title !== undefined ? title : option.title,
+    startAt: startAt || option.startAt,
+    endAt: endAt !== undefined ? endAt : option.endAt,
+    location: location !== undefined ? location : option.location,
   });
 
   return { ok: true };
@@ -275,6 +313,7 @@ function listMyEvents_(payload) {
   const list = related.map((e) => ({
     eventId: e.eventId,
     title: e.title,
+    icon: e.icon || '📅',
     deadline: e.deadline || '',
     status: e.status,
     isCreator: e.creatorUserId === userId,
@@ -285,6 +324,44 @@ function listMyEvents_(payload) {
   list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return { events: list };
+}
+
+function listMyOptions_(payload) {
+  const { userId } = payload;
+  if (!userId) {
+    throw new Error('userId は必須です');
+  }
+  const { rows: events } = sheetRowsAsObjects_(SHEET.EVENTS);
+  const { rows: options } = sheetRowsAsObjects_(SHEET.EVENT_OPTIONS);
+  const { rows: responses } = sheetRowsAsObjects_(SHEET.RESPONSES);
+
+  const myResponseEventIds = new Set(
+    responses.filter((r) => r.userId === userId).map((r) => r.eventId)
+  );
+  const relatedEvents = events.filter((e) => isEditorOrCreator_(e, userId) || myResponseEventIds.has(e.eventId));
+  const eventById = {};
+  relatedEvents.forEach((e) => { eventById[e.eventId] = e; });
+
+  const items = options
+    .filter((o) => eventById[o.eventId])
+    .map((o) => {
+      const e = eventById[o.eventId];
+      const myResponse = responses.find((r) => r.userId === userId && r.optionId === o.optionId);
+      return {
+        optionId: o.optionId,
+        eventId: o.eventId,
+        eventTitle: e.title,
+        eventIcon: e.icon || '📅',
+        optionTitle: o.title || '',
+        startAt: o.startAt,
+        endAt: o.endAt || '',
+        location: o.location || '',
+        myAnswer: myResponse ? myResponse.answer : null,
+        isCreator: e.creatorUserId === userId,
+      };
+    });
+
+  return { items };
 }
 
 function deleteEvent_(payload) {

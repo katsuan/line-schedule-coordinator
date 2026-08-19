@@ -7,7 +7,7 @@ const SCHEMA = {
   [SHEET.USERS]: ['userId', 'displayName', 'pictureUrl', 'createdAt', 'updatedAt'],
   [SHEET.EVENTS]: [
     'eventId', 'creatorUserId', 'title', 'description', 'deadline',
-    'status', 'workspaceId', 'createdAt', 'updatedAt', 'editorUserIds',
+    'status', 'workspaceId', 'createdAt', 'updatedAt', 'editorUserIds', 'icon',
   ],
   [SHEET.EVENT_OPTIONS]: ['optionId', 'eventId', 'startAt', 'endAt', 'sort', 'title', 'location'],
   [SHEET.RESPONSES]: ['eventId', 'optionId', 'userId', 'answer', 'answeredAt', 'updatedAt'],

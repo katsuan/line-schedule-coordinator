@@ -1,8 +1,10 @@
 const DetailView = (() => {
   const ANSWERS = ['○', '△', '×'];
 
-  async function render(root, ctx) {
-    root.innerHTML = AppUtil.loadingHtml();
+  async function render(root, ctx, opts) {
+    if (!opts || !opts.silent) {
+      root.innerHTML = AppUtil.loadingHtml();
+    }
 
     if (ctx.claimEditor) {
       try {
@@ -30,20 +32,85 @@ const DetailView = (() => {
     return `
       <div class="page-header">
         <a class="btn-back" href="?view=list">← 一覧へ</a>
-        <h1>${AppUtil.escapeHtml(event.title)}</h1>
+        <h1>${AppUtil.titleIconHtml(event.title)}</h1>
         ${event.description ? `<p class="event-description">${AppUtil.escapeHtml(event.description)}</p>` : ''}
         ${event.deadline ? `<p class="event-meta">回答期限: ${AppUtil.formatDateTimeLocal(event.deadline)}</p>` : ''}
       </div>`;
   }
 
-  function optionMetaHtml(opt) {
+  function optionMetaHtml(opt, canEdit) {
     return `
-      <div class="option-meta">
-        <div class="option-meta-title">📅 ${AppUtil.escapeHtml(opt.title || '(タイトルなし)')}</div>
-        <div class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</div>
-        ${opt.location ? `<div class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</div>` : ''}
-        ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
+      <div class="option-meta" data-option-id="${opt.optionId}">
+        <div class="option-meta-view">
+          <div class="option-meta-title-row">
+            <div class="option-meta-title">${AppUtil.titleIconHtml(opt.title || '(タイトルなし)')}</div>
+            ${canEdit ? `<button type="button" class="edit-option-btn" aria-label="編集">✏️</button>` : ''}
+          </div>
+          <div class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</div>
+          ${opt.location ? `<div class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</div>` : ''}
+          ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
+        </div>
+        ${canEdit ? `
+        <div class="option-edit-form" hidden>
+          <input type="text" class="edit-title" value="${AppUtil.escapeHtml(opt.title || '')}" placeholder="予定タイトル">
+          <div class="option-range">
+            <label class="option-sublabel">開始<input type="datetime-local" step="900" class="edit-start" value="${AppUtil.toDatetimeLocalValue(opt.startAt)}"></label>
+            <label class="option-sublabel">完了<input type="datetime-local" step="900" class="edit-end" value="${AppUtil.toDatetimeLocalValue(opt.endAt)}"></label>
+          </div>
+          <input type="text" class="edit-location option-location" value="${AppUtil.escapeHtml(opt.location || '')}" placeholder="📍 場所（任意）">
+          <div class="option-edit-actions">
+            <button type="button" class="btn save-option-btn">保存</button>
+            <button type="button" class="btn cancel-option-btn">キャンセル</button>
+          </div>
+        </div>` : ''}
       </div>`;
+  }
+
+  function wireOptionEditForms(root, ctx) {
+    root.querySelectorAll('.option-meta').forEach((meta) => {
+      const editBtn = meta.querySelector('.edit-option-btn');
+      const view = meta.querySelector('.option-meta-view');
+      const form = meta.querySelector('.option-edit-form');
+      if (!editBtn || !form) return;
+
+      editBtn.addEventListener('click', () => {
+        view.hidden = true;
+        form.hidden = false;
+      });
+
+      meta.querySelector('.cancel-option-btn').addEventListener('click', () => {
+        form.hidden = true;
+        view.hidden = false;
+      });
+
+      meta.querySelector('.save-option-btn').addEventListener('click', async (e) => {
+        const title = meta.querySelector('.edit-title').value.trim();
+        const startAt = meta.querySelector('.edit-start').value;
+        const endAt = meta.querySelector('.edit-end').value;
+        const location = meta.querySelector('.edit-location').value.trim();
+        if (!title || !startAt || !endAt) {
+          alert('タイトル・開始・完了を入力してください');
+          return;
+        }
+        if (new Date(endAt) <= new Date(startAt)) {
+          alert('完了は開始より後の日時にしてください');
+          return;
+        }
+        e.target.disabled = true;
+        try {
+          await AppApi.updateOption({
+            eventId: ctx.eventId,
+            userId: ctx.identity.userId,
+            optionId: meta.dataset.optionId,
+            title, startAt, endAt, location,
+          });
+          await render(root, ctx, { silent: true });
+        } catch (err) {
+          alert('更新に失敗しました: ' + err.message);
+          e.target.disabled = false;
+        }
+      });
+    });
   }
 
   function shareButtonHtml(label) {
@@ -91,12 +158,7 @@ const DetailView = (() => {
     btn.addEventListener('click', async () => {
       btn.disabled = true;
       try {
-        const config = await AppConfig.load();
-        const url = config.liffId && config.liffId !== 'YOUR_LIFF_ID'
-          ? `https://liff.line.me/${config.liffId}?event=${encodeURIComponent(ctx.eventId)}&claimEditor=1`
-          : '';
-        const text = `「${root.querySelector('h1').textContent}」の編集をお願いします。\nこのリンクを開くと、候補日の追加や共有ができるようになります。${url ? '\n' + url : ''}`;
-        await AppShare.sendTextMessage(text);
+        await AppShare.inviteEditor(ctx.eventId);
       } catch (err) {
         alert('招待の送信に失敗しました: ' + err.message);
       } finally {
@@ -111,7 +173,7 @@ const DetailView = (() => {
     return `<span class="avatar"${style}>${pictureUrl ? '' : initial}</span>`;
   }
 
-  function summaryRowsHtml(event, summary) {
+  function summaryRowsHtml(event, summary, canEdit) {
     return summary.map((row, rowIndex) => {
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
@@ -124,12 +186,7 @@ const DetailView = (() => {
       };
       return `
         <div class="summary-row" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}">
-          <div class="option-meta">
-            <div class="option-meta-title">📅 ${AppUtil.escapeHtml(row.option.title || '(タイトルなし)')}</div>
-            <div class="option-meta-date">${AppUtil.formatDateRange(row.option.startAt, row.option.endAt)}</div>
-            ${row.option.location ? `<div class="option-meta-location">📍 ${AppUtil.escapeHtml(row.option.location)}</div>` : ''}
-            ${AppUtil.calendarLinkHtml(row.option.title, '', row.option.startAt, row.option.endAt, row.option.location)}
-          </div>
+          ${optionMetaHtml(row.option, canEdit)}
           <div class="summary-counts">
             <span>○ ${row.counts['○']}</span>
             <span>△ ${row.counts['△']}</span>
@@ -172,9 +229,10 @@ const DetailView = (() => {
   }
 
   function renderAnswerForm(root, ctx, data, isEditing) {
+    const canEdit = data.isCreator || data.isEditor;
     const rows = data.options.map((opt) => `
       <div class="answer-row" data-option-id="${opt.optionId}">
-        ${optionMetaHtml(opt)}
+        ${optionMetaHtml(opt, canEdit)}
         <span class="answer-choices" data-option-id="${opt.optionId}">
           ${choiceButtonsHtml(opt.optionId, data.myAnswers)}
         </span>
@@ -196,8 +254,9 @@ const DetailView = (() => {
         </section>` : ''}
     `;
 
-    if (data.isCreator || data.isEditor) wireShareButton(root, ctx);
+    if (canEdit) wireShareButton(root, ctx);
     if (data.isCreator) wireDeleteButton(root, ctx);
+    if (canEdit) wireOptionEditForms(root, ctx);
 
     const toggleBtn = root.querySelector('#toggle-summary');
     const previewBox = root.querySelector('#summary-preview');
@@ -248,7 +307,7 @@ const DetailView = (() => {
         answeredMap[optionId] = value;
         if (data.options.every((opt) => answeredMap[opt.optionId] !== undefined)) {
           data.myAnswers = answeredMap;
-          await render(root, ctx);
+          await render(root, ctx, { silent: true });
           return;
         }
       } catch (err) {
@@ -285,20 +344,20 @@ const DetailView = (() => {
       </section>
       ${canEdit ? `
         <section>
-          <h2>候補を追加</h2>
-          <p class="event-meta">追加すると、既に回答した人も新しい候補への回答が必要になります。</p>
+          <h2>予定枠を追加</h2>
+          <p class="event-meta">追加すると、既に回答した人も新しい予定枠への回答が必要になります。</p>
           <div class="option-card">
             <div class="option-card-head">
               <span class="option-card-icon">📅</span>
               <input type="text" id="new-option-title" placeholder="予定タイトル（例: BBQ）">
             </div>
             <div class="option-range">
-              <label class="option-sublabel">開始<input type="datetime-local" id="new-option-start"></label>
-              <label class="option-sublabel">完了<input type="datetime-local" id="new-option-end"></label>
+              <label class="option-sublabel">開始<input type="datetime-local" step="900" id="new-option-start"></label>
+              <label class="option-sublabel">完了<input type="datetime-local" step="900" id="new-option-end"></label>
             </div>
             <input type="text" id="new-option-location" class="option-location" placeholder="📍 場所（任意）">
+            <button id="add-option-btn" class="btn btn-primary" type="button">＋ このカードの内容で予定枠を追加する</button>
           </div>
-          <button id="add-option-btn" class="btn" type="button">＋ 候補を追加する</button>
         </section>
         <section>
           ${shareButtonHtml('LINEで共有する')}
@@ -333,9 +392,9 @@ const DetailView = (() => {
         e.target.disabled = true;
         try {
           await AppApi.addOptions({ eventId: ctx.eventId, userId: ctx.identity.userId, options: [{ title, startAt, endAt, location }] });
-          await render(root, ctx);
+          await render(root, ctx, { silent: true });
         } catch (err) {
-          alert('候補の追加に失敗しました: ' + err.message);
+          alert('予定枠の追加に失敗しました: ' + err.message);
           e.target.disabled = false;
         }
       });

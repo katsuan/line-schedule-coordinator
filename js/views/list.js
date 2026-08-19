@@ -20,7 +20,7 @@ const ListView = (() => {
       return `<ul>${list.map((e) => `
         <li class="event-row">
           <a href="?event=${encodeURIComponent(e.eventId)}">
-            <span class="event-title">${AppUtil.escapeHtml(e.title)}</span>
+            <span class="event-title">${AppUtil.titleIconHtml(e.title)}</span>
             <span class="event-meta">${e.deadline ? '期限 ' + AppUtil.formatDateTimeLocal(e.deadline) : ''}</span>
           </a>
         </li>`).join('')}</ul>`;

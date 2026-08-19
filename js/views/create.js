@@ -5,11 +5,11 @@ const CreateView = (() => {
         <div class="option-card-head">
           <span class="option-card-icon">📅</span>
           <input type="text" class="option-title" placeholder="予定タイトル（例: BBQ）" required>
-          <button type="button" class="btn-remove-option" aria-label="この候補を削除">×</button>
+          <button type="button" class="btn-remove-option" aria-label="この予定枠を削除">×</button>
         </div>
         <div class="option-range">
-          <label class="option-sublabel">開始<input type="datetime-local" class="option-start" required></label>
-          <label class="option-sublabel">完了<input type="datetime-local" class="option-end" required></label>
+          <label class="option-sublabel">開始<input type="datetime-local" step="900" class="option-start" required></label>
+          <label class="option-sublabel">完了<input type="datetime-local" step="900" class="option-end" required></label>
         </div>
         <input type="text" class="option-location" placeholder="📍 場所（任意）">
       </div>`;
@@ -24,11 +24,11 @@ const CreateView = (() => {
       <form id="create-form">
         <label>大枠のタイトル（例: 8月）<input type="text" id="f-title" required></label>
         <label>説明（任意）<textarea id="f-description"></textarea></label>
-        <label>回答期限（任意）<input type="datetime-local" id="f-deadline"></label>
+        <label>回答期限（任意）<input type="datetime-local" step="900" id="f-deadline"></label>
         <div class="options-block">
-          <label>候補</label>
+          <label>予定枠</label>
           <div id="option-list">${optionCardHtml(0)}</div>
-          <button type="button" id="add-option" class="btn">＋ 候補を追加</button>
+          <button type="button" id="add-option" class="btn">＋ 予定枠を追加</button>
         </div>
         <button type="submit" class="btn btn-primary">作成する</button>
       </form>
@@ -67,7 +67,7 @@ const CreateView = (() => {
         .filter((opt) => opt.startAt && opt.endAt && opt.title);
 
       if (!title || !options.length) {
-        alert('大枠のタイトルと、候補（タイトル・開始・完了とも）を1件以上入力してください');
+        alert('大枠のタイトルと、予定枠（タイトル・開始・完了とも）を1件以上入力してください');
         return;
       }
       if (options.some((opt) => new Date(opt.endAt) <= new Date(opt.startAt))) {

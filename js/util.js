@@ -29,6 +29,26 @@ const AppUtil = (() => {
     return `${startText} 〜 ${endText}`;
   }
 
+  function toDatetimeLocalValue(isoLike) {
+    if (!isoLike) return '';
+    const date = new Date(isoLike);
+    if (isNaN(date.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
+  const EMOJI_REGEX = /\p{Extended_Pictographic}/u;
+
+  function titleIconHtml(title) {
+    const trimmed = String(title || '').trim();
+    const firstChar = Array.from(trimmed)[0] || '';
+    if (firstChar && EMOJI_REGEX.test(firstChar)) {
+      const rest = trimmed.slice(firstChar.length).trim();
+      return `${firstChar} ${escapeHtml(rest || trimmed)}`;
+    }
+    return `📅 ${escapeHtml(trimmed)}`;
+  }
+
   function toGCalStamp(value) {
     const date = value instanceof Date ? value : new Date(value);
     const pad = (n) => String(n).padStart(2, '0');
@@ -60,11 +80,11 @@ const AppUtil = (() => {
   }
 
   const TIPS = [
-    '候補日ごとに○（参加）／△（未定）／×（不参加）で回答できます。',
+    '予定枠ごとに○（参加）／△（未定）／×（不参加）で回答できます。',
     '回答はタップした瞬間に自動保存されます。送信ボタンは不要です。',
-    '候補日には個別のタイトルを付けられます（例: BBQ、飲み会）。',
-    '各候補日の「カレンダーに追加」からGoogleカレンダーに直接登録できます。',
-    '作成者は候補日をあとから追加できます。全員の回答状況もいつでも確認できます。',
+    '予定枠には個別のタイトルを付けられます（例: BBQ、飲み会）。',
+    '各予定枠の「カレンダーに追加」からGoogleカレンダーに直接登録できます。',
+    '作成者は予定枠をあとから追加できます。全員の回答状況もいつでも確認できます。',
     '回答状況は、作成者だけでなく参加者もいつでも確認できます。',
     '共有ボタンからLINEでこの予定を友だちやグループに送れます。',
     '予定の作成者は、他の人に編集権限を渡すこともできます。',
@@ -80,5 +100,5 @@ const AppUtil = (() => {
       </div>`;
   }
 
-  return { escapeHtml, formatDateTimeLocal, formatDateRange, buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml };
+  return { escapeHtml, formatDateTimeLocal, formatDateRange, toDatetimeLocalValue, buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml, titleIconHtml };
 })();
