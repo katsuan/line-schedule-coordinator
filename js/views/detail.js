@@ -80,7 +80,7 @@ const DetailView = (() => {
         const names = list.map((r) => r.displayName).join(',');
         return `<div class="respondent-list">
           ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span></span>`).join('')}
-          <button type="button" class="remind-btn" data-answer="${answer}" data-row="${rowIndex}" data-names="${AppUtil.escapeHtml(names)}">催促する</button>
+          <button type="button" class="remind-btn" data-answer="${answer}" data-row="${rowIndex}" data-names="${AppUtil.escapeHtml(names)}">連絡する</button>
         </div>`;
       };
       const totalCount = row.counts['○'] + row.counts['△'] + row.counts['×'];
@@ -119,10 +119,10 @@ const DetailView = (() => {
             optionLocation: rowEl ? rowEl.dataset.optionLocation : '',
           });
           btn.textContent = '送信しました';
-          setTimeout(() => { btn.textContent = '催促する'; btn.disabled = false; }, 2000);
+          setTimeout(() => { btn.textContent = '連絡する'; btn.disabled = false; }, 2000);
         } catch (err) {
-          alert('催促の送信に失敗しました: ' + err.message);
-          btn.textContent = '催促する';
+          alert('連絡の送信に失敗しました: ' + err.message);
+          btn.textContent = '連絡する';
           btn.disabled = false;
         }
       });
