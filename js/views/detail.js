@@ -71,26 +71,28 @@ const DetailView = (() => {
     return `<span class="avatar"${style}>${pictureUrl ? '' : initial}</span>`;
   }
 
-  function summaryRowsHtml(event, summary, canEdit, myUserId, myAnswers) {
+  function summaryRowsHtml(event, summary, canEdit, myUserId, myAnswers, myComments) {
     myAnswers = myAnswers || {};
+    myComments = myComments || {};
     return summary.map((row, rowIndex) => {
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
         if (!list.length) return '<p class="empty-respondents">なし</p>';
         const names = list.map((r) => r.displayName).join(',');
         return `<div class="respondent-list">
-          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span></span>`).join('')}
+          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}${r.comment ? `<br><span class="respondent-comment">💬 ${AppUtil.escapeHtml(r.comment)}</span>` : ''}</span></span>`).join('')}
           <button type="button" class="remind-btn" data-answer="${answer}" data-row="${rowIndex}" data-names="${AppUtil.escapeHtml(names)}">連絡する</button>
         </div>`;
       };
       const totalCount = row.counts['○'] + row.counts['△'] + row.counts['×'];
       return `
         <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}">
-          ${OptionCard.metaHtml(row.option, canEdit, myAnswers[row.option.optionId])}
+          ${OptionCard.metaHtml(row.option, canEdit, myAnswers[row.option.optionId], myComments[row.option.optionId])}
           <div class="summary-counts">
             <span>${OptionCard.answerIcon('○')} ${row.counts['○']}</span>
             <span>${OptionCard.answerIcon('△')} ${row.counts['△']}</span>
             <span>${OptionCard.answerIcon('×')} ${row.counts['×']}</span>
+            ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
           </div>
           <details>
             <summary>回答者を見る（${totalCount}人）</summary>
@@ -145,9 +147,11 @@ const DetailView = (() => {
         previewBox.innerHTML = AppUtil.loadingHtml();
         try {
           const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
-          previewBox.innerHTML = summaryRowsHtml(data.event, summaryData.summary, false, ctx.identity.userId, data.myAnswers);
+          previewBox.innerHTML = summaryRowsHtml(data.event, summaryData.summary, false, ctx.identity.userId, data.myAnswers, data.myComments);
           wireRemindButtons(previewBox, data.event.title, ctx.eventId);
-          OptionCard.wireInlineAnswerToggles(previewBox, ctx, () => render(root, ctx, { silent: true }));
+          const previewRefresh = () => render(root, ctx, { silent: true });
+          OptionCard.wireInlineAnswerToggles(previewBox, ctx, previewRefresh);
+          OptionCard.wireComments(previewBox, ctx, previewRefresh);
           previewLoaded = true;
         } catch (err) {
           previewBox.innerHTML = `<p class="error">${AppUtil.escapeHtml(err.message)}</p>`;
@@ -228,7 +232,7 @@ const DetailView = (() => {
   async function renderSummary(root, ctx, data, refresh) {
     const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
     const canEdit = data.isCreator || data.isEditor;
-    const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId, data.myAnswers);
+    const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId, data.myAnswers, data.myComments);
 
     root.innerHTML = `
       ${headerHtml(data.event)}
@@ -259,6 +263,7 @@ const DetailView = (() => {
 
     wireRemindButtons(root, data.event.title, ctx.eventId);
     OptionCard.wireInlineAnswerToggles(root, ctx, refresh);
+    OptionCard.wireComments(root, ctx, refresh);
     wireCommonActions(root, ctx, { canShare: canEdit, isCreator: data.isCreator });
 
     if (canEdit) {

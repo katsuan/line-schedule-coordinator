@@ -10,7 +10,7 @@ const SCHEMA = {
     'status', 'workspaceId', 'createdAt', 'updatedAt', 'editorUserIds', 'icon',
   ],
   [SHEET.EVENT_OPTIONS]: ['optionId', 'eventId', 'startAt', 'endAt', 'sort', 'title', 'location'],
-  [SHEET.RESPONSES]: ['eventId', 'optionId', 'userId', 'answer', 'answeredAt', 'updatedAt'],
+  [SHEET.RESPONSES]: ['eventId', 'optionId', 'userId', 'answer', 'answeredAt', 'updatedAt', 'comment'],
 };
 
 function getSpreadsheet_() {
