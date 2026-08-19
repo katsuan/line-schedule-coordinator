@@ -85,6 +85,19 @@ const AppUtil = (() => {
     return 'https://calendar.google.com/calendar/render?' + params.toString();
   }
 
+  function relativeDayPillHtml(startAt) {
+    if (!startAt) return '';
+    const start = new Date(startAt);
+    if (isNaN(start.getTime())) return '';
+    const now = new Date();
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffDays = Math.round((startDay - today) / 86400000);
+    if (diffDays < 0 || diffDays > 7) return '';
+    const label = diffDays === 0 ? '今日' : diffDays === 1 ? '明日' : `${diffDays}日後`;
+    return `<span class="date-pill${diffDays <= 1 ? ' date-pill-urgent' : ''}">${label}</span>`;
+  }
+
   const CALENDAR_ICON_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9.5H21" stroke="currentColor" stroke-width="1.6"/><path d="M8 3V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 3V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 13V17M10 15H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 
   function calendarLinkHtml(title, description, startAt, endAt, location) {
@@ -142,6 +155,6 @@ const AppUtil = (() => {
   return {
     escapeHtml, formatDateTimeLocal, formatDateRange, toDatetimeLocalValue,
     buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml, titleIconHtml,
-    extractIcon, shortTime, validateEventFields, wireAsyncButton,
+    extractIcon, shortTime, validateEventFields, wireAsyncButton, relativeDayPillHtml,
   };
 })();
