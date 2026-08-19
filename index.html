@@ -186,7 +186,19 @@
   .option-meta-date { color: var(--sub-text); font-size: 0.8rem; margin-top: 2px; }
   .option-meta-location { color: var(--sub-text); font-size: 0.8rem; margin-top: 2px; }
   .answer-choices { display: flex; gap: 10px; }
-  .answer-value { font-size: 1.1rem; font-weight: bold; }
+  .answer-value {
+    display: inline-block;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 3px 12px;
+    border-radius: 12px;
+    background: var(--border);
+  }
+  .answer-value.choice-ok { background: #E9F7EF; }
+  .answer-value.choice-maybe { background: #FFF6E5; }
+  .answer-value.choice-ng { background: #FDEDEB; }
+  .respondent.me .avatar { outline: 2px solid var(--primary); outline-offset: 1px; }
+  .respondent.me span:last-child { font-weight: bold; }
   .summary-counts { display: flex; gap: 16px; margin: 8px 0 4px; font-size: 0.9rem; }
   .remind-btn {
     border: none;

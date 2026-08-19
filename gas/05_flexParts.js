@@ -8,7 +8,7 @@ function _createFlexHeader_(title, subtitle) {
     { type: 'text', text: title, weight: 'bold', size: 'lg', wrap: true, color: COLOR.TEXT },
   ];
   if (subtitle) {
-    contents.push({ type: 'text', text: subtitle, size: 'xs', color: COLOR.SUB_TEXT, margin: 'sm' });
+    contents.push({ type: 'text', text: subtitle, size: 'xs', color: COLOR.SUB_TEXT, margin: 'sm', wrap: true });
   }
   return {
     type: 'box',

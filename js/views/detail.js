@@ -173,19 +173,19 @@ const DetailView = (() => {
     return `<span class="avatar"${style}>${pictureUrl ? '' : initial}</span>`;
   }
 
-  function summaryRowsHtml(event, summary, canEdit) {
+  function summaryRowsHtml(event, summary, canEdit, myUserId) {
     return summary.map((row, rowIndex) => {
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
         if (!list.length) return '<p class="empty-respondents">なし</p>';
         const names = list.map((r) => r.displayName).join(',');
         return `<div class="respondent-list">
-          ${list.map((r) => `<span class="respondent">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}</span></span>`).join('')}
+          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span></span>`).join('')}
           <button type="button" class="remind-btn" data-answer="${answer}" data-row="${rowIndex}" data-names="${AppUtil.escapeHtml(names)}">催促する</button>
         </div>`;
       };
       return `
-        <div class="summary-row" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}">
+        <div class="summary-row" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}">
           ${optionMetaHtml(row.option, canEdit)}
           <div class="summary-counts">
             <span>○ ${row.counts['○']}</span>
@@ -209,12 +209,16 @@ const DetailView = (() => {
         if (!names.length) return;
         const rowEl = btn.closest('.summary-row');
         const optionTitle = rowEl ? rowEl.dataset.optionTitle : eventTitle;
+        const optionStartAt = rowEl ? rowEl.dataset.optionStart : '';
         btn.disabled = true;
+        btn.textContent = '送信中...';
         try {
-          await AppShare.remindRespondents(optionTitle, eventId, btn.dataset.answer, names);
+          await AppShare.remindRespondents(optionTitle, optionStartAt, eventId, btn.dataset.answer, names);
+          btn.textContent = '送信しました';
+          setTimeout(() => { btn.textContent = '催促する'; btn.disabled = false; }, 2000);
         } catch (err) {
           alert('催促の送信に失敗しました: ' + err.message);
-        } finally {
+          btn.textContent = '催促する';
           btn.disabled = false;
         }
       });
@@ -274,7 +278,7 @@ const DetailView = (() => {
         previewBox.innerHTML = AppUtil.loadingHtml();
         try {
           const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
-          previewBox.innerHTML = summaryRowsHtml(data.event, summaryData.summary);
+          previewBox.innerHTML = summaryRowsHtml(data.event, summaryData.summary, false, ctx.identity.userId);
           wireRemindButtons(previewBox, data.event.title, ctx.eventId);
           previewLoaded = true;
         } catch (err) {
@@ -321,14 +325,15 @@ const DetailView = (() => {
   async function renderSummary(root, ctx, data) {
     const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
 
+    const canEdit = data.isCreator || data.isEditor;
+
     const myAnswerRows = data.options.map((opt) => `
       <div class="answer-row readonly">
-        ${optionMetaHtml(opt)}
-        <span class="answer-value">${AppUtil.escapeHtml(data.myAnswers[opt.optionId] || '-')}</span>
+        ${optionMetaHtml(opt, canEdit)}
+        <span class="answer-value ${ANSWER_CLASS[data.myAnswers[opt.optionId]] || ''}">${AppUtil.escapeHtml(data.myAnswers[opt.optionId] || '-')}</span>
       </div>`).join('');
 
-    const rows = summaryRowsHtml(data.event, summaryData.summary);
-    const canEdit = data.isCreator || data.isEditor;
+    const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId);
 
     root.innerHTML = `
       ${headerHtml(data.event)}

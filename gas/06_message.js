@@ -13,11 +13,19 @@ function buildEventShareFlex_(eventId) {
   const answeredUserIds = new Set(responses.map((r) => r.userId));
   const deadlineText = event.deadline ? formatDateTime_(event.deadline) : 'なし';
 
-  const rows = [
-    _createInfoRow_('予定枠', options.length + '件'),
+  const headerRows = [
     _createInfoRow_('回答期限', deadlineText),
     _createInfoRow_('回答', answeredUserIds.size + '人'),
   ];
+
+  const optionRows = options.map((opt) => {
+    const optResponses = responses.filter((r) => r.optionId === opt.optionId);
+    const count = (a) => optResponses.filter((r) => r.answer === a).length;
+    return _createInfoRow_(
+      formatDateTime_(opt.startAt),
+      (opt.title || '(タイトルなし)') + `  ○${count(ANSWER.OK)} △${count(ANSWER.MAYBE)} ×${count(ANSWER.NG)}`
+    );
+  });
 
   const liffUrl = getLiffUrl_();
   const answerUrl = liffUrl ? (liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId)) : '';
@@ -30,7 +38,9 @@ function buildEventShareFlex_(eventId) {
       contents: [
         _createFlexHeader_(event.title, event.description || ''),
         _createSeparator_(),
-        { type: 'box', layout: 'vertical', margin: 'md', contents: [_createFlexBody_(rows)] },
+        { type: 'box', layout: 'vertical', margin: 'md', contents: [_createFlexBody_(headerRows)] },
+        _createSeparator_(),
+        { type: 'box', layout: 'vertical', margin: 'md', spacing: 'sm', contents: optionRows },
       ],
     },
     footer: answerUrl ? _createFlexButtonFooter_('回答する', answerUrl) : undefined,
@@ -42,7 +52,7 @@ function buildEventShareFlex_(eventId) {
   };
 }
 
-function buildReminderFlex_(eventId, answerLabel, names, optionTitle) {
+function buildReminderFlex_(eventId, answerLabel, names, optionTitle, optionStartAt) {
   const event = findEventById_(eventId);
   if (!event) {
     throw new Error('イベントが見つかりません: ' + eventId);
@@ -51,8 +61,10 @@ function buildReminderFlex_(eventId, answerLabel, names, optionTitle) {
   const nameList = names.join('さん、') + 'さん';
   const liffUrl = getLiffUrl_();
   const answerUrl = liffUrl ? (liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId)) : '';
+  const targetLabel = (optionTitle || event.title) + (optionStartAt ? '（' + formatDateTime_(optionStartAt) + '）' : '');
 
   const rows = [
+    _createInfoRow_('対象', targetLabel),
     _createInfoRow_('宛先', nameList),
     _createInfoRow_('現在の回答', answerLabel),
   ];
@@ -63,7 +75,7 @@ function buildReminderFlex_(eventId, answerLabel, names, optionTitle) {
       type: 'box',
       layout: 'vertical',
       contents: [
-        _createFlexHeader_(event.title, (optionTitle ? optionTitle + ' の' : '') + '回答の更新をお願いします🙏'),
+        _createFlexHeader_(event.title, '回答の更新をお願いします🙏'),
         _createSeparator_(),
         { type: 'box', layout: 'vertical', margin: 'md', contents: [_createFlexBody_(rows)] },
       ],
@@ -72,7 +84,7 @@ function buildReminderFlex_(eventId, answerLabel, names, optionTitle) {
   };
 
   return {
-    altText: nameList + '様への回答更新のお願い（' + event.title + '）',
+    altText: nameList + '様への回答更新のお願い（' + targetLabel + '）',
     contents: bubble,
   };
 }

@@ -1,14 +1,21 @@
 const AppShare = (() => {
-  async function sendFlexMessage(flex) {
+  async function sendFlexMessage(flex, opts) {
     const message = {
       type: 'flex',
       altText: flex.altText,
       contents: flex.contents,
     };
 
-    if (window.liff && typeof liff.isApiAvailable === 'function' && liff.isApiAvailable('shareTargetPicker')) {
+    let available = false;
+    try {
+      available = window.liff && typeof liff.isApiAvailable === 'function' && liff.isApiAvailable('shareTargetPicker');
+    } catch (err) {
+      available = false;
+    }
+
+    if (available) {
       await liff.shareTargetPicker([message]);
-      if (liff.isInClient && liff.isInClient()) {
+      if ((!opts || opts.closeAfter !== false) && liff.isInClient && liff.isInClient()) {
         liff.closeWindow();
       }
       return true;
@@ -24,14 +31,14 @@ const AppShare = (() => {
     return sendFlexMessage(flex);
   }
 
-  async function remindRespondents(optionTitle, eventId, answerLabel, names) {
-    const flex = await AppApi.buildReminderFlex({ eventId, answerLabel, names, optionTitle });
-    return sendFlexMessage(flex);
+  async function remindRespondents(optionTitle, optionStartAt, eventId, answerLabel, names) {
+    const flex = await AppApi.buildReminderFlex({ eventId, answerLabel, names, optionTitle, optionStartAt });
+    return sendFlexMessage(flex, { closeAfter: false });
   }
 
   async function inviteEditor(eventId) {
     const flex = await AppApi.buildEditorInviteFlex({ eventId });
-    return sendFlexMessage(flex);
+    return sendFlexMessage(flex, { closeAfter: false });
   }
 
   return { shareEvent, remindRespondents, inviteEditor };
