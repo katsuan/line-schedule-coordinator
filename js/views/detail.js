@@ -44,7 +44,7 @@ const DetailView = (() => {
         <div class="option-meta-view">
           <div class="option-meta-title-row">
             <div class="option-meta-title">${AppUtil.titleIconHtml(opt.title || '(タイトルなし)')}</div>
-            ${myAnswer !== undefined ? answerIconHtml(myAnswer) : ''}
+            ${myAnswer !== undefined ? answerInlineHtml(opt.optionId, myAnswer) : ''}
             ${canEdit ? `<button type="button" class="edit-option-btn" aria-label="編集">✏️</button>` : ''}
           </div>
           <div class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</div>
@@ -192,6 +192,50 @@ const DetailView = (() => {
     return `<span class="answer-icon ${cls}">${answer || '-'}</span>`;
   }
 
+  function answerInlineHtml(optionId, myAnswer) {
+    const cls = ANSWER_CLASS[myAnswer] || 'dot-none';
+    return `
+      <span class="answer-inline" data-option-id="${optionId}">
+        <button type="button" class="answer-icon answer-inline-badge ${cls}" aria-label="回答を変更">${myAnswer || '-'}</button>
+        <span class="answer-inline-choices" hidden>
+          ${ANSWERS.map((a) => `<button type="button" class="choice-btn choice-inline ${ANSWER_CLASS[a]} ${myAnswer === a ? 'selected' : ''}" data-value="${a}">${a}</button>`).join('')}
+        </span>
+      </span>`;
+  }
+
+  function wireInlineAnswerToggles(root, ctx) {
+    root.querySelectorAll('.answer-inline').forEach((wrap) => {
+      const badge = wrap.querySelector('.answer-inline-badge');
+      const choices = wrap.querySelector('.answer-inline-choices');
+
+      badge.addEventListener('click', () => {
+        badge.hidden = true;
+        choices.hidden = false;
+      });
+
+      choices.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.choice-btn');
+        if (!btn) return;
+        const optionId = wrap.dataset.optionId;
+        const value = btn.dataset.value;
+        choices.querySelectorAll('.choice-btn').forEach((b) => { b.disabled = true; });
+        try {
+          await AppApi.submitAnswer({
+            eventId: ctx.eventId,
+            userId: ctx.identity.userId,
+            displayName: ctx.identity.displayName,
+            pictureUrl: ctx.identity.pictureUrl,
+            answers: [{ optionId, answer: value }],
+          });
+          await render(root, ctx, { silent: true });
+        } catch (err) {
+          alert('回答の保存に失敗しました: ' + err.message);
+          choices.querySelectorAll('.choice-btn').forEach((b) => { b.disabled = false; });
+        }
+      });
+    });
+  }
+
   function avatarHtml(displayName, pictureUrl) {
     const initial = AppUtil.escapeHtml(String(displayName || '?').slice(0, 1));
     const style = pictureUrl ? ` style="background-image:url('${pictureUrl.replace(/'/g, '%27')}')"` : '';
@@ -312,6 +356,7 @@ const DetailView = (() => {
           const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
           previewBox.innerHTML = summaryRowsHtml(data.event, summaryData.summary, false, ctx.identity.userId, data.myAnswers);
           wireRemindButtons(previewBox, data.event.title, ctx.eventId);
+          wireInlineAnswerToggles(previewBox, ctx);
           previewLoaded = true;
         } catch (err) {
           previewBox.innerHTML = `<p class="error">${AppUtil.escapeHtml(err.message)}</p>`;
@@ -399,6 +444,7 @@ const DetailView = (() => {
     });
 
     wireRemindButtons(root, data.event.title, ctx.eventId);
+    wireInlineAnswerToggles(root, ctx);
 
     if (canEdit) {
       wireShareButton(root, ctx);
