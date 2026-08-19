@@ -2,7 +2,21 @@ const DetailView = (() => {
   const ANSWERS = ['○', '△', '×'];
 
   async function render(root, ctx) {
-    root.innerHTML = `<div class="loading"><span class="spinner"></span>読み込み中...</div>`;
+    root.innerHTML = AppUtil.loadingHtml();
+
+    if (ctx.claimEditor) {
+      try {
+        await AppApi.claimEditor({
+          eventId: ctx.eventId,
+          userId: ctx.identity.userId,
+          displayName: ctx.identity.displayName,
+          pictureUrl: ctx.identity.pictureUrl,
+        });
+      } catch (err) {
+        console.error('編集者登録に失敗しました', err);
+      }
+    }
+
     const data = await AppApi.getEvent({ eventId: ctx.eventId, userId: ctx.identity.userId });
 
     if (!data.hasAnswered) {
@@ -19,6 +33,16 @@ const DetailView = (() => {
         <h1>${AppUtil.escapeHtml(event.title)}</h1>
         ${event.description ? `<p class="event-description">${AppUtil.escapeHtml(event.description)}</p>` : ''}
         ${event.deadline ? `<p class="event-meta">回答期限: ${AppUtil.formatDateTimeLocal(event.deadline)}</p>` : ''}
+      </div>`;
+  }
+
+  function optionMetaHtml(opt) {
+    return `
+      <div class="option-meta">
+        <div class="option-meta-title">📅 ${AppUtil.escapeHtml(opt.title || '(タイトルなし)')}</div>
+        <div class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</div>
+        ${opt.location ? `<div class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</div>` : ''}
+        ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
       </div>`;
   }
 
@@ -61,6 +85,26 @@ const DetailView = (() => {
     });
   }
 
+  function wireInviteEditorButton(root, ctx) {
+    const btn = root.querySelector('#invite-editor');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try {
+        const config = await AppConfig.load();
+        const url = config.liffId && config.liffId !== 'YOUR_LIFF_ID'
+          ? `https://liff.line.me/${config.liffId}?event=${encodeURIComponent(ctx.eventId)}&claimEditor=1`
+          : '';
+        const text = `「${root.querySelector('h1').textContent}」の編集をお願いします。\nこのリンクを開くと、候補日の追加や共有ができるようになります。${url ? '\n' + url : ''}`;
+        await AppShare.sendTextMessage(text);
+      } catch (err) {
+        alert('招待の送信に失敗しました: ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
   function avatarHtml(displayName, pictureUrl) {
     const initial = AppUtil.escapeHtml(String(displayName || '?').slice(0, 1));
     const style = pictureUrl ? ` style="background-image:url('${pictureUrl.replace(/'/g, '%27')}')"` : '';
@@ -68,18 +112,23 @@ const DetailView = (() => {
   }
 
   function summaryRowsHtml(event, summary) {
-    return summary.map((row) => {
+    return summary.map((row, rowIndex) => {
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
         if (!list.length) return '<p class="empty-respondents">なし</p>';
-        return `<div class="respondent-list">${list.map((r) => `
-          <span class="respondent">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}</span></span>`).join('')}</div>`;
+        const names = list.map((r) => r.displayName).join(',');
+        return `<div class="respondent-list">
+          ${list.map((r) => `<span class="respondent">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}</span></span>`).join('')}
+          <button type="button" class="remind-btn" data-answer="${answer}" data-row="${rowIndex}" data-names="${AppUtil.escapeHtml(names)}">催促する</button>
+        </div>`;
       };
       return `
-        <div class="summary-row">
-          <div class="summary-date-block">
-            <div class="summary-date">${AppUtil.formatDateRange(row.option.startAt, row.option.endAt)}</div>
-            ${AppUtil.calendarLinkHtml(event.title, event.description, row.option.startAt, row.option.endAt)}
+        <div class="summary-row" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}">
+          <div class="option-meta">
+            <div class="option-meta-title">📅 ${AppUtil.escapeHtml(row.option.title || '(タイトルなし)')}</div>
+            <div class="option-meta-date">${AppUtil.formatDateRange(row.option.startAt, row.option.endAt)}</div>
+            ${row.option.location ? `<div class="option-meta-location">📍 ${AppUtil.escapeHtml(row.option.location)}</div>` : ''}
+            ${AppUtil.calendarLinkHtml(row.option.title, '', row.option.startAt, row.option.endAt, row.option.location)}
           </div>
           <div class="summary-counts">
             <span>○ ${row.counts['○']}</span>
@@ -96,42 +145,59 @@ const DetailView = (() => {
     }).join('');
   }
 
+  function wireRemindButtons(root, eventTitle, eventId) {
+    root.querySelectorAll('.remind-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const names = btn.dataset.names.split(',').filter(Boolean);
+        if (!names.length) return;
+        const rowEl = btn.closest('.summary-row');
+        const optionTitle = rowEl ? rowEl.dataset.optionTitle : eventTitle;
+        btn.disabled = true;
+        try {
+          await AppShare.remindRespondents(optionTitle, eventId, btn.dataset.answer, names);
+        } catch (err) {
+          alert('催促の送信に失敗しました: ' + err.message);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  const ANSWER_CLASS = { '○': 'choice-ok', '△': 'choice-maybe', '×': 'choice-ng' };
+
+  function choiceButtonsHtml(optionId, myAnswers) {
+    return ANSWERS.map((a) => `
+      <button type="button" class="choice-btn ${ANSWER_CLASS[a]} ${myAnswers[optionId] === a ? 'selected' : ''}" data-value="${a}">${a}</button>`).join('');
+  }
+
   function renderAnswerForm(root, ctx, data, isEditing) {
     const rows = data.options.map((opt) => `
       <div class="answer-row" data-option-id="${opt.optionId}">
-        <span class="answer-date-block">
-          <span class="answer-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</span>
-          ${AppUtil.calendarLinkHtml(data.event.title, data.event.description, opt.startAt, opt.endAt)}
-        </span>
-        <span class="answer-choices">
-          ${ANSWERS.map((a) => `
-            <label class="choice">
-              <input type="radio" name="answer-${opt.optionId}" value="${a}" ${data.myAnswers[opt.optionId] === a ? 'checked' : ''}>
-              <span>${a}</span>
-            </label>`).join('')}
+        ${optionMetaHtml(opt)}
+        <span class="answer-choices" data-option-id="${opt.optionId}">
+          ${choiceButtonsHtml(opt.optionId, data.myAnswers)}
         </span>
       </div>`).join('');
 
     root.innerHTML = `
       ${headerHtml(data.event)}
-      <form id="answer-form">
-        ${rows}
-        <button type="submit" class="btn btn-primary">${isEditing ? '回答を更新する' : '回答する'}</button>
-      </form>
+      <p class="event-meta">タップすると自動的に保存されます。</p>
+      <div id="answer-rows">${rows}</div>
       <section>
         <button id="toggle-summary" class="btn" type="button">現在の回答状況を見る</button>
         <div id="summary-preview" class="summary-list" hidden></div>
       </section>
-      ${data.isCreator ? `
+      ${data.isCreator || data.isEditor ? `
         <section>
-          <p class="event-meta">作成者として、回答前でも共有できます。</p>
+          <p class="event-meta">${data.isCreator ? '作成者' : '編集者'}として、回答前でも共有できます。</p>
           ${shareButtonHtml('LINEで共有する')}
-          ${deleteButtonHtml()}
+          ${data.isCreator ? deleteButtonHtml() : ''}
         </section>` : ''}
     `;
 
-    wireShareButton(root, ctx);
-    wireDeleteButton(root, ctx);
+    if (data.isCreator || data.isEditor) wireShareButton(root, ctx);
+    if (data.isCreator) wireDeleteButton(root, ctx);
 
     const toggleBtn = root.querySelector('#toggle-summary');
     const previewBox = root.querySelector('#summary-preview');
@@ -146,10 +212,11 @@ const DetailView = (() => {
       toggleBtn.textContent = '閉じる';
       previewBox.hidden = false;
       if (!previewLoaded) {
-        previewBox.innerHTML = '<div class="loading"><span class="spinner"></span>読み込み中...</div>';
+        previewBox.innerHTML = AppUtil.loadingHtml();
         try {
           const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
           previewBox.innerHTML = summaryRowsHtml(data.event, summaryData.summary);
+          wireRemindButtons(previewBox, data.event.title, ctx.eventId);
           previewLoaded = true;
         } catch (err) {
           previewBox.innerHTML = `<p class="error">${AppUtil.escapeHtml(err.message)}</p>`;
@@ -157,32 +224,37 @@ const DetailView = (() => {
       }
     });
 
-    root.querySelector('#answer-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const answers = data.options.map((opt) => {
-        const checked = root.querySelector(`input[name="answer-${opt.optionId}"]:checked`);
-        return checked ? { optionId: opt.optionId, answer: checked.value } : null;
-      }).filter(Boolean);
+    const answeredMap = { ...data.myAnswers };
+    let saving = false;
 
-      if (answers.length !== data.options.length) {
-        alert('すべての候補日に回答してください');
-        return;
-      }
+    root.querySelector('#answer-rows').addEventListener('click', async (e) => {
+      const btn = e.target.closest('.choice-btn');
+      if (!btn || saving) return;
+      const container = btn.closest('.answer-choices');
+      const optionId = container.dataset.optionId;
+      const value = btn.dataset.value;
 
-      const submitBtn = root.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
+      container.querySelectorAll('.choice-btn').forEach((b) => b.classList.toggle('selected', b === btn));
+
+      saving = true;
       try {
         await AppApi.submitAnswer({
           eventId: ctx.eventId,
           userId: ctx.identity.userId,
           displayName: ctx.identity.displayName,
           pictureUrl: ctx.identity.pictureUrl,
-          answers,
+          answers: [{ optionId, answer: value }],
         });
-        await render(root, ctx);
+        answeredMap[optionId] = value;
+        if (data.options.every((opt) => answeredMap[opt.optionId] !== undefined)) {
+          data.myAnswers = answeredMap;
+          await render(root, ctx);
+          return;
+        }
       } catch (err) {
-        alert('回答の送信に失敗しました: ' + err.message);
-        submitBtn.disabled = false;
+        alert('回答の保存に失敗しました: ' + err.message);
+      } finally {
+        saving = false;
       }
     });
   }
@@ -192,14 +264,12 @@ const DetailView = (() => {
 
     const myAnswerRows = data.options.map((opt) => `
       <div class="answer-row readonly">
-        <span class="answer-date-block">
-          <span class="answer-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</span>
-          ${AppUtil.calendarLinkHtml(data.event.title, data.event.description, opt.startAt, opt.endAt)}
-        </span>
+        ${optionMetaHtml(opt)}
         <span class="answer-value">${AppUtil.escapeHtml(data.myAnswers[opt.optionId] || '-')}</span>
       </div>`).join('');
 
     const rows = summaryRowsHtml(data.event, summaryData.summary);
+    const canEdit = data.isCreator || data.isEditor;
 
     root.innerHTML = `
       ${headerHtml(data.event)}
@@ -212,17 +282,68 @@ const DetailView = (() => {
         <h2>回答集計</h2>
         <p class="event-meta">回答者数: ${summaryData.totalRespondents}人</p>
         <div class="summary-list">${rows}</div>
-        ${data.isCreator ? `${shareButtonHtml('LINEで共有する')}${deleteButtonHtml()}` : ''}
       </section>
+      ${canEdit ? `
+        <section>
+          <h2>候補を追加</h2>
+          <p class="event-meta">追加すると、既に回答した人も新しい候補への回答が必要になります。</p>
+          <div class="option-card">
+            <div class="option-card-head">
+              <span class="option-card-icon">📅</span>
+              <input type="text" id="new-option-title" placeholder="予定タイトル（例: BBQ）">
+            </div>
+            <div class="option-range">
+              <label class="option-sublabel">開始<input type="datetime-local" id="new-option-start"></label>
+              <label class="option-sublabel">完了<input type="datetime-local" id="new-option-end"></label>
+            </div>
+            <input type="text" id="new-option-location" class="option-location" placeholder="📍 場所（任意）">
+          </div>
+          <button id="add-option-btn" class="btn" type="button">＋ 候補を追加する</button>
+        </section>
+        <section>
+          ${shareButtonHtml('LINEで共有する')}
+          ${data.isCreator ? `
+            <button id="invite-editor" class="btn" type="button">編集者を招待する</button>
+            ${deleteButtonHtml()}` : ''}
+        </section>` : ''}
     `;
 
     root.querySelector('#edit-answer').addEventListener('click', () => {
       renderAnswerForm(root, ctx, data, true);
     });
 
-    if (data.isCreator) {
+    wireRemindButtons(root, data.event.title, ctx.eventId);
+
+    if (canEdit) {
       wireShareButton(root, ctx);
+
+      root.querySelector('#add-option-btn').addEventListener('click', async (e) => {
+        const title = root.querySelector('#new-option-title').value.trim();
+        const startAt = root.querySelector('#new-option-start').value;
+        const endAt = root.querySelector('#new-option-end').value;
+        const location = root.querySelector('#new-option-location').value.trim();
+        if (!title || !startAt || !endAt) {
+          alert('タイトル・開始・完了を入力してください');
+          return;
+        }
+        if (new Date(endAt) <= new Date(startAt)) {
+          alert('完了は開始より後の日時にしてください');
+          return;
+        }
+        e.target.disabled = true;
+        try {
+          await AppApi.addOptions({ eventId: ctx.eventId, userId: ctx.identity.userId, options: [{ title, startAt, endAt, location }] });
+          await render(root, ctx);
+        } catch (err) {
+          alert('候補の追加に失敗しました: ' + err.message);
+          e.target.disabled = false;
+        }
+      });
+    }
+
+    if (data.isCreator) {
       wireDeleteButton(root, ctx);
+      wireInviteEditorButton(root, ctx);
     }
   }
 

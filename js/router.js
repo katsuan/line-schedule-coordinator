@@ -4,6 +4,7 @@ const AppRouter = (() => {
     return {
       view: params.get('view') || '',
       eventId: params.get('event') || '',
+      claimEditor: params.get('claimEditor') === '1',
     };
   }
 

@@ -35,7 +35,7 @@ const AppUtil = (() => {
     return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
   }
 
-  function buildGoogleCalendarUrl(title, description, startAt, endAt) {
+  function buildGoogleCalendarUrl(title, description, startAt, endAt, location) {
     if (!startAt) return '';
     const start = toGCalStamp(startAt);
     const endDate = endAt ? new Date(endAt) : new Date(new Date(startAt).getTime() + 60 * 60 * 1000);
@@ -47,16 +47,38 @@ const AppUtil = (() => {
       details: description || '',
       ctz: 'Asia/Tokyo',
     });
+    if (location) params.set('location', location);
     return 'https://calendar.google.com/calendar/render?' + params.toString();
   }
 
   const CALENDAR_ICON_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9.5H21" stroke="currentColor" stroke-width="1.6"/><path d="M8 3V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 3V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 13V17M10 15H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 
-  function calendarLinkHtml(title, description, startAt, endAt) {
-    const url = buildGoogleCalendarUrl(title, description, startAt, endAt);
+  function calendarLinkHtml(title, description, startAt, endAt, location) {
+    const url = buildGoogleCalendarUrl(title, description, startAt, endAt, location);
     if (!url) return '';
     return `<a class="cal-link" href="${url}" target="_blank" rel="noopener">${CALENDAR_ICON_SVG}<span>カレンダーに追加</span></a>`;
   }
 
-  return { escapeHtml, formatDateTimeLocal, formatDateRange, buildGoogleCalendarUrl, calendarLinkHtml };
+  const TIPS = [
+    '候補日ごとに○（参加）／△（未定）／×（不参加）で回答できます。',
+    '回答はタップした瞬間に自動保存されます。送信ボタンは不要です。',
+    '候補日には個別のタイトルを付けられます（例: BBQ、飲み会）。',
+    '各候補日の「カレンダーに追加」からGoogleカレンダーに直接登録できます。',
+    '作成者は候補日をあとから追加できます。全員の回答状況もいつでも確認できます。',
+    '回答状況は、作成者だけでなく参加者もいつでも確認できます。',
+    '共有ボタンからLINEでこの予定を友だちやグループに送れます。',
+    '予定の作成者は、他の人に編集権限を渡すこともできます。',
+  ];
+
+  function loadingHtml(message) {
+    const tip = TIPS[Math.floor(Math.random() * TIPS.length)];
+    return `
+      <div class="loading">
+        <span class="spinner"></span>
+        <span>${escapeHtml(message || '読み込み中...')}</span>
+        <p class="loading-tip">💡 ${escapeHtml(tip)}</p>
+      </div>`;
+  }
+
+  return { escapeHtml, formatDateTimeLocal, formatDateRange, buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml };
 })();

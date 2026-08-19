@@ -1,6 +1,6 @@
 const ListView = (() => {
   async function render(root, ctx) {
-    root.innerHTML = `<div class="loading"><span class="spinner"></span>読み込み中...</div>`;
+    root.innerHTML = AppUtil.loadingHtml();
     const { events } = await AppApi.listMyEvents({ userId: ctx.identity.userId });
 
     const groups = {

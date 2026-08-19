@@ -11,6 +11,8 @@ function routeAction_(action, payload) {
     case 'listMyEvents': return listMyEvents_(payload);
     case 'buildShareFlex': return buildShareFlex_(payload);
     case 'deleteEvent': return deleteEvent_(payload);
+    case 'addOptions': return addOptions_(payload);
+    case 'claimEditor': return claimEditor_(payload);
     default:
       throw new Error('未対応のactionです: ' + action);
   }
@@ -41,6 +43,14 @@ function getUserDisplayName_(userId) {
   return user ? user.displayName : '';
 }
 
+function editorIdsOf_(event) {
+  return String(event.editorUserIds || '').split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+function isEditorOrCreator_(event, userId) {
+  return event.creatorUserId === userId || editorIdsOf_(event).includes(userId);
+}
+
 /** ========= actions ========= */
 
 function createEvent_(payload) {
@@ -66,6 +76,7 @@ function createEvent_(payload) {
     workspaceId: '',
     createdAt: now,
     updatedAt: now,
+    editorUserIds: '',
   });
 
   options.forEach((opt, index) => {
@@ -75,10 +86,43 @@ function createEvent_(payload) {
       startAt: opt.startAt,
       endAt: opt.endAt || '',
       sort: index,
+      title: opt.title || '',
+      location: opt.location || '',
     });
   });
 
   return { eventId };
+}
+
+function addOptions_(payload) {
+  const { eventId, userId, options } = payload;
+  if (!eventId || !options || !options.length) {
+    throw new Error('eventId / options は必須です');
+  }
+  const event = findEventById_(eventId);
+  if (!event) {
+    throw new Error('イベントが見つかりません');
+  }
+  if (!isEditorOrCreator_(event, userId)) {
+    throw new Error('候補日を追加できるのは作成者・編集者のみです');
+  }
+
+  const existingOptions = getEventOptions_(eventId);
+  let nextSort = existingOptions.reduce((max, o) => Math.max(max, Number(o.sort)), -1) + 1;
+
+  options.forEach((opt) => {
+    appendRowObject_(SHEET.EVENT_OPTIONS, {
+      optionId: 'OPT_' + Utilities.getUuid(),
+      eventId,
+      startAt: opt.startAt,
+      endAt: opt.endAt || '',
+      sort: nextSort++,
+      title: opt.title || '',
+      location: opt.location || '',
+    });
+  });
+
+  return { ok: true };
 }
 
 function getEvent_(payload) {
@@ -97,9 +141,35 @@ function getEvent_(payload) {
     event: stripRowMeta_(event),
     options: options.map(stripRowMeta_),
     isCreator: event.creatorUserId === userId,
-    hasAnswered: myResponses.length > 0,
+    isEditor: isEditorOrCreator_(event, userId),
+    hasAnswered: options.length > 0 && options.every((opt) => myAnswers[opt.optionId] !== undefined),
     myAnswers,
   };
+}
+
+function claimEditor_(payload) {
+  const { eventId, userId, displayName, pictureUrl } = payload;
+  if (!eventId || !userId) {
+    throw new Error('eventId / userId は必須です');
+  }
+  const event = findEventById_(eventId);
+  if (!event) {
+    throw new Error('イベントが見つかりません');
+  }
+
+  upsertUser_(userId, displayName, pictureUrl);
+
+  if (!isEditorOrCreator_(event, userId)) {
+    const ids = editorIdsOf_(event);
+    ids.push(userId);
+    updateRowObject_(SHEET.EVENTS, event._rowIndex, {
+      ...event,
+      editorUserIds: ids.join(','),
+      updatedAt: new Date(),
+    });
+  }
+
+  return { ok: true };
 }
 
 function submitAnswer_(payload) {
@@ -185,6 +255,7 @@ function listMyEvents_(payload) {
   }
   const { rows: events } = sheetRowsAsObjects_(SHEET.EVENTS);
   const { rows: responses } = sheetRowsAsObjects_(SHEET.RESPONSES);
+  const { rows: allOptions } = sheetRowsAsObjects_(SHEET.EVENT_OPTIONS);
 
   const myResponseEventIds = new Set(
     responses.filter((r) => r.userId === userId).map((r) => r.eventId)
@@ -192,13 +263,22 @@ function listMyEvents_(payload) {
 
   const related = events.filter((e) => e.creatorUserId === userId || myResponseEventIds.has(e.eventId));
 
+  const hasFullyAnswered = (eventId) => {
+    const optionIds = allOptions.filter((o) => o.eventId === eventId).map((o) => o.optionId);
+    if (!optionIds.length) return false;
+    const myAnsweredOptionIds = new Set(
+      responses.filter((r) => r.eventId === eventId && r.userId === userId).map((r) => r.optionId)
+    );
+    return optionIds.every((id) => myAnsweredOptionIds.has(id));
+  };
+
   const list = related.map((e) => ({
     eventId: e.eventId,
     title: e.title,
     deadline: e.deadline || '',
     status: e.status,
     isCreator: e.creatorUserId === userId,
-    hasAnswered: myResponseEventIds.has(e.eventId),
+    hasAnswered: hasFullyAnswered(e.eventId),
     createdAt: e.createdAt,
   }));
 

@@ -7,9 +7,9 @@ const SCHEMA = {
   [SHEET.USERS]: ['userId', 'displayName', 'pictureUrl', 'createdAt', 'updatedAt'],
   [SHEET.EVENTS]: [
     'eventId', 'creatorUserId', 'title', 'description', 'deadline',
-    'status', 'workspaceId', 'createdAt', 'updatedAt',
+    'status', 'workspaceId', 'createdAt', 'updatedAt', 'editorUserIds',
   ],
-  [SHEET.EVENT_OPTIONS]: ['optionId', 'eventId', 'startAt', 'endAt', 'sort'],
+  [SHEET.EVENT_OPTIONS]: ['optionId', 'eventId', 'startAt', 'endAt', 'sort', 'title', 'location'],
   [SHEET.RESPONSES]: ['eventId', 'optionId', 'userId', 'answer', 'answeredAt', 'updatedAt'],
 };
 
@@ -29,11 +29,17 @@ function getOrCreateSheet_(sheetName) {
 
 function ensureSheetSchema_(sheet, sheetName) {
   const headers = SCHEMA[sheetName];
-  const firstRow = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
-  const isEmpty = firstRow.every((v) => v === '');
-  if (isEmpty) {
+  const lastCol = sheet.getLastColumn();
+  if (lastCol === 0) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     sheet.setFrozenRows(1);
+    return;
+  }
+  // スキーマ拡張は末尾への追加のみを想定。既存ヘッダーより列数が少なければ、
+  // 足りない分だけ末尾に追記する（既存データの列位置はそのまま保つ）。
+  if (lastCol < headers.length) {
+    const missing = headers.slice(lastCol);
+    sheet.getRange(1, lastCol + 1, 1, missing.length).setValues([missing]);
   }
 }
 

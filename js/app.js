@@ -3,8 +3,8 @@
 
   try {
     const identity = await AppPlatform.initIdentity();
-    const { view, eventId } = AppRouter.getQueryState();
-    const ctx = { identity, eventId };
+    const { view, eventId, claimEditor } = AppRouter.getQueryState();
+    const ctx = { identity, eventId, claimEditor };
 
     if (eventId) {
       await DetailView.render(root, ctx);

@@ -75,10 +75,46 @@
     font-size: 1rem;
     color: var(--text);
   }
-  .option-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end; }
-  .option-range { display: flex; gap: 8px; flex: 1; }
+  .option-range { display: flex; gap: 8px; }
   .option-sublabel { flex: 1; font-size: 0.7rem; color: var(--sub-text); margin-bottom: 0; }
-  .option-row .btn-remove-option { flex-shrink: 0; }
+  .option-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: var(--bg);
+  }
+  .option-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .option-card-icon { font-size: 1.1rem; flex-shrink: 0; }
+  .option-card-head .option-title {
+    flex: 1;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    padding: 4px 2px;
+    font-weight: bold;
+  }
+  .btn-remove-option {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--sub-text);
+    cursor: pointer;
+  }
+  .option-location {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #fff;
+  }
   .event-row { list-style: none; }
   .event-row a {
     display: flex;
@@ -125,19 +161,30 @@
   .tab-btn.active .tab-count { background: var(--primary); color: #fff; }
   ul { padding: 0; margin: 0; }
   .empty { color: var(--sub-text); text-align: center; margin-top: 40px; }
-  .answer-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
+  .answer-row, .summary-row {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #fff;
   }
-  .answer-choices { display: flex; gap: 12px; }
-  .choice { display: flex; align-items: center; gap: 4px; font-size: 1.1rem; }
-  .summary-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
-  .summary-date { font-weight: bold; }
-  .summary-counts { display: flex; gap: 16px; margin: 4px 0; }
-  .answer-date-block, .summary-date-block { display: flex; flex-direction: column; gap: 2px; }
+  .answer-row.readonly { background: var(--bg); }
+  .option-meta { margin-bottom: 10px; }
+  .option-meta-title { font-weight: bold; font-size: 0.95rem; }
+  .option-meta-date { color: var(--sub-text); font-size: 0.8rem; margin-top: 2px; }
+  .option-meta-location { color: var(--sub-text); font-size: 0.8rem; margin-top: 2px; }
+  .answer-choices { display: flex; gap: 10px; }
+  .answer-value { font-size: 1.1rem; font-weight: bold; }
+  .summary-counts { display: flex; gap: 16px; margin: 8px 0 4px; font-size: 0.9rem; }
+  .remind-btn {
+    border: none;
+    background: none;
+    color: var(--primary);
+    font-size: 0.7rem;
+    text-decoration: underline;
+    cursor: pointer;
+    align-self: center;
+  }
   .cal-link {
     display: inline-flex;
     align-items: center;
@@ -179,11 +226,42 @@
     animation: spin 0.7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-tip {
+    max-width: 280px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--sub-text);
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 6px;
+  }
+  .choice-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: #fff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--sub-text);
+  }
+  .choice-ok { border-color: #B7E4C7; color: #2D8A4E; }
+  .choice-ok.selected { background: #2D8A4E; border-color: #2D8A4E; color: #fff; }
+  .choice-maybe { border-color: #FFE1A8; color: #C9862B; }
+  .choice-maybe.selected { background: #E8A33D; border-color: #E8A33D; color: #fff; }
+  .choice-ng { border-color: #F3C6C1; color: #D93025; }
+  .choice-ng.selected { background: #D93025; border-color: #D93025; color: #fff; }
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="loading" style="margin-top:80px"><span class="spinner"></span>読み込み中...</div>
+  <div class="loading" style="margin-top:80px">
+    <span class="spinner"></span>
+    <span>読み込み中...</span>
+    <p class="loading-tip">💡 候補日ごとに○（参加）／△（未定）／×（不参加）で回答できます。</p>
+  </div>
 </div>
 <script src="js/util.js"></script>
 <script src="js/config.js"></script>
