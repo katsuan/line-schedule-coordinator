@@ -104,7 +104,7 @@ function buildEditorInviteFlex_(eventId) {
     body: {
       type: 'box',
       layout: 'vertical',
-      contents: [_createFlexHeader_(event.title, '編集をお願いします🙏\nこのリンクから予定枠の追加や共有ができるようになります。')],
+      contents: [_createFlexHeader_(event.title, '編集をお願いします🙏\nこのリンクからイベントの追加や共有ができるようになります。')],
     },
     footer: inviteUrl ? _createFlexButtonFooter_('編集者として参加する', inviteUrl) : undefined,
   };

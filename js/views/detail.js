@@ -52,7 +52,7 @@ const DetailView = (() => {
         </div>
         ${canEdit ? `
         <div class="option-edit-form" hidden>
-          <input type="text" class="edit-title" value="${AppUtil.escapeHtml(opt.title || '')}" placeholder="予定タイトル">
+          <input type="text" class="edit-title" value="${AppUtil.escapeHtml(opt.title || '')}" placeholder="イベント名">
           <div class="option-range">
             <label class="option-sublabel">開始<input type="datetime-local" step="900" class="edit-start" value="${AppUtil.toDatetimeLocalValue(opt.startAt)}"></label>
             <label class="option-sublabel">完了<input type="datetime-local" step="900" class="edit-end" value="${AppUtil.toDatetimeLocalValue(opt.endAt)}"></label>
@@ -349,19 +349,19 @@ const DetailView = (() => {
       </section>
       ${canEdit ? `
         <section>
-          <h2>予定枠を追加</h2>
-          <p class="event-meta">追加すると、既に回答した人も新しい予定枠への回答が必要になります。</p>
+          <h2>イベントを追加</h2>
+          <p class="event-meta">追加すると、既に回答した人も新しいイベントへの回答が必要になります。</p>
           <div class="option-card">
             <div class="option-card-head">
               <span class="option-card-icon">📅</span>
-              <input type="text" id="new-option-title" placeholder="予定タイトル（例: BBQ）">
+              <input type="text" id="new-option-title" placeholder="イベント名（例: BBQ）">
             </div>
             <div class="option-range">
               <label class="option-sublabel">開始<input type="datetime-local" step="900" id="new-option-start"></label>
               <label class="option-sublabel">完了<input type="datetime-local" step="900" id="new-option-end"></label>
             </div>
             <input type="text" id="new-option-location" class="option-location" placeholder="📍 場所（任意）">
-            <button id="add-option-btn" class="btn btn-primary" type="button">＋ このカードの内容で予定枠を追加する</button>
+            <button id="add-option-btn" class="btn btn-primary" type="button">＋ このカードの内容でイベントを追加する</button>
           </div>
         </section>
         <section>
@@ -399,7 +399,7 @@ const DetailView = (() => {
           await AppApi.addOptions({ eventId: ctx.eventId, userId: ctx.identity.userId, options: [{ title, startAt, endAt, location }] });
           await render(root, ctx, { silent: true });
         } catch (err) {
-          alert('予定枠の追加に失敗しました: ' + err.message);
+          alert('イベントの追加に失敗しました: ' + err.message);
           e.target.disabled = false;
         }
       });

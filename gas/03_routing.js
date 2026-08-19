@@ -68,7 +68,7 @@ function createEvent_(payload) {
     throw new Error('title / creatorUserId は必須です');
   }
   if (!options || !options.length) {
-    throw new Error('予定枠を1件以上指定してください');
+    throw new Error('イベントを1件以上指定してください');
   }
 
   upsertUser_(creatorUserId, creatorDisplayName, creatorPictureUrl);
@@ -114,7 +114,7 @@ function addOptions_(payload) {
     throw new Error('イベントが見つかりません');
   }
   if (!isEditorOrCreator_(event, userId)) {
-    throw new Error('予定枠を追加できるのは作成者・編集者のみです');
+    throw new Error('イベントを追加できるのは作成者・編集者のみです');
   }
 
   const existingOptions = getEventOptions_(eventId);
@@ -145,11 +145,11 @@ function updateOption_(payload) {
     throw new Error('イベントが見つかりません');
   }
   if (!isEditorOrCreator_(event, userId)) {
-    throw new Error('予定枠を編集できるのは作成者・編集者のみです');
+    throw new Error('イベントを編集できるのは作成者・編集者のみです');
   }
   const option = findOptionById_(eventId, optionId);
   if (!option) {
-    throw new Error('予定枠が見つかりません');
+    throw new Error('イベントが見つかりません');
   }
 
   updateRowObject_(SHEET.EVENT_OPTIONS, option._rowIndex, {
