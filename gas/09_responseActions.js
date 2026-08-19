@@ -17,15 +17,18 @@ function submitAnswer_(payload) {
   const { rows } = sheetRowsAsObjects_(SHEET.RESPONSES);
   const now = new Date();
 
-  answers.forEach(({ optionId, answer }) => {
+  answers.forEach(({ optionId, answer, comment }) => {
     const existing = rows.find((r) => r.eventId === eventId && r.optionId === optionId && r.userId === userId);
     if (existing) {
       updateRowObject_(SHEET.RESPONSES, existing._rowIndex, {
-        eventId, optionId, userId, answer, answeredAt: existing.answeredAt || now, updatedAt: now,
+        eventId, optionId, userId, answer,
+        answeredAt: existing.answeredAt || now,
+        updatedAt: now,
+        comment: comment !== undefined ? comment : existing.comment,
       });
     } else {
       appendRowObject_(SHEET.RESPONSES, {
-        eventId, optionId, userId, answer, answeredAt: now, updatedAt: now,
+        eventId, optionId, userId, answer, answeredAt: now, updatedAt: now, comment: comment || '',
       });
     }
   });
@@ -50,13 +53,16 @@ function getSummary_(payload) {
   const summary = options.map((opt) => {
     const optResponses = responses.filter((r) => r.optionId === opt.optionId);
     const byAnswer = { [ANSWER.OK]: [], [ANSWER.MAYBE]: [], [ANSWER.NG]: [] };
+    let commentCount = 0;
     optResponses.forEach((r) => {
       if (byAnswer[r.answer]) {
         const u = userOf(r.userId);
+        if (r.comment) commentCount++;
         byAnswer[r.answer].push({
           userId: r.userId,
           displayName: u.displayName || '(名前未取得)',
           pictureUrl: u.pictureUrl || '',
+          comment: r.comment || '',
         });
       }
     });
@@ -67,6 +73,7 @@ function getSummary_(payload) {
         [ANSWER.MAYBE]: byAnswer[ANSWER.MAYBE].length,
         [ANSWER.NG]: byAnswer[ANSWER.NG].length,
       },
+      commentCount,
       respondents: byAnswer,
     };
   });

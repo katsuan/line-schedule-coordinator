@@ -114,7 +114,11 @@ function getEvent_(payload) {
   const responses = getEventResponses_(eventId);
   const myResponses = responses.filter((r) => r.userId === userId);
   const myAnswers = {};
-  myResponses.forEach((r) => { myAnswers[r.optionId] = r.answer; });
+  const myComments = {};
+  myResponses.forEach((r) => {
+    myAnswers[r.optionId] = r.answer;
+    if (r.comment) myComments[r.optionId] = r.comment;
+  });
 
   return {
     event: stripRowMeta_(event),
@@ -123,6 +127,7 @@ function getEvent_(payload) {
     isEditor: isEditorOrCreator_(event, userId),
     hasAnswered: options.length > 0 && options.every((opt) => myAnswers[opt.optionId] !== undefined),
     myAnswers,
+    myComments,
   };
 }
 
