@@ -46,7 +46,9 @@ const AppShare = (() => {
     return { altText: flex.altText, contents: bubble };
   }
 
-  function showPreviewModal(flex) {
+  function showPreviewModal(flex, opts) {
+    const presets = (opts && opts.presets) || [];
+    const defaultIndex = (opts && opts.defaultPresetIndex) || 0;
     return new Promise((resolve) => {
       const lines = buildPreviewLines(flex);
       const overlay = document.createElement('div');
@@ -65,7 +67,11 @@ const AppShare = (() => {
           </div>
           <label class="preview-comment-label">
             コメントを追加（任意）
-            <textarea id="preview-comment" rows="2" class="preview-comment-input"></textarea>
+            ${presets.length ? `
+              <div class="preset-chip-row">
+                ${presets.map((p, i) => `<button type="button" class="preset-chip${i === defaultIndex ? ' selected' : ''}" data-index="${i}">${AppUtil.escapeHtml(p)}</button>`).join('')}
+              </div>` : ''}
+            <textarea id="preview-comment" rows="2" class="preview-comment-input">${AppUtil.escapeHtml(presets[defaultIndex] || '')}</textarea>
           </label>
           <div class="option-edit-actions" style="margin-top:12px">
             <button type="button" class="btn btn-primary" id="preview-confirm">送信先を選ぶ</button>
@@ -74,18 +80,26 @@ const AppShare = (() => {
         </div>`;
       document.body.appendChild(overlay);
 
+      const textarea = overlay.querySelector('#preview-comment');
+      overlay.querySelectorAll('.preset-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          overlay.querySelectorAll('.preset-chip').forEach((c) => c.classList.toggle('selected', c === chip));
+          textarea.value = presets[Number(chip.dataset.index)];
+        });
+      });
+
       const close = (result) => { overlay.remove(); resolve(result); };
       overlay.querySelector('.modal-close').addEventListener('click', () => close(null));
       overlay.querySelector('#preview-cancel').addEventListener('click', () => close(null));
       overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
       overlay.querySelector('#preview-confirm').addEventListener('click', () => {
-        close(overlay.querySelector('#preview-comment').value.trim());
+        close(textarea.value.trim());
       });
     });
   }
 
   async function sendFlexMessage(flex, opts) {
-    const comment = await showPreviewModal(flex);
+    const comment = await showPreviewModal(flex, opts);
     if (comment === null) return false;
 
     const finalFlex = injectComment(flex, comment);
@@ -124,9 +138,12 @@ const AppShare = (() => {
     return sendFlexMessage(flex);
   }
 
+  const REMIND_PRESETS = ['回答ありがとうございます', '回答の更新をお願いします', 'イベントが近づいています'];
+
   async function remindRespondents(params) {
     const flex = await AppApi.buildReminderFlex(params);
-    return sendFlexMessage(flex, { closeAfter: false });
+    const defaultPresetIndex = params.answerLabel === '△' ? 1 : 0;
+    return sendFlexMessage(flex, { closeAfter: false, presets: REMIND_PRESETS, defaultPresetIndex });
   }
 
   async function inviteEditor(eventId) {
