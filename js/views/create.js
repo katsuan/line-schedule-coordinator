@@ -4,14 +4,10 @@ const CreateView = (() => {
       <div class="option-card" data-index="${index}">
         <div class="option-card-head">
           <span class="option-card-icon">📅</span>
-          <input type="text" class="option-title" placeholder="イベント名（例: BBQ）" required>
+          ${OptionCard.titleFieldHtml('option', null, 'イベント名（例: BBQ）')}
           <button type="button" class="btn-remove-option" aria-label="このイベントを削除">×</button>
         </div>
-        <div class="option-range">
-          <label class="option-sublabel">開始<input type="datetime-local" step="900" class="option-start" required></label>
-          <label class="option-sublabel">完了<input type="datetime-local" step="900" class="option-end" required></label>
-        </div>
-        <input type="text" class="option-location" placeholder="📍 場所（任意）">
+        ${OptionCard.rangeLocationFieldsHtml('option')}
       </div>`;
   }
 
@@ -58,20 +54,16 @@ const CreateView = (() => {
 
       const optionCards = Array.from(optionList.querySelectorAll('.option-card'));
       const options = optionCards
-        .map((card) => ({
-          title: card.querySelector('.option-title').value.trim(),
-          startAt: card.querySelector('.option-start').value,
-          endAt: card.querySelector('.option-end').value,
-          location: card.querySelector('.option-location').value.trim(),
-        }))
+        .map((card) => OptionCard.readFields(card, 'option'))
         .filter((opt) => opt.startAt && opt.endAt && opt.title);
 
       if (!title || !options.length) {
         alert('予定のタイトルと、イベント（タイトル・開始・完了とも）を1件以上入力してください');
         return;
       }
-      if (options.some((opt) => new Date(opt.endAt) <= new Date(opt.startAt))) {
-        alert('完了は開始より後の日時にしてください');
+      const fieldError = options.map(AppUtil.validateEventFields).find(Boolean);
+      if (fieldError) {
+        alert(fieldError);
         return;
       }
 

@@ -182,6 +182,9 @@
     background: #fff;
   }
   .answer-row.readonly { background: var(--bg); }
+  .answer-row.choice-ok, .summary-row.choice-ok { background: #F3FAF6; border-color: #CFEBDB; }
+  .answer-row.choice-maybe, .summary-row.choice-maybe { background: #FFFBF0; border-color: #F5E3BC; }
+  .answer-row.choice-ng, .summary-row.choice-ng { background: #FDF4F3; border-color: #F3D6D3; }
   .option-meta { margin-bottom: 10px; }
   .option-meta-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .option-meta-title { font-weight: bold; font-size: 0.95rem; }
@@ -433,6 +436,7 @@
 <script src="js/api.js"></script>
 <script src="js/router.js"></script>
 <script src="js/share.js"></script>
+<script src="js/views/optionCard.js"></script>
 <script src="js/views/list.js"></script>
 <script src="js/views/create.js"></script>
 <script src="js/views/detail.js"></script>
