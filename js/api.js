@@ -28,6 +28,7 @@ const AppApi = (() => {
     buildShareFlex: (payload) => call('buildShareFlex', payload),
     deleteEvent: (payload) => call('deleteEvent', payload),
     addOptions: (payload) => call('addOptions', payload),
+    claimEditor: (payload) => call('claimEditor', payload),
     updateOption: (payload) => call('updateOption', payload),
     listMyOptions: (payload) => call('listMyOptions', payload),
     buildReminderFlex: (payload) => call('buildReminderFlex', payload),

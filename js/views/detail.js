@@ -167,6 +167,11 @@ const DetailView = (() => {
     });
   }
 
+  function answerIconHtml(answer) {
+    const cls = ANSWER_CLASS[answer] || 'dot-none';
+    return `<span class="answer-icon ${cls}">${answer || '-'}</span>`;
+  }
+
   function avatarHtml(displayName, pictureUrl) {
     const initial = AppUtil.escapeHtml(String(displayName || '?').slice(0, 1));
     const style = pictureUrl ? ` style="background-image:url('${pictureUrl.replace(/'/g, '%27')}')"` : '';
@@ -188,9 +193,9 @@ const DetailView = (() => {
         <div class="summary-row" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}">
           ${optionMetaHtml(row.option, canEdit)}
           <div class="summary-counts">
-            <span>○ ${row.counts['○']}</span>
-            <span>△ ${row.counts['△']}</span>
-            <span>× ${row.counts['×']}</span>
+            <span>${answerIconHtml('○')} ${row.counts['○']}</span>
+            <span>${answerIconHtml('△')} ${row.counts['△']}</span>
+            <span>${answerIconHtml('×')} ${row.counts['×']}</span>
           </div>
           <details>
             <summary>回答者を見る</summary>
@@ -293,18 +298,19 @@ const DetailView = (() => {
     });
 
     const answeredMap = { ...data.myAnswers };
-    let saving = false;
+    const savingOptionIds = new Set();
 
     root.querySelector('#answer-rows').addEventListener('click', async (e) => {
       const btn = e.target.closest('.choice-btn');
-      if (!btn || saving) return;
+      if (!btn) return;
       const container = btn.closest('.answer-choices');
       const optionId = container.dataset.optionId;
+      if (savingOptionIds.has(optionId)) return;
       const value = btn.dataset.value;
 
       container.querySelectorAll('.choice-btn').forEach((b) => b.classList.toggle('selected', b === btn));
 
-      saving = true;
+      savingOptionIds.add(optionId);
       try {
         await AppApi.submitAnswer({
           eventId: ctx.eventId,
@@ -322,7 +328,7 @@ const DetailView = (() => {
       } catch (err) {
         alert('回答の保存に失敗しました: ' + err.message);
       } finally {
-        saving = false;
+        savingOptionIds.delete(optionId);
       }
     });
   }
@@ -335,7 +341,7 @@ const DetailView = (() => {
     const myAnswerRows = data.options.map((opt) => `
       <div class="answer-row readonly">
         ${optionMetaHtml(opt, canEdit)}
-        <span class="answer-value ${ANSWER_CLASS[data.myAnswers[opt.optionId]] || ''}">${AppUtil.escapeHtml(data.myAnswers[opt.optionId] || '-')}</span>
+        ${answerIconHtml(data.myAnswers[opt.optionId])}
       </div>`).join('');
 
     const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId);

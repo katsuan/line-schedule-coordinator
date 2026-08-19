@@ -188,17 +188,23 @@
   .option-meta-date { color: var(--sub-text); font-size: 0.8rem; margin-top: 2px; }
   .option-meta-location { color: var(--sub-text); font-size: 0.8rem; margin-top: 2px; }
   .answer-choices { display: flex; gap: 10px; }
-  .answer-value {
-    display: inline-block;
-    font-size: 1rem;
+  .answer-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 0.75rem;
     font-weight: bold;
-    padding: 3px 12px;
-    border-radius: 12px;
-    background: var(--border);
+    color: #fff;
+    background: #B0B0B0;
+    flex-shrink: 0;
   }
-  .answer-value.choice-ok { background: #E9F7EF; }
-  .answer-value.choice-maybe { background: #FFF6E5; }
-  .answer-value.choice-ng { background: #FDEDEB; }
+  .answer-icon.choice-ok { background: #2D8A4E; }
+  .answer-icon.choice-maybe { background: #E8A33D; }
+  .answer-icon.choice-ng { background: #D93025; }
+  .summary-counts span { display: inline-flex; align-items: center; gap: 4px; }
   .respondent.me .avatar { outline: 2px solid var(--primary); outline-offset: 1px; }
   .respondent.me span:last-child { font-weight: bold; }
   .summary-counts { display: flex; gap: 16px; margin: 8px 0 4px; font-size: 0.9rem; }
