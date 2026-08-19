@@ -386,6 +386,7 @@ const DetailView = (() => {
 
     if (canEdit) {
       wireShareButton(root, ctx);
+      wireOptionEditForms(root, ctx);
 
       root.querySelector('#add-option-btn').addEventListener('click', async (e) => {
         const title = root.querySelector('#new-option-title').value.trim();
