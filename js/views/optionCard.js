@@ -31,6 +31,75 @@ const OptionCard = (() => {
       </span>`;
   }
 
+  function commentHtml(optionId, myAnswer, myComment) {
+    if (myComment) {
+      return `
+        <div class="option-comment" data-option-id="${optionId}" data-answer="${myAnswer}">
+          <span class="option-comment-text">💬 ${AppUtil.escapeHtml(myComment)}</span>
+          <button type="button" class="comment-delete-btn" aria-label="コメントを削除">×</button>
+        </div>`;
+    }
+    return `
+      <div class="option-comment-add" data-option-id="${optionId}" data-answer="${myAnswer}">
+        <button type="button" class="comment-add-toggle">💬 コメントを追加</button>
+        <div class="comment-add-form" hidden>
+          <input type="text" class="comment-input" placeholder="例: 友達が1名参加します" maxlength="200">
+          <button type="button" class="btn comment-save-btn">保存</button>
+        </div>
+      </div>`;
+  }
+
+  function wireComments(root, ctx, refresh) {
+    root.querySelectorAll('.option-comment-add').forEach((wrap) => {
+      const toggle = wrap.querySelector('.comment-add-toggle');
+      const form = wrap.querySelector('.comment-add-form');
+      const input = wrap.querySelector('.comment-input');
+      toggle.addEventListener('click', () => {
+        toggle.hidden = true;
+        form.hidden = false;
+        input.focus();
+      });
+      wrap.querySelector('.comment-save-btn').addEventListener('click', async (e) => {
+        const comment = input.value.trim();
+        if (!comment) return;
+        e.target.disabled = true;
+        try {
+          await AppApi.submitAnswer({
+            eventId: ctx.eventId,
+            userId: ctx.identity.userId,
+            displayName: ctx.identity.displayName,
+            pictureUrl: ctx.identity.pictureUrl,
+            answers: [{ optionId: wrap.dataset.optionId, answer: wrap.dataset.answer, comment }],
+          });
+          await refresh();
+        } catch (err) {
+          alert('コメントの保存に失敗しました: ' + err.message);
+          e.target.disabled = false;
+        }
+      });
+    });
+
+    root.querySelectorAll('.option-comment').forEach((wrap) => {
+      wrap.querySelector('.comment-delete-btn').addEventListener('click', async (e) => {
+        if (!confirm('コメントを削除しますか？')) return;
+        e.target.disabled = true;
+        try {
+          await AppApi.submitAnswer({
+            eventId: ctx.eventId,
+            userId: ctx.identity.userId,
+            displayName: ctx.identity.displayName,
+            pictureUrl: ctx.identity.pictureUrl,
+            answers: [{ optionId: wrap.dataset.optionId, answer: wrap.dataset.answer, comment: '' }],
+          });
+          await refresh();
+        } catch (err) {
+          alert('コメントの削除に失敗しました: ' + err.message);
+          e.target.disabled = false;
+        }
+      });
+    });
+  }
+
   function titleFieldHtml(prefix, values, placeholder) {
     values = values || {};
     return `<input type="text" class="${prefix}-title" value="${AppUtil.escapeHtml(values.title || '')}" placeholder="${AppUtil.escapeHtml(placeholder || 'イベント名')}">`;
@@ -59,7 +128,7 @@ const OptionCard = (() => {
     };
   }
 
-  function metaHtml(opt, canEdit, myAnswer) {
+  function metaHtml(opt, canEdit, myAnswer, myComment) {
     return `
       <div class="option-meta" data-option-id="${opt.optionId}">
         <div class="option-meta-view">
@@ -71,6 +140,7 @@ const OptionCard = (() => {
           <div class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</div>
           ${opt.location ? `<div class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</div>` : ''}
           ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
+          ${myAnswer !== undefined ? commentHtml(opt.optionId, myAnswer, myComment) : ''}
         </div>
         ${canEdit ? `
         <div class="option-edit-form" hidden>
@@ -174,6 +244,6 @@ const OptionCard = (() => {
 
   return {
     metaHtml, fieldsHtml, titleFieldHtml, rangeLocationFieldsHtml, readFields,
-    choiceButtonsHtml, answerIcon, statusClass, wireEditForms, wireInlineAnswerToggles,
+    choiceButtonsHtml, answerIcon, statusClass, wireEditForms, wireInlineAnswerToggles, wireComments,
   };
 })();

@@ -201,6 +201,47 @@
   .option-edit-actions .btn { flex: 1; }
   .option-meta-date { color: var(--sub-text); font-size: 0.8rem; margin-top: 2px; }
   .option-meta-location { color: var(--sub-text); font-size: 0.8rem; margin-top: 2px; }
+  .option-comment {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: var(--bg);
+    border-radius: 8px;
+    font-size: 0.8rem;
+  }
+  .option-comment-text { flex: 1; word-break: break-word; }
+  .comment-delete-btn {
+    flex-shrink: 0;
+    border: none;
+    background: none;
+    color: var(--sub-text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+  .option-comment-add { margin-top: 8px; }
+  .comment-add-toggle {
+    border: none;
+    background: none;
+    color: var(--sub-text);
+    font-size: 0.75rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+  .comment-add-form { display: flex; gap: 6px; margin-top: 4px; }
+  .comment-input {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+  .comment-count { color: var(--sub-text); }
+  .respondent-comment { color: var(--sub-text); font-size: 0.65rem; }
   .answer-choices { display: flex; gap: 10px; }
   .answer-icon {
     display: inline-flex;
