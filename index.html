@@ -51,6 +51,14 @@
     margin-top: 12px;
   }
   .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn-danger {
+    width: 100%;
+    text-align: center;
+    margin-top: 8px;
+    color: #D93025;
+    border-color: #F3D4D1;
+    background: #FDF3F2;
+  }
   form label {
     display: block;
     margin-bottom: 14px;
@@ -79,6 +87,40 @@
     color: var(--text);
   }
   .event-meta { color: var(--sub-text); font-size: 0.8rem; }
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border: none;
+    background: none;
+    color: var(--sub-text);
+    font-size: 0.85rem;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--primary); font-weight: bold; }
+  .tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: var(--border);
+    color: var(--text);
+    font-size: 0.7rem;
+  }
+  .tab-btn.active .tab-count { background: var(--primary); color: #fff; }
   ul { padding: 0; margin: 0; }
   .empty { color: var(--sub-text); text-align: center; margin-top: 40px; }
   .answer-row {
@@ -93,6 +135,17 @@
   .summary-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
   .summary-date { font-weight: bold; }
   .summary-counts { display: flex; gap: 16px; margin: 4px 0; }
+  .answer-date-block, .summary-date-block { display: flex; flex-direction: column; gap: 2px; }
+  .cal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: var(--sub-text);
+    text-decoration: none;
+    width: fit-content;
+  }
+  .cal-link:hover { color: var(--text); }
   .loading, .error { text-align: center; color: var(--sub-text); margin-top: 40px; }
   .event-description { color: var(--sub-text); font-size: 0.9rem; white-space: pre-wrap; }
   section { margin-bottom: 24px; }
@@ -114,10 +167,22 @@
     flex-shrink: 0;
   }
   .empty-respondents { color: var(--sub-text); font-size: 0.8rem; margin: 4px 0; }
+  .loading { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="app">
+  <div class="loading" style="margin-top:80px"><span class="spinner"></span>読み込み中...</div>
+</div>
 <script src="js/util.js"></script>
 <script src="js/config.js"></script>
 <script src="js/platform.js"></script>

@@ -60,6 +60,12 @@ function appendRowObject_(sheetName, obj) {
   sheet.appendRow(row);
 }
 
+function deleteRows_(sheetName, rowIndices) {
+  const sheet = getOrCreateSheet_(sheetName);
+  const sorted = [...rowIndices].sort((a, b) => b - a);
+  sorted.forEach((rowIndex) => sheet.deleteRow(rowIndex));
+}
+
 function updateRowObject_(sheetName, rowIndex, obj) {
   const sheet = getOrCreateSheet_(sheetName);
   const headers = SCHEMA[sheetName];

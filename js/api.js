@@ -26,5 +26,6 @@ const AppApi = (() => {
     getSummary: (payload) => call('getSummary', payload),
     listMyEvents: (payload) => call('listMyEvents', payload),
     buildShareFlex: (payload) => call('buildShareFlex', payload),
+    deleteEvent: (payload) => call('deleteEvent', payload),
   };
 })();

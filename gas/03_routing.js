@@ -10,6 +10,7 @@ function routeAction_(action, payload) {
     case 'getSummary': return getSummary_(payload);
     case 'listMyEvents': return listMyEvents_(payload);
     case 'buildShareFlex': return buildShareFlex_(payload);
+    case 'deleteEvent': return deleteEvent_(payload);
     default:
       throw new Error('未対応のactionです: ' + action);
   }
@@ -138,12 +139,9 @@ function getSummary_(payload) {
   if (!event) {
     throw new Error('イベントが見つかりません');
   }
-  if (event.creatorUserId !== userId) {
-    throw new Error('集計を閲覧できるのは作成者のみです');
-  }
-
   const options = getEventOptions_(eventId);
   const responses = getEventResponses_(eventId);
+
   const { rows: users } = sheetRowsAsObjects_(SHEET.USERS);
   const userOf = (uid) => users.find((u) => u.userId === uid) || {};
 
@@ -207,6 +205,26 @@ function listMyEvents_(payload) {
   list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return { events: list };
+}
+
+function deleteEvent_(payload) {
+  const { eventId, userId } = payload;
+  const event = findEventById_(eventId);
+  if (!event) {
+    throw new Error('イベントが見つかりません');
+  }
+  if (event.creatorUserId !== userId) {
+    throw new Error('削除できるのは作成者のみです');
+  }
+
+  const { rows: optionRows } = sheetRowsAsObjects_(SHEET.EVENT_OPTIONS);
+  const { rows: responseRows } = sheetRowsAsObjects_(SHEET.RESPONSES);
+
+  deleteRows_(SHEET.EVENT_OPTIONS, optionRows.filter((r) => r.eventId === eventId).map((r) => r._rowIndex));
+  deleteRows_(SHEET.RESPONSES, responseRows.filter((r) => r.eventId === eventId).map((r) => r._rowIndex));
+  deleteRows_(SHEET.EVENTS, [event._rowIndex]);
+
+  return { ok: true };
 }
 
 function buildShareFlex_(payload) {
