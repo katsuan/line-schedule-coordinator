@@ -46,9 +46,26 @@ const AppShare = (() => {
     return { altText: flex.altText, contents: bubble };
   }
 
+  function removeRowsByLabel(node, labels) {
+    if (!node || !node.contents) return;
+    node.contents = node.contents.filter((child) => {
+      const label = child.type === 'box' && child.layout === 'baseline' && child.contents && child.contents[0]
+        ? child.contents[0].text : null;
+      return !labels.includes(label);
+    });
+    node.contents.forEach((child) => removeRowsByLabel(child, labels));
+  }
+
+  function stripRecipientInfo(flex) {
+    const bubble = JSON.parse(JSON.stringify(flex.contents));
+    removeRowsByLabel(bubble.body, ['宛先']);
+    return { altText: flex.altText.replace(/^.+?への連絡/, '連絡'), contents: bubble };
+  }
+
   function showPreviewModal(flex, opts) {
     const presets = (opts && opts.presets) || [];
     const defaultIndex = (opts && opts.defaultPresetIndex) || 0;
+    const allowHideRecipients = !!(opts && opts.allowHideRecipients);
     return new Promise((resolve) => {
       const lines = buildPreviewLines(flex);
       const overlay = document.createElement('div');
@@ -65,6 +82,11 @@ const AppShare = (() => {
               ? '<hr class="flex-preview-sep">'
               : `<p class="flex-preview-line">${AppUtil.escapeHtml(l)}</p>`).join('')}
           </div>
+          ${allowHideRecipients ? `
+            <label class="preview-checkbox-label">
+              <input type="checkbox" id="preview-hide-recipients">
+              宛先の名前を隠して送信する（グループ転送などを想定する場合）
+            </label>` : ''}
           <label class="preview-comment-label">
             コメントを追加（任意）
             ${presets.length ? `
@@ -93,16 +115,18 @@ const AppShare = (() => {
       overlay.querySelector('#preview-cancel').addEventListener('click', () => close(null));
       overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
       overlay.querySelector('#preview-confirm').addEventListener('click', () => {
-        close(textarea.value.trim());
+        const hideCheckbox = overlay.querySelector('#preview-hide-recipients');
+        close({ comment: textarea.value.trim(), hideRecipients: !!(hideCheckbox && hideCheckbox.checked) });
       });
     });
   }
 
   async function sendFlexMessage(flex, opts) {
-    const comment = await showPreviewModal(flex, opts);
-    if (comment === null) return false;
+    const result = await showPreviewModal(flex, opts);
+    if (result === null) return false;
 
-    const finalFlex = injectComment(flex, comment);
+    let finalFlex = result.hideRecipients ? stripRecipientInfo(flex) : flex;
+    finalFlex = injectComment(finalFlex, result.comment);
     const message = {
       type: 'flex',
       altText: finalFlex.altText,
@@ -143,7 +167,7 @@ const AppShare = (() => {
   async function remindRespondents(params) {
     const flex = await AppApi.buildReminderFlex(params);
     const defaultPresetIndex = params.answerLabel === '△' ? 1 : 0;
-    return sendFlexMessage(flex, { closeAfter: false, presets: REMIND_PRESETS, defaultPresetIndex });
+    return sendFlexMessage(flex, { closeAfter: false, presets: REMIND_PRESETS, defaultPresetIndex, allowHideRecipients: true });
   }
 
   async function inviteEditor(eventId) {
