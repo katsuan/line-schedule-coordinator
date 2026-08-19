@@ -95,6 +95,25 @@
   .summary-counts { display: flex; gap: 16px; margin: 4px 0; }
   .loading, .error { text-align: center; color: var(--sub-text); margin-top: 40px; }
   .event-description { color: var(--sub-text); font-size: 0.9rem; white-space: pre-wrap; }
+  section { margin-bottom: 24px; }
+  .respondent-label { font-size: 0.75rem; color: var(--sub-text); margin: 8px 0 4px; }
+  .respondent-list { display: flex; flex-wrap: wrap; gap: 10px; }
+  .respondent { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.7rem; width: 48px; }
+  .avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--border);
+    background-size: cover;
+    background-position: center;
+    color: var(--sub-text);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+  .empty-respondents { color: var(--sub-text); font-size: 0.8rem; margin: 4px 0; }
 </style>
 </head>
 <body>

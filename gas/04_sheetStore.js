@@ -4,7 +4,7 @@
  */
 
 const SCHEMA = {
-  [SHEET.USERS]: ['userId', 'displayName', 'createdAt', 'updatedAt'],
+  [SHEET.USERS]: ['userId', 'displayName', 'pictureUrl', 'createdAt', 'updatedAt'],
   [SHEET.EVENTS]: [
     'eventId', 'creatorUserId', 'title', 'description', 'deadline',
     'status', 'workspaceId', 'createdAt', 'updatedAt',
@@ -67,19 +67,24 @@ function updateRowObject_(sheetName, rowIndex, obj) {
   sheet.getRange(rowIndex, 1, 1, headers.length).setValues([row]);
 }
 
-function upsertUser_(userId, displayName) {
+function upsertUser_(userId, displayName, pictureUrl) {
   const { rows } = sheetRowsAsObjects_(SHEET.USERS);
   const now = new Date();
   const existing = rows.find((r) => r.userId === userId);
   if (existing) {
-    if (displayName && existing.displayName !== displayName) {
+    const changed = (displayName && existing.displayName !== displayName) ||
+      (pictureUrl && existing.pictureUrl !== pictureUrl);
+    if (changed) {
       updateRowObject_(SHEET.USERS, existing._rowIndex, {
-        ...existing, displayName, updatedAt: now,
+        ...existing,
+        displayName: displayName || existing.displayName,
+        pictureUrl: pictureUrl || existing.pictureUrl,
+        updatedAt: now,
       });
     }
     return;
   }
   appendRowObject_(SHEET.USERS, {
-    userId, displayName: displayName || '', createdAt: now, updatedAt: now,
+    userId, displayName: displayName || '', pictureUrl: pictureUrl || '', createdAt: now, updatedAt: now,
   });
 }

@@ -64,6 +64,7 @@ const CreateView = (() => {
           title, description, deadline, options,
           creatorUserId: ctx.identity.userId,
           creatorDisplayName: ctx.identity.displayName,
+          creatorPictureUrl: ctx.identity.pictureUrl,
         });
         AppRouter.navigate({ event: eventId });
       } catch (err) {

@@ -43,7 +43,7 @@ function getUserDisplayName_(userId) {
 /** ========= actions ========= */
 
 function createEvent_(payload) {
-  const { title, description, deadline, options, creatorUserId, creatorDisplayName } = payload;
+  const { title, description, deadline, options, creatorUserId, creatorDisplayName, creatorPictureUrl } = payload;
   if (!title || !creatorUserId) {
     throw new Error('title / creatorUserId は必須です');
   }
@@ -51,7 +51,7 @@ function createEvent_(payload) {
     throw new Error('候補日時を1件以上指定してください');
   }
 
-  upsertUser_(creatorUserId, creatorDisplayName);
+  upsertUser_(creatorUserId, creatorDisplayName, creatorPictureUrl);
 
   const eventId = 'EVT_' + Utilities.getUuid();
   const now = new Date();
@@ -102,7 +102,7 @@ function getEvent_(payload) {
 }
 
 function submitAnswer_(payload) {
-  const { eventId, userId, displayName, answers } = payload;
+  const { eventId, userId, displayName, pictureUrl, answers } = payload;
   if (!eventId || !userId || !answers || !answers.length) {
     throw new Error('eventId / userId / answers は必須です');
   }
@@ -111,7 +111,7 @@ function submitAnswer_(payload) {
     throw new Error('イベントが見つかりません');
   }
 
-  upsertUser_(userId, displayName);
+  upsertUser_(userId, displayName, pictureUrl);
 
   const { rows } = sheetRowsAsObjects_(SHEET.RESPONSES);
   const now = new Date();
@@ -145,7 +145,7 @@ function getSummary_(payload) {
   const options = getEventOptions_(eventId);
   const responses = getEventResponses_(eventId);
   const { rows: users } = sheetRowsAsObjects_(SHEET.USERS);
-  const nameOf = (uid) => (users.find((u) => u.userId === uid) || {}).displayName || '(名前未取得)';
+  const userOf = (uid) => users.find((u) => u.userId === uid) || {};
 
   const answeredUserIds = new Set(responses.map((r) => r.userId));
 
@@ -154,7 +154,12 @@ function getSummary_(payload) {
     const byAnswer = { [ANSWER.OK]: [], [ANSWER.MAYBE]: [], [ANSWER.NG]: [] };
     optResponses.forEach((r) => {
       if (byAnswer[r.answer]) {
-        byAnswer[r.answer].push({ userId: r.userId, displayName: nameOf(r.userId) });
+        const u = userOf(r.userId);
+        byAnswer[r.answer].push({
+          userId: r.userId,
+          displayName: u.displayName || '(名前未取得)',
+          pictureUrl: u.pictureUrl || '',
+        });
       }
     });
     return {
