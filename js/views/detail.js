@@ -33,7 +33,7 @@ const DetailView = (() => {
       <div class="page-header">
         <div class="page-header-top-row">
           <a class="btn-back" href="?view=list">← 一覧へ</a>
-          <button type="button" id="refresh-event" class="btn-refresh" aria-label="最新の状態に更新">🔄 更新</button>
+          <button type="button" id="refresh-event" class="btn-refresh" aria-label="最新の状態に更新">🔄</button>
         </div>
         <div class="page-header-title-row">
           <h1>${AppUtil.titleIconHtml(event.title)}</h1>
@@ -72,27 +72,24 @@ const DetailView = (() => {
     }
   }
 
-  function avatarHtml(displayName, pictureUrl) {
-    const initial = AppUtil.escapeHtml(String(displayName || '?').slice(0, 1));
-    const style = pictureUrl ? ` style="background-image:url('${pictureUrl.replace(/'/g, '%27')}')"` : '';
-    return `<span class="avatar"${style}>${pictureUrl ? '' : initial}</span>`;
-  }
-
-  function summaryRowsHtml(event, summary, canEdit, myUserId, myAnswers, myComments) {
+  function summaryRowsHtml(event, summary, canEdit, myUserId, myAnswers) {
     myAnswers = myAnswers || {};
-    myComments = myComments || {};
     return summary.map((row, rowIndex) => {
-      const commentsByUser = (row.comments || []).reduce((map, c) => {
-        (map[c.userId] = map[c.userId] || []).push(c);
-        return map;
-      }, {});
+      const answerByUser = {};
+      ['○', '△', '×'].forEach((a) => (row.respondents[a] || []).forEach((r) => { answerByUser[r.userId] = a; }));
+      const enrichedComments = (row.comments || []).map((c) => ({ ...c, answer: answerByUser[c.userId] }));
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
         if (!list.length) return '<p class="empty-respondents">なし</p>';
         return `<div class="respondent-list">
-          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}${(commentsByUser[r.userId] || []).map((c) => `<br><span class="respondent-comment">💬 ${AppUtil.escapeHtml(c.text)}</span>`).join('')}</span></span>`).join('')}
+          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${AppUtil.avatarHtml(r.displayName, r.pictureUrl, answer)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span></span>`).join('')}
         </div>`;
       };
+      const groupBlock = (answer) => `
+        <div class="respondent-group ${OptionCard.statusClass(answer)}">
+          <p class="respondent-label">${answer}</p>
+          ${respondentsHtml(answer)}
+        </div>`;
       const groups = {};
       ['○', '△', '×'].forEach((a) => {
         const names = (row.respondents[a] || []).map((r) => r.displayName);
@@ -101,20 +98,18 @@ const DetailView = (() => {
       const totalCount = row.counts['○'] + row.counts['△'] + row.counts['×'];
       return `
         <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
-          ${OptionCard.metaHtml(row.option, canEdit, myComments[row.option.optionId])}
+          ${OptionCard.metaHtml(row.option, canEdit, enrichedComments, myUserId)}
           <div class="summary-answer-row">
             ${OptionCard.answerButtonsHtml(row.option.optionId, myAnswers[row.option.optionId], row.counts)}
             <div class="summary-answer-side">
-              ${OptionCard.commentAddToggleHtml(row.option.optionId)}
               ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
+              ${OptionCard.commentAddToggleHtml(row.option.optionId)}
               ${totalCount ? `<button type="button" class="btn remind-btn" data-row="${rowIndex}">連絡する</button>` : ''}
             </div>
           </div>
           <details>
             <summary>回答者を見る（${totalCount}人）</summary>
-            <p class="respondent-label">○</p>${respondentsHtml('○')}
-            <p class="respondent-label">△</p>${respondentsHtml('△')}
-            <p class="respondent-label">×</p>${respondentsHtml('×')}
+            ${groupBlock('○')}${groupBlock('△')}${groupBlock('×')}
           </details>
         </div>`;
     }).join('');
@@ -151,7 +146,7 @@ const DetailView = (() => {
   async function renderSummary(root, ctx, data, refresh) {
     const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
     const canEdit = data.isCreator || data.isEditor;
-    const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId, data.myAnswers, data.myComments);
+    const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId, data.myAnswers);
 
     root.innerHTML = `
       ${headerHtml(data.event, data)}
