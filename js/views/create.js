@@ -20,7 +20,7 @@ const CreateView = (() => {
       <form id="create-form">
         <label>予定のタイトル（例: 8月）<input type="text" id="f-title" required></label>
         <label>説明（任意）<textarea id="f-description"></textarea></label>
-        <label>回答期限（任意）<input type="datetime-local" step="900" id="f-deadline"></label>
+        <label>回答期限（任意）<input type="datetime-local" id="f-deadline"></label>
         <div class="options-block">
           <label>イベント</label>
           <div id="option-list">${optionCardHtml(0)}</div>
