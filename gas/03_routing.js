@@ -11,6 +11,8 @@ function routeAction_(action, payload) {
     case 'claimEditor': return claimEditor_(payload);
     case 'deleteEvent': return deleteEvent_(payload);
     case 'submitAnswer': return submitAnswer_(payload);
+    case 'addComment': return addComment_(payload);
+    case 'deleteComment': return deleteComment_(payload);
     case 'getSummary': return getSummary_(payload);
     case 'listMyEvents': return listMyEvents_(payload);
     case 'listMyOptions': return listMyOptions_(payload);

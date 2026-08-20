@@ -80,7 +80,7 @@ const DetailView = (() => {
         if (!list.length) return '<p class="empty-respondents">なし</p>';
         const names = list.map((r) => r.displayName).join(',');
         return `<div class="respondent-list">
-          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}${r.comment ? `<br><span class="respondent-comment">💬 ${AppUtil.escapeHtml(r.comment)}</span>` : ''}</span></span>`).join('')}
+          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span></span>`).join('')}
           <button type="button" class="remind-btn" data-answer="${answer}" data-row="${rowIndex}" data-names="${AppUtil.escapeHtml(names)}">連絡する</button>
         </div>`;
       };
@@ -99,6 +99,7 @@ const DetailView = (() => {
             <p class="respondent-label">○</p>${respondentsHtml('○')}
             <p class="respondent-label">△</p>${respondentsHtml('△')}
             <p class="respondent-label">×</p>${respondentsHtml('×')}
+            <p class="respondent-label">💬 コメント</p>${OptionCard.commentThreadHtml(row.comments, myUserId)}
           </details>
         </div>`;
     }).join('');

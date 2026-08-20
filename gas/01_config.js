@@ -16,6 +16,7 @@ const SHEET = {
   EVENTS: 'EVENTS',
   EVENT_OPTIONS: 'EVENT_OPTIONS',
   RESPONSES: 'RESPONSES',
+  COMMENTS: 'COMMENTS',
 };
 
 /** ========= ANSWER ========= */

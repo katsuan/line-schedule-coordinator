@@ -31,22 +31,35 @@ const OptionCard = (() => {
       </span>`;
   }
 
-  function commentHtml(optionId, myAnswer, myComment) {
-    if (myComment) {
-      return `
-        <div class="option-comment" data-option-id="${optionId}" data-answer="${myAnswer}">
-          <span class="option-comment-text">💬 ${AppUtil.escapeHtml(myComment)}</span>
-          <button type="button" class="comment-delete-btn" aria-label="コメントを削除">×</button>
-        </div>`;
-    }
+  function myCommentHtml(comment) {
     return `
-      <div class="option-comment-add" data-option-id="${optionId}" data-answer="${myAnswer}">
+      <div class="option-comment" data-comment-id="${comment.commentId}">
+        <span class="option-comment-text">💬 ${AppUtil.escapeHtml(comment.text)}</span>
+        <button type="button" class="comment-delete-btn" data-comment-id="${comment.commentId}" aria-label="コメントを削除">×</button>
+      </div>`;
+  }
+
+  function commentHtml(optionId, myComments) {
+    myComments = myComments || [];
+    return `
+      ${myComments.map(myCommentHtml).join('')}
+      <div class="option-comment-add" data-option-id="${optionId}">
         <button type="button" class="comment-add-toggle">💬 コメントを追加</button>
         <div class="comment-add-form" hidden>
           <input type="text" class="comment-input" placeholder="例: 友達が1名参加します" maxlength="200">
           <button type="button" class="btn comment-save-btn">保存</button>
         </div>
       </div>`;
+  }
+
+  function commentThreadHtml(comments, myUserId) {
+    if (!comments || !comments.length) return '<p class="empty-respondents">まだコメントはありません</p>';
+    return `<div class="comment-thread">${comments.map((c) => `
+      <div class="thread-comment">
+        <span class="thread-comment-author">${AppUtil.escapeHtml(c.displayName)}${c.userId === myUserId ? '（自分）' : ''}</span>
+        <span class="thread-comment-text">💬 ${AppUtil.escapeHtml(c.text)}</span>
+        ${c.userId === myUserId ? `<button type="button" class="comment-delete-btn" data-comment-id="${c.commentId}" aria-label="コメントを削除">×</button>` : ''}
+      </div>`).join('')}</div>`;
   }
 
   function wireComments(root, ctx, refresh) {
@@ -60,17 +73,18 @@ const OptionCard = (() => {
         input.focus();
       });
       wrap.querySelector('.comment-save-btn').addEventListener('click', async (e) => {
-        const comment = input.value.trim();
-        if (!comment) return;
+        const text = input.value.trim();
+        if (!text) return;
         const stopLoading = AppUtil.beginButtonLoading(e.target);
         input.disabled = true;
         try {
-          await AppApi.submitAnswer({
+          await AppApi.addComment({
             eventId: ctx.eventId,
+            optionId: wrap.dataset.optionId,
             userId: ctx.identity.userId,
             displayName: ctx.identity.displayName,
             pictureUrl: ctx.identity.pictureUrl,
-            answers: [{ optionId: wrap.dataset.optionId, answer: wrap.dataset.answer, comment }],
+            text,
           });
           await refresh();
         } catch (err) {
@@ -81,17 +95,15 @@ const OptionCard = (() => {
       });
     });
 
-    root.querySelectorAll('.option-comment').forEach((wrap) => {
-      wrap.querySelector('.comment-delete-btn').addEventListener('click', async (e) => {
+    root.querySelectorAll('.comment-delete-btn').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
         if (!confirm('コメントを削除しますか？')) return;
         const stopLoading = AppUtil.beginButtonLoading(e.target);
         try {
-          await AppApi.submitAnswer({
+          await AppApi.deleteComment({
             eventId: ctx.eventId,
             userId: ctx.identity.userId,
-            displayName: ctx.identity.displayName,
-            pictureUrl: ctx.identity.pictureUrl,
-            answers: [{ optionId: wrap.dataset.optionId, answer: wrap.dataset.answer, comment: '' }],
+            commentId: btn.dataset.commentId,
           });
           await refresh();
         } catch (err) {
@@ -130,7 +142,7 @@ const OptionCard = (() => {
     };
   }
 
-  function metaHtml(opt, canEdit, myAnswer, myComment) {
+  function metaHtml(opt, canEdit, myAnswer, myComments) {
     return `
       <div class="option-meta" data-option-id="${opt.optionId}">
         <div class="option-meta-view">
@@ -142,7 +154,7 @@ const OptionCard = (() => {
           <div class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)} ${AppUtil.relativeDayPillHtml(opt.startAt)}</div>
           ${opt.location ? `<div class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</div>` : ''}
           ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
-          ${myAnswer !== undefined ? commentHtml(opt.optionId, myAnswer, myComment) : ''}
+          ${myAnswer !== undefined ? commentHtml(opt.optionId, myComments) : ''}
         </div>
         ${canEdit ? `
         <div class="option-edit-form" hidden>
@@ -249,5 +261,6 @@ const OptionCard = (() => {
   return {
     metaHtml, fieldsHtml, titleFieldHtml, rangeLocationFieldsHtml, readFields,
     choiceButtonsHtml, answerIcon, statusClass, wireEditForms, wireInlineAnswerToggles, wireComments,
+    commentThreadHtml,
   };
 })();
