@@ -223,8 +223,7 @@
   .date-pill-urgent { background: #fdeaea; color: #c0392b; }
   .option-comment {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
+    align-items: center;
     gap: 8px;
     margin-top: 8px;
     padding: 6px 10px;
@@ -233,6 +232,7 @@
     font-size: 0.8rem;
   }
   .option-comment-text { flex: 1; word-break: break-word; }
+  .option-comment-author { flex-shrink: 0; margin-left: auto; font-size: 0.7rem; color: var(--sub-text); }
   .comment-delete-btn {
     flex-shrink: 0;
     border: none;
@@ -242,7 +242,6 @@
     font-size: 0.9rem;
     line-height: 1;
   }
-  .option-comment-add { margin-top: 8px; }
   .comment-add-toggle {
     border: none;
     background: none;
@@ -251,8 +250,9 @@
     text-decoration: underline;
     cursor: pointer;
     padding: 0;
+    white-space: nowrap;
   }
-  .comment-add-form { display: flex; gap: 6px; margin-top: 4px; width: 180px; }
+  .comment-add-form { display: flex; gap: 6px; margin-top: 8px; }
   .comment-add-form[hidden] { display: none; }
   .comment-input {
     flex: 1;
@@ -264,7 +264,6 @@
   }
   .comment-count { color: var(--sub-text); }
   .answer-choices { display: flex; gap: 10px; }
-  .respondent.me .avatar { outline: 2px solid var(--primary); outline-offset: 1px; }
   .respondent.me span:last-child { font-weight: bold; }
   details summary { font-size: 0.8rem; color: var(--sub-text); cursor: pointer; }
   .summary-answer-row { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
@@ -299,7 +298,17 @@
   .loading, .error { text-align: center; color: var(--sub-text); margin-top: 40px; }
   .event-description { color: var(--sub-text); font-size: 0.9rem; white-space: pre-wrap; }
   section { margin-bottom: 24px; }
-  .respondent-label { font-size: 0.75rem; color: var(--sub-text); margin: 8px 0 4px; }
+  .respondent-label { font-size: 0.75rem; color: var(--sub-text); margin: 0 0 4px; }
+  .respondent-group {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-top: 8px;
+  }
+  .respondent-group:first-of-type { margin-top: 0; }
+  .respondent-group.choice-ok { border-color: #BFE5D1; }
+  .respondent-group.choice-maybe { border-color: #F0D9A6; }
+  .respondent-group.choice-ng { border-color: #F5C6C0; }
   /* デフォルトは横スクロール。将来「可視範囲まで展開」に切り替える場合は
      .respondent-list.expanded { flex-wrap: wrap; overflow-x: visible; } を追加すればよい */
   .respondent-list {
@@ -313,7 +322,6 @@
   .respondent-list.expanded { flex-wrap: wrap; overflow-x: visible; }
   .respondent-list .respondent { flex-shrink: 0; }
   .respondent { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.7rem; width: 48px; }
-  .respondent-comment { color: var(--sub-text); font-size: 0.65rem; }
   .avatar {
     display: inline-flex;
     align-items: center;
@@ -328,6 +336,9 @@
     font-size: 0.8rem;
     flex-shrink: 0;
   }
+  .avatar-ok { border: 2px solid #2D8A4E; }
+  .avatar-maybe { border: 2px solid #E8A33D; }
+  .avatar-ng { border: 2px solid #D93025; }
   .empty-respondents { color: var(--sub-text); font-size: 0.8rem; margin: 4px 0; }
   .loading { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 40px; }
   .spinner {

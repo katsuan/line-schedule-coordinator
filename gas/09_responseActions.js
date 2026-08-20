@@ -111,6 +111,7 @@ function getSummary_(payload) {
           commentId: c.commentId,
           userId: c.userId,
           displayName: u.displayName || '(名前未取得)',
+          pictureUrl: u.pictureUrl || '',
           text: c.text,
           createdAt: c.createdAt,
         };
