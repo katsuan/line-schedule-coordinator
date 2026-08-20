@@ -207,6 +207,7 @@ const DetailView = (() => {
       row.classList.add(OptionCard.statusClass(value));
 
       savingOptionIds.add(optionId);
+      const stopLoading = AppUtil.beginButtonLoading(btn);
       try {
         await AppApi.submitAnswer({
           eventId: ctx.eventId,
@@ -225,6 +226,7 @@ const DetailView = (() => {
         alert('回答の保存に失敗しました: ' + err.message);
       } finally {
         savingOptionIds.delete(optionId);
+        stopLoading();
       }
     });
   }
@@ -274,13 +276,13 @@ const DetailView = (() => {
         const error = AppUtil.validateEventFields(fields);
         if (error) { alert(error); return; }
 
-        e.target.disabled = true;
+        const stopLoading = AppUtil.beginButtonLoading(e.target);
         try {
           await AppApi.addOptions({ eventId: ctx.eventId, userId: ctx.identity.userId, options: [fields] });
           await refresh();
         } catch (err) {
           alert('イベントの追加に失敗しました: ' + err.message);
-          e.target.disabled = false;
+          stopLoading();
         }
       });
     }

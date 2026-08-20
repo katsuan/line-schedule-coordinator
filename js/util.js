@@ -137,17 +137,33 @@ const AppUtil = (() => {
     return null;
   }
 
+  function beginButtonLoading(btn) {
+    const originalColor = getComputedStyle(btn).color;
+    btn.classList.add('is-saving');
+    btn.disabled = true;
+    const spinner = document.createElement('span');
+    spinner.className = 'btn-spinner';
+    spinner.style.borderColor = originalColor;
+    spinner.style.borderTopColor = 'transparent';
+    btn.appendChild(spinner);
+    return () => {
+      btn.classList.remove('is-saving');
+      btn.disabled = false;
+      spinner.remove();
+    };
+  }
+
   function wireAsyncButton(btn, action, { confirmMessage, errorPrefix } = {}) {
     if (!btn) return;
     btn.addEventListener('click', async (e) => {
       if (confirmMessage && !confirm(confirmMessage)) return;
-      e.target.disabled = true;
+      const stopLoading = beginButtonLoading(e.target);
       try {
         await action(e);
       } catch (err) {
         alert((errorPrefix || '処理に失敗しました') + ': ' + err.message);
       } finally {
-        e.target.disabled = false;
+        stopLoading();
       }
     });
   }
@@ -155,6 +171,6 @@ const AppUtil = (() => {
   return {
     escapeHtml, formatDateTimeLocal, formatDateRange, toDatetimeLocalValue,
     buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml, titleIconHtml,
-    extractIcon, shortTime, validateEventFields, wireAsyncButton, relativeDayPillHtml,
+    extractIcon, shortTime, validateEventFields, wireAsyncButton, relativeDayPillHtml, beginButtonLoading,
   };
 })();
