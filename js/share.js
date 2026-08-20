@@ -196,10 +196,10 @@ const AppShare = (() => {
     return new Promise((resolve) => {
       let presetIndex = presets.length ? defaultIndex : null;
       let commentText = '';
-      let embedComment = false;
+      let sendAsChat = true;
       const linesFor = (unselectedAnswers, hiddenAnswers) => buildPreviewLines(applyComment(
         hideNames(filterGroups(flex, unselectedAnswers), hiddenAnswers),
-        embedComment ? commentText : '', presetIndex, presetIndex != null ? presets[presetIndex] : null
+        sendAsChat ? '' : commentText, presetIndex, presetIndex != null ? presets[presetIndex] : null
       ));
       const lines = linesFor([]);
       const overlay = document.createElement('div');
@@ -245,8 +245,8 @@ const AppShare = (() => {
             <textarea id="preview-comment" rows="2" class="preview-comment-input" placeholder="自由にコメントを入力できます"></textarea>
           </label>
           <label class="preview-checkbox-label-inline">
-            <input type="checkbox" id="preview-embed-comment">
-            コメントをFlexに埋め込む（OFF: 別のチャットメッセージとして送信）
+            <input type="checkbox" id="preview-comment-as-chat" checked>
+            コメントをチャット形式で送信する（OFFでFlexに埋め込む）
           </label>
           <div class="option-edit-actions" style="margin-top:12px">
             <button type="button" class="btn btn-primary" id="preview-confirm">送信先を選ぶ</button>
@@ -284,7 +284,7 @@ const AppShare = (() => {
       const banner = overlay.querySelector('#preview-header-banner');
       const bannerLabel = overlay.querySelector('#preview-header-label');
       const bannerComment = overlay.querySelector('#preview-header-comment');
-      const embedCheckbox = overlay.querySelector('#preview-embed-comment');
+      const chatCheckbox = overlay.querySelector('#preview-comment-as-chat');
       const chatBubble = overlay.querySelector('#preview-chat-bubble');
       const updateBanner = () => {
         if (!banner) return;
@@ -292,11 +292,11 @@ const AppShare = (() => {
         banner.style.background = color ? color.bg : '';
         banner.style.color = color ? color.text : '';
         if (bannerLabel) bannerLabel.textContent = presetIndex != null ? presets[presetIndex] : '';
-        if (bannerComment) bannerComment.textContent = embedComment ? commentText : '';
+        if (bannerComment) bannerComment.textContent = sendAsChat ? '' : commentText;
       };
       const updateChatBubble = () => {
         if (!chatBubble) return;
-        const show = !!commentText && !embedComment;
+        const show = !!commentText && sendAsChat;
         chatBubble.hidden = !show;
         if (show) chatBubble.textContent = commentText;
       };
@@ -306,8 +306,8 @@ const AppShare = (() => {
         updateChatBubble();
         renderPreview();
       });
-      if (embedCheckbox) embedCheckbox.addEventListener('change', () => {
-        embedComment = embedCheckbox.checked;
+      if (chatCheckbox) chatCheckbox.addEventListener('change', () => {
+        sendAsChat = chatCheckbox.checked;
         updateBanner();
         updateChatBubble();
         renderPreview();
@@ -359,7 +359,7 @@ const AppShare = (() => {
           : [];
         close({
           comment: textarea.value.trim(),
-          embedComment,
+          sendAsChat,
           unselectedAnswers,
           hiddenAnswers,
           presetIndex,
@@ -375,13 +375,13 @@ const AppShare = (() => {
 
     let finalFlex = filterGroups(flex, result.unselectedAnswers);
     finalFlex = hideNames(finalFlex, result.hiddenAnswers);
-    finalFlex = applyComment(finalFlex, result.embedComment ? result.comment : '', result.presetIndex, result.presetLabel);
+    finalFlex = applyComment(finalFlex, result.sendAsChat ? '' : result.comment, result.presetIndex, result.presetLabel);
     const messages = [{
       type: 'flex',
       altText: finalFlex.altText,
       contents: finalFlex.contents,
     }];
-    if (result.comment && !result.embedComment) {
+    if (result.comment && result.sendAsChat) {
       messages.push({ type: 'text', text: result.comment });
     }
 
