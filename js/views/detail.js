@@ -78,11 +78,17 @@ const DetailView = (() => {
       const answerByUser = {};
       ['○', '△', '×'].forEach((a) => (row.respondents[a] || []).forEach((r) => { answerByUser[r.userId] = a; }));
       const enrichedComments = (row.comments || []).map((c) => ({ ...c, answer: answerByUser[c.userId] }));
+      const commentedUserIds = new Set((row.comments || []).map((c) => c.userId));
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
         if (!list.length) return '<p class="empty-respondents">なし</p>';
         return `<div class="respondent-list">
-          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${AppUtil.avatarHtml(r.displayName, r.pictureUrl, answer)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span></span>`).join('')}
+          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">
+            <span class="avatar-wrap">
+              ${AppUtil.avatarHtml(r.displayName, r.pictureUrl, answer)}
+              ${commentedUserIds.has(r.userId) ? '<span class="avatar-comment-badge">💬</span>' : ''}
+            </span>
+            <span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span></span>`).join('')}
         </div>`;
       };
       const groupBlock = (answer) => `
@@ -102,9 +108,11 @@ const DetailView = (() => {
           <div class="summary-answer-row">
             ${OptionCard.answerButtonsHtml(row.option.optionId, myAnswers[row.option.optionId], row.counts)}
             <div class="summary-answer-side">
-              ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
-              ${OptionCard.commentAddToggleHtml(row.option.optionId)}
-              ${totalCount ? `<button type="button" class="btn remind-btn" data-row="${rowIndex}">連絡する</button>` : ''}
+              <span class="summary-comment-row">
+                ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
+                ${OptionCard.commentAddToggleHtml(row.option.optionId)}
+              </span>
+              ${totalCount ? `<button type="button" class="btn remind-btn" data-row="${rowIndex}">LINE送信</button>` : ''}
             </div>
           </div>
           <details>
@@ -133,10 +141,10 @@ const DetailView = (() => {
             optionLocation: rowEl ? rowEl.dataset.optionLocation : '',
           });
           btn.textContent = '送信しました';
-          setTimeout(() => { btn.textContent = '連絡する'; btn.disabled = false; }, 2000);
+          setTimeout(() => { btn.textContent = 'LINE送信'; btn.disabled = false; }, 2000);
         } catch (err) {
           alert('連絡の送信に失敗しました: ' + err.message);
-          btn.textContent = '連絡する';
+          btn.textContent = 'LINE送信';
           btn.disabled = false;
         }
       });
