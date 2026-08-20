@@ -200,8 +200,14 @@
   .option-edit-form { margin-top: 8px; }
   .option-edit-actions { display: flex; gap: 8px; margin-top: 8px; }
   .option-edit-actions .btn { flex: 1; }
-  .option-meta-date { color: var(--sub-text); font-size: 0.8rem; margin-top: 2px; }
-  .option-meta-location { color: var(--sub-text); font-size: 0.8rem; margin-top: 2px; }
+  .option-meta-info-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    margin-top: 2px;
+  }
+  .option-meta-date, .option-meta-location { color: var(--sub-text); font-size: 0.8rem; }
   .date-pill {
     display: inline-block;
     padding: 1px 8px;
@@ -287,7 +293,8 @@
   .summary-counts span { display: inline-flex; align-items: center; gap: 4px; }
   .respondent.me .avatar { outline: 2px solid var(--primary); outline-offset: 1px; }
   .respondent.me span:last-child { font-weight: bold; }
-  .summary-counts { display: flex; gap: 16px; margin: 8px 0 4px; font-size: 0.9rem; }
+  .summary-counts { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 4px; font-size: 0.9rem; }
+  .summary-counts-values { display: flex; flex-wrap: wrap; gap: 16px; }
   details summary { font-size: 0.8rem; color: var(--sub-text); cursor: pointer; }
   .option-meta-title-row .answer-icon { flex-shrink: 0; }
   .answer-inline { display: inline-flex; align-items: center; flex-shrink: 0; }
@@ -300,7 +307,7 @@
     font-size: 0.85rem;
     border: none;
   }
-  .remind-btn { display: block; margin-top: 10px; font-size: 0.8rem; }
+  .remind-btn { flex-shrink: 0; padding: 6px 12px; font-size: 0.75rem; }
   .cal-link {
     display: inline-flex;
     align-items: center;

@@ -96,12 +96,14 @@ const DetailView = (() => {
         <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
           ${OptionCard.metaHtml(row.option, canEdit, myAnswers[row.option.optionId], myComments[row.option.optionId])}
           <div class="summary-counts">
-            <span>${OptionCard.answerIcon('○')} ${row.counts['○']}</span>
-            <span>${OptionCard.answerIcon('△')} ${row.counts['△']}</span>
-            <span>${OptionCard.answerIcon('×')} ${row.counts['×']}</span>
-            ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
+            <span class="summary-counts-values">
+              <span>${OptionCard.answerIcon('○')} ${row.counts['○']}</span>
+              <span>${OptionCard.answerIcon('△')} ${row.counts['△']}</span>
+              <span>${OptionCard.answerIcon('×')} ${row.counts['×']}</span>
+              ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
+            </span>
+            ${totalCount ? `<button type="button" class="btn remind-btn" data-row="${rowIndex}">連絡する</button>` : ''}
           </div>
-          ${totalCount ? `<button type="button" class="btn remind-btn" data-row="${rowIndex}">連絡する</button>` : ''}
           <details>
             <summary>回答者を見る（${totalCount}人）</summary>
             <p class="respondent-label">○</p>${respondentsHtml('○')}

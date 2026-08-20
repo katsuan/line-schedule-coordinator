@@ -78,8 +78,10 @@ const CalendarView = (() => {
         <div class="answer-row" data-option-id="${it.optionId}" data-event-id="${it.eventId}">
           <div class="option-meta">
             <div class="option-meta-title">${AppUtil.titleIconHtml(it.optionTitle || it.eventTitle)}</div>
-            <div class="option-meta-date">${AppUtil.formatDateRange(it.startAt, it.endAt)}</div>
-            ${it.location ? `<div class="option-meta-location">📍 ${AppUtil.escapeHtml(it.location)}</div>` : ''}
+            <div class="option-meta-info-row">
+              <span class="option-meta-date">${AppUtil.formatDateRange(it.startAt, it.endAt)}</span>
+              ${it.location ? `<span class="option-meta-location">📍 ${AppUtil.escapeHtml(it.location)}</span>` : ''}
+            </div>
           </div>
           <span class="answer-choices" data-option-id="${it.optionId}">
             ${OptionCard.choiceButtonsHtml(it.optionId, { [it.optionId]: it.myAnswer })}
