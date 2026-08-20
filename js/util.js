@@ -5,6 +5,15 @@ const AppUtil = (() => {
     }[ch]));
   }
 
+  const AVATAR_ANSWER_CLASS = { '○': 'avatar-ok', '△': 'avatar-maybe', '×': 'avatar-ng' };
+
+  function avatarHtml(displayName, pictureUrl, answer) {
+    const initial = escapeHtml(String(displayName || '?').slice(0, 1));
+    const style = pictureUrl ? ` style="background-image:url('${pictureUrl.replace(/'/g, '%27')}')"` : '';
+    const cls = AVATAR_ANSWER_CLASS[answer] ? ` ${AVATAR_ANSWER_CLASS[answer]}` : '';
+    return `<span class="avatar${cls}"${style}>${pictureUrl ? '' : initial}</span>`;
+  }
+
   function formatDateTimeLocal(isoLike) {
     if (!isoLike) return '';
     const date = new Date(isoLike);
@@ -172,5 +181,6 @@ const AppUtil = (() => {
     escapeHtml, formatDateTimeLocal, formatDateRange, toDatetimeLocalValue,
     buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml, titleIconHtml,
     extractIcon, shortTime, validateEventFields, wireAsyncButton, relativeDayPillHtml, beginButtonLoading,
+    avatarHtml,
   };
 })();
