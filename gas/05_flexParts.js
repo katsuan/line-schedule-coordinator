@@ -44,6 +44,7 @@ function _createFlexButtonFooter_(label, uri) {
     type: 'box',
     layout: 'vertical',
     spacing: 'sm',
+    paddingAll: 'lg',
     contents: [
       {
         type: 'button',
@@ -53,6 +54,10 @@ function _createFlexButtonFooter_(label, uri) {
       },
     ],
   };
+}
+
+function _footerStyles_() {
+  return { footer: { separator: true, separatorColor: COLOR.BORDER } };
 }
 
 function _weekdayColor_(date) {

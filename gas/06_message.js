@@ -18,22 +18,22 @@ function buildEventShareFlex_(eventId) {
     _createInfoRow_('回答', answeredUserIds.size + '人'),
   ];
 
-  const optionRows = options.map((opt) => {
+  const optionCards = options.map((opt) => {
     const optResponses = responses.filter((r) => r.optionId === opt.optionId);
     const count = (a) => optResponses.filter((r) => r.answer === a).length;
+    const cardRows = [_createEventTimeRow_('日時', opt.startAt, opt.endAt)];
+    if (opt.location) cardRows.push(_createInfoRow_('場所', opt.location));
+    cardRows.push(_createInfoRow_('回答', `○${count(ANSWER.OK)} △${count(ANSWER.MAYBE)} ×${count(ANSWER.NG)}`));
     return {
       type: 'box',
       layout: 'vertical',
-      margin: 'sm',
+      spacing: 'sm',
+      paddingAll: 'md',
+      backgroundColor: '#F7F8FA',
+      cornerRadius: 'md',
       contents: [
-        {
-          type: 'text',
-          size: 'sm',
-          color: COLOR.TEXT,
-          wrap: true,
-          text: (opt.title || '(タイトルなし)') + `  ○${count(ANSWER.OK)} △${count(ANSWER.MAYBE)} ×${count(ANSWER.NG)}`,
-        },
-        _createEventTimeRow_('日時', opt.startAt, opt.endAt),
+        { type: 'text', text: opt.title || '(タイトルなし)', weight: 'bold', size: 'sm', color: COLOR.TEXT, wrap: true },
+        ...cardRows,
       ],
     };
   });
@@ -51,10 +51,11 @@ function buildEventShareFlex_(eventId) {
         _createSeparator_(),
         { type: 'box', layout: 'vertical', margin: 'md', contents: [_createFlexBody_(headerRows)] },
         _createSeparator_(),
-        { type: 'box', layout: 'vertical', margin: 'md', spacing: 'sm', contents: optionRows },
+        { type: 'box', layout: 'vertical', margin: 'md', spacing: 'md', contents: optionCards },
       ],
     },
     footer: answerUrl ? _createFlexButtonFooter_('回答する', answerUrl) : undefined,
+    styles: answerUrl ? _footerStyles_() : undefined,
   };
 
   return {
@@ -63,15 +64,13 @@ function buildEventShareFlex_(eventId) {
   };
 }
 
-function buildReminderFlex_(eventId, answerLabel, names, optionTitle, optionStartAt, optionEndAt, optionLocation) {
+function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionEndAt, optionLocation) {
   const event = findEventById_(eventId);
   if (!event) {
     throw new Error('イベントが見つかりません: ' + eventId);
   }
+  groups = groups || {};
 
-  const nameList = names.length > 3
-    ? names.slice(0, 3).join('さん、') + `さん他${names.length - 3}名`
-    : names.join('さん、') + 'さん';
   const liffUrl = getLiffUrl_();
   const answerUrl = liffUrl ? (liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId)) : '';
   const targetTitle = optionTitle || event.title;
@@ -81,25 +80,39 @@ function buildReminderFlex_(eventId, answerLabel, names, optionTitle, optionStar
   ];
   if (optionStartAt) rows.push(_createEventTimeRow_('日時', optionStartAt, optionEndAt));
   if (optionLocation) rows.push(_createInfoRow_('場所', optionLocation));
-  rows.push(_createInfoRow_('宛先', nameList + '一同'));
-  rows.push(_createInfoRow_('現在の回答', answerLabel));
+  [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].forEach((ans) => {
+    const names = groups[ans];
+    if (names && names.length) {
+      rows.push(_createInfoRow_(ans, names.map((n) => n + 'さん').join('、')));
+    }
+  });
+
+  const allNames = [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].reduce((acc, ans) => acc.concat(groups[ans] || []), []);
+  const nameLabel = allNames.length > 3
+    ? allNames.slice(0, 3).join('・') + `他${allNames.length - 3}名`
+    : allNames.join('・');
 
   const bubble = {
     type: 'bubble',
+    header: {
+      type: 'box',
+      layout: 'vertical',
+      paddingAll: 'lg',
+      contents: [
+        { type: 'text', text: event.title, weight: 'bold', size: 'lg', wrap: true, color: COLOR.TEXT },
+      ],
+    },
     body: {
       type: 'box',
       layout: 'vertical',
-      contents: [
-        _createFlexHeader_(event.title, '回答状況のご連絡です'),
-        _createSeparator_(),
-        { type: 'box', layout: 'vertical', margin: 'md', contents: [_createFlexBody_(rows)] },
-      ],
+      contents: [_createFlexBody_(rows)],
     },
     footer: answerUrl ? _createFlexButtonFooter_('回答を確認する', answerUrl) : undefined,
+    styles: answerUrl ? _footerStyles_() : undefined,
   };
 
   return {
-    altText: nameList + 'への連絡（' + targetTitle + '）',
+    altText: nameLabel + 'への連絡（' + targetTitle + '）',
     contents: bubble,
   };
 }
@@ -135,6 +148,7 @@ function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optio
       ],
     },
     footer: answerUrl ? _createFlexButtonFooter_('内容を確認する', answerUrl) : undefined,
+    styles: answerUrl ? _footerStyles_() : undefined,
   };
 
   return {
@@ -161,6 +175,7 @@ function buildEditorInviteFlex_(eventId) {
       contents: [_createFlexHeader_(event.title, '編集をお願いします🙏\nこのリンクからイベントの追加や共有ができるようになります。')],
     },
     footer: inviteUrl ? _createFlexButtonFooter_('編集者として参加する', inviteUrl) : undefined,
+    styles: inviteUrl ? _footerStyles_() : undefined,
   };
   return { altText: event.title + ' の編集をお願いします', contents: bubble };
 }

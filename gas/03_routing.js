@@ -17,7 +17,7 @@ function routeAction_(action, payload) {
     case 'listMyEvents': return listMyEvents_(payload);
     case 'listMyOptions': return listMyOptions_(payload);
     case 'buildShareFlex': return buildShareFlex_(payload);
-    case 'buildReminderFlex': return buildReminderFlex_(payload.eventId, payload.answerLabel, payload.names, payload.optionTitle, payload.optionStartAt, payload.optionEndAt, payload.optionLocation);
+    case 'buildReminderFlex': return buildReminderFlex_(payload.eventId, payload.groups, payload.optionTitle, payload.optionStartAt, payload.optionEndAt, payload.optionLocation);
     case 'buildEditorInviteFlex': return buildEditorInviteFlex_(payload.eventId);
     case 'buildChangeNotificationFlex': return buildChangeNotificationFlex_(payload.eventId, payload.optionTitle, payload.optionStartAt, payload.optionEndAt, payload.optionLocation, payload.names);
     default:
