@@ -52,16 +52,6 @@ const OptionCard = (() => {
       </div>`;
   }
 
-  function commentThreadHtml(comments, myUserId) {
-    if (!comments || !comments.length) return '<p class="empty-respondents">まだコメントはありません</p>';
-    return `<div class="comment-thread">${comments.map((c) => `
-      <div class="thread-comment">
-        <span class="thread-comment-author">${AppUtil.escapeHtml(c.displayName)}${c.userId === myUserId ? '（自分）' : ''}</span>
-        <span class="thread-comment-text">💬 ${AppUtil.escapeHtml(c.text)}</span>
-        ${c.userId === myUserId ? `<button type="button" class="comment-delete-btn" data-comment-id="${c.commentId}" aria-label="コメントを削除">×</button>` : ''}
-      </div>`).join('')}</div>`;
-  }
-
   function wireComments(root, ctx, refresh) {
     root.querySelectorAll('.option-comment-add').forEach((wrap) => {
       const toggle = wrap.querySelector('.comment-add-toggle');
@@ -261,6 +251,5 @@ const OptionCard = (() => {
   return {
     metaHtml, fieldsHtml, titleFieldHtml, rangeLocationFieldsHtml, readFields,
     choiceButtonsHtml, answerIcon, statusClass, wireEditForms, wireInlineAnswerToggles, wireComments,
-    commentThreadHtml,
   };
 })();

@@ -70,6 +70,7 @@
   form input[type="text"], form input[type="datetime-local"], form textarea {
     display: block;
     width: 100%;
+    min-width: 0;
     margin-top: 4px;
     padding: 10px;
     border: 1px solid var(--border);
@@ -77,8 +78,8 @@
     font-size: 1rem;
     color: var(--text);
   }
-  .option-range { display: flex; gap: 8px; }
-  .option-sublabel { flex: 1; font-size: 0.7rem; color: var(--sub-text); margin-bottom: 0; }
+  .option-range { display: flex; gap: 8px; min-width: 0; }
+  .option-sublabel { flex: 1; min-width: 0; font-size: 0.7rem; color: var(--sub-text); margin-bottom: 0; }
   .option-card {
     border: 1px solid var(--border);
     border-radius: 12px;
@@ -299,15 +300,15 @@
     font-size: 0.85rem;
     border: none;
   }
-  .remind-btn {
-    border: none;
-    background: none;
-    color: var(--primary);
-    font-size: 0.7rem;
-    text-decoration: underline;
+  .remind-btn { display: block; margin-top: 10px; font-size: 0.8rem; }
+  .remind-check-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     cursor: pointer;
-    align-self: center;
+    margin-right: 8px;
   }
+  .remind-check-label input { cursor: pointer; }
   .cal-link {
     display: inline-flex;
     align-items: center;
@@ -369,10 +370,10 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    margin: -6px 0 0 -6px;
   }
   .answer-inline-badge.is-saving { color: transparent; position: relative; }
-  .answer-inline-badge.is-saving .btn-spinner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--primary); }
+  .answer-inline-badge.is-saving .btn-spinner { position: absolute; top: 50%; left: 50%; margin: -6px 0 0 -6px; color: var(--primary); }
   .loading-tip {
     max-width: 280px;
     text-align: center;

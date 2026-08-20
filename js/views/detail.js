@@ -78,11 +78,17 @@ const DetailView = (() => {
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
         if (!list.length) return '<p class="empty-respondents">なし</p>';
-        const names = list.map((r) => r.displayName).join(',');
         return `<div class="respondent-list">
           ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span></span>`).join('')}
-          <button type="button" class="remind-btn" data-answer="${answer}" data-row="${rowIndex}" data-names="${AppUtil.escapeHtml(names)}">連絡する</button>
         </div>`;
+      };
+      const groupLabel = (answer) => {
+        const list = row.respondents[answer] || [];
+        const names = list.map((r) => r.displayName).join(',');
+        return `<label class="respondent-label remind-check-label">
+          <input type="checkbox" class="remind-check" data-answer="${answer}" data-names="${AppUtil.escapeHtml(names)}" ${list.length ? '' : 'disabled'}>
+          ${answer}
+        </label>`;
       };
       const totalCount = row.counts['○'] + row.counts['△'] + row.counts['×'];
       return `
@@ -96,10 +102,10 @@ const DetailView = (() => {
           </div>
           <details>
             <summary>回答者を見る（${totalCount}人）</summary>
-            <p class="respondent-label">○</p>${respondentsHtml('○')}
-            <p class="respondent-label">△</p>${respondentsHtml('△')}
-            <p class="respondent-label">×</p>${respondentsHtml('×')}
-            <p class="respondent-label">💬 コメント</p>${OptionCard.commentThreadHtml(row.comments, myUserId)}
+            ${groupLabel('○')}${respondentsHtml('○')}
+            ${groupLabel('△')}${respondentsHtml('△')}
+            ${groupLabel('×')}${respondentsHtml('×')}
+            <button type="button" class="btn remind-btn" data-row="${rowIndex}">選択した人に連絡する</button>
           </details>
         </div>`;
     }).join('');
@@ -108,24 +114,28 @@ const DetailView = (() => {
   function wireRemindButtons(root, eventTitle, eventId) {
     root.querySelectorAll('.remind-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        const names = btn.dataset.names.split(',').filter(Boolean);
-        if (!names.length) return;
         const rowEl = btn.closest('.summary-row');
+        const groups = {};
+        (rowEl || root).querySelectorAll('.remind-check:checked').forEach((cb) => {
+          groups[cb.dataset.answer] = cb.dataset.names.split(',').filter(Boolean);
+        });
+        if (!Object.keys(groups).length) { alert('連絡先を選択してください'); return; }
+
         btn.disabled = true;
         btn.textContent = '送信中...';
         try {
           await AppShare.remindRespondents({
-            eventId, answerLabel: btn.dataset.answer, names,
+            eventId, groups,
             optionTitle: rowEl ? rowEl.dataset.optionTitle : eventTitle,
             optionStartAt: rowEl ? rowEl.dataset.optionStart : '',
             optionEndAt: rowEl ? rowEl.dataset.optionEnd : '',
             optionLocation: rowEl ? rowEl.dataset.optionLocation : '',
           });
           btn.textContent = '送信しました';
-          setTimeout(() => { btn.textContent = '連絡する'; btn.disabled = false; }, 2000);
+          setTimeout(() => { btn.textContent = '選択した人に連絡する'; btn.disabled = false; }, 2000);
         } catch (err) {
           alert('連絡の送信に失敗しました: ' + err.message);
-          btn.textContent = '連絡する';
+          btn.textContent = '選択した人に連絡する';
           btn.disabled = false;
         }
       });

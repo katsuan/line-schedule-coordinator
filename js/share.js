@@ -1,7 +1,10 @@
 const AppShare = (() => {
   function collectText(node) {
     if (!node) return '';
-    if (node.type === 'text') return node.text || '';
+    if (node.type === 'text' || node.type === 'span') {
+      if (node.contents) return node.contents.map(collectText).join('');
+      return node.text || '';
+    }
     if (node.contents) return node.contents.map(collectText).join(' ').replace(/\s+/g, ' ').trim();
     return '';
   }
@@ -9,7 +12,7 @@ const AppShare = (() => {
   function walkPreviewLines(node, lines) {
     if (!node) return;
     if (node.type === 'separator') { lines.push('---'); return; }
-    if (node.type === 'text') { lines.push(node.text); return; }
+    if (node.type === 'text') { lines.push(collectText(node)); return; }
     if (node.type === 'button') { lines.push('▶ ' + node.action.label); return; }
     if (node.type === 'box') {
       if (node.layout === 'horizontal' || node.layout === 'baseline') {
@@ -28,9 +31,32 @@ const AppShare = (() => {
     return lines;
   }
 
-  function injectComment(flex, comment) {
-    if (!comment) return flex;
+  const HEADER_COLORS = {
+    1: { bg: '#FDEDEB', text: '#D93025' }, // 赤: 要確認
+    2: { bg: '#FFF6E5', text: '#C9862B' }, // 黄: イベント近し
+  };
+
+  function applyComment(flex, comment, presetIndex) {
     const bubble = JSON.parse(JSON.stringify(flex.contents));
+    const color = HEADER_COLORS[presetIndex];
+
+    if (bubble.header) {
+      if (color) {
+        bubble.header.backgroundColor = color.bg;
+        (bubble.header.contents || []).forEach((c) => {
+          if (c.type === 'text' && !c.contents) c.color = color.text;
+        });
+      }
+      if (comment) {
+        bubble.header.contents.push({
+          type: 'text', text: comment, size: 'sm', wrap: true, margin: 'sm',
+          color: color ? color.text : '#8C8C8C',
+        });
+      }
+      return { altText: flex.altText, contents: bubble };
+    }
+
+    if (!comment) return flex;
     bubble.body.contents.push(
       { type: 'separator', margin: 'md' },
       {
@@ -58,7 +84,7 @@ const AppShare = (() => {
 
   function stripRecipientInfo(flex) {
     const bubble = JSON.parse(JSON.stringify(flex.contents));
-    removeRowsByLabel(bubble.body, ['宛先']);
+    removeRowsByLabel(bubble.body, ['○', '△', '×']);
     return { altText: flex.altText.replace(/^.+?への連絡/, '連絡'), contents: bubble };
   }
 
@@ -103,10 +129,12 @@ const AppShare = (() => {
       document.body.appendChild(overlay);
 
       const textarea = overlay.querySelector('#preview-comment');
+      let presetIndex = presets.length ? defaultIndex : null;
       overlay.querySelectorAll('.preset-chip').forEach((chip) => {
         chip.addEventListener('click', () => {
           overlay.querySelectorAll('.preset-chip').forEach((c) => c.classList.toggle('selected', c === chip));
-          textarea.value = presets[Number(chip.dataset.index)];
+          presetIndex = Number(chip.dataset.index);
+          textarea.value = presets[presetIndex];
         });
       });
 
@@ -116,7 +144,11 @@ const AppShare = (() => {
       overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
       overlay.querySelector('#preview-confirm').addEventListener('click', () => {
         const hideCheckbox = overlay.querySelector('#preview-hide-recipients');
-        close({ comment: textarea.value.trim(), hideRecipients: !!(hideCheckbox && hideCheckbox.checked) });
+        close({
+          comment: textarea.value.trim(),
+          hideRecipients: !!(hideCheckbox && hideCheckbox.checked),
+          presetIndex,
+        });
       });
     });
   }
@@ -126,7 +158,7 @@ const AppShare = (() => {
     if (result === null) return false;
 
     let finalFlex = result.hideRecipients ? stripRecipientInfo(flex) : flex;
-    finalFlex = injectComment(finalFlex, result.comment);
+    finalFlex = applyComment(finalFlex, result.comment, result.presetIndex);
     const message = {
       type: 'flex',
       altText: finalFlex.altText,
@@ -166,7 +198,8 @@ const AppShare = (() => {
 
   async function remindRespondents(params) {
     const flex = await AppApi.buildReminderFlex(params);
-    const defaultPresetIndex = params.answerLabel === '△' ? 1 : 0;
+    const hasMaybe = !!(params.groups && params.groups['△'] && params.groups['△'].length);
+    const defaultPresetIndex = hasMaybe ? 1 : 0;
     return sendFlexMessage(flex, { closeAfter: false, presets: REMIND_PRESETS, defaultPresetIndex, allowHideRecipients: true });
   }
 
