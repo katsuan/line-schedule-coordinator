@@ -31,15 +31,29 @@ const OptionCard = (() => {
     return `
       <div class="option-comment" data-comment-id="${comment.commentId}">
         ${AppUtil.avatarHtml(comment.displayName, comment.pictureUrl, comment.answer)}
-        <span class="option-comment-text">${AppUtil.escapeHtml(comment.text)}</span>
-        <span class="option-comment-author">${AppUtil.escapeHtml(comment.displayName)}${isMine ? '（自分）' : ''}</span>
+        <div class="option-comment-body">
+          <span class="option-comment-author">${AppUtil.escapeHtml(comment.displayName)}${isMine ? '（自分）' : ''}</span>
+          <span class="option-comment-text">${AppUtil.escapeHtml(comment.text)}</span>
+        </div>
         ${isMine ? `<button type="button" class="comment-delete-btn" data-comment-id="${comment.commentId}" aria-label="コメントを削除">×</button>` : ''}
       </div>`;
   }
 
+  const COMMENT_VISIBLE_LIMIT = 2;
+
   function commentsListHtml(comments, myUserId) {
     comments = comments || [];
-    return comments.map((c) => commentEntryHtml(c, myUserId)).join('');
+    if (comments.length <= COMMENT_VISIBLE_LIMIT) {
+      return comments.map((c) => commentEntryHtml(c, myUserId)).join('');
+    }
+    const visible = comments.slice(0, COMMENT_VISIBLE_LIMIT);
+    const rest = comments.slice(COMMENT_VISIBLE_LIMIT);
+    return `
+      ${visible.map((c) => commentEntryHtml(c, myUserId)).join('')}
+      <details class="comment-list-more">
+        <summary>他${rest.length}件のコメントを見る</summary>
+        ${rest.map((c) => commentEntryHtml(c, myUserId)).join('')}
+      </details>`;
   }
 
   function commentAddToggleHtml(optionId) {
@@ -121,7 +135,7 @@ const OptionCard = (() => {
         <label class="option-sublabel">開始<input type="datetime-local" class="${prefix}-start" value="${AppUtil.toDatetimeLocalValue(values.startAt)}"></label>
         <label class="option-sublabel">完了<input type="datetime-local" class="${prefix}-end" value="${AppUtil.toDatetimeLocalValue(values.endAt)}"></label>
       </div>
-      <input type="text" class="${prefix}-location option-location" value="${AppUtil.escapeHtml(values.location || '')}" placeholder="📍 場所（任意）">`;
+      <input type="text" class="${prefix}-location option-location" value="${AppUtil.escapeHtml(values.location || '')}" placeholder="📍 場所・持ち物など（任意）">`;
   }
 
   function fieldsHtml(prefix, values) {

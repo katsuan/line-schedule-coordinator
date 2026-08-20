@@ -23,7 +23,7 @@ const DetailView = (() => {
     await renderSummary(root, ctx, data, refresh);
   }
 
-  function headerHtml(event, data) {
+  function headerHtml(event, data, canEdit) {
     const statusPill = data.isCreator
       ? '<span class="status-pill status-pill-creator">作成者</span>'
       : data.isEditor
@@ -35,13 +35,55 @@ const DetailView = (() => {
           <a class="btn-back" href="?view=list">← 一覧へ</a>
           <button type="button" id="refresh-event" class="btn-refresh" aria-label="最新の状態に更新">🔄</button>
         </div>
-        <div class="page-header-title-row">
-          <h1>${AppUtil.titleIconHtml(event.title)}</h1>
-          ${statusPill}
+        <div id="event-header-view">
+          <div class="page-header-title-row">
+            <h1>${AppUtil.titleIconHtml(event.title)}</h1>
+            ${statusPill}
+            ${canEdit ? `<button type="button" id="edit-event-btn" class="edit-option-btn" aria-label="予定を編集">✏️</button>` : ''}
+          </div>
+          ${event.description ? `<p class="event-description">${AppUtil.escapeHtml(event.description)}</p>` : ''}
+          ${event.deadline ? `<p class="event-meta">回答期限: ${AppUtil.formatDateTimeLocal(event.deadline)}</p>` : ''}
         </div>
-        ${event.description ? `<p class="event-description">${AppUtil.escapeHtml(event.description)}</p>` : ''}
-        ${event.deadline ? `<p class="event-meta">回答期限: ${AppUtil.formatDateTimeLocal(event.deadline)}</p>` : ''}
+        ${canEdit ? `
+        <div id="event-header-edit" class="option-edit-form" hidden>
+          <input type="text" id="edit-event-title" value="${AppUtil.escapeHtml(event.title)}" placeholder="予定のタイトル">
+          <textarea id="edit-event-description" placeholder="説明（任意）">${AppUtil.escapeHtml(event.description || '')}</textarea>
+          <input type="datetime-local" id="edit-event-deadline" value="${AppUtil.toDatetimeLocalValue(event.deadline)}">
+          <div class="option-edit-actions">
+            <button type="button" class="btn" id="save-event-btn">保存</button>
+            <button type="button" class="btn" id="cancel-event-btn">キャンセル</button>
+          </div>
+        </div>` : ''}
       </div>`;
+  }
+
+  function wireEventEdit(root, ctx, refresh) {
+    const editBtn = root.querySelector('#edit-event-btn');
+    if (!editBtn) return;
+    const view = root.querySelector('#event-header-view');
+    const form = root.querySelector('#event-header-edit');
+    editBtn.addEventListener('click', () => {
+      view.hidden = true;
+      form.hidden = false;
+    });
+    root.querySelector('#cancel-event-btn').addEventListener('click', () => {
+      form.hidden = true;
+      view.hidden = false;
+    });
+    root.querySelector('#save-event-btn').addEventListener('click', async (e) => {
+      const title = root.querySelector('#edit-event-title').value.trim();
+      if (!title) { alert('タイトルを入力してください'); return; }
+      const description = root.querySelector('#edit-event-description').value.trim();
+      const deadline = root.querySelector('#edit-event-deadline').value;
+      const stopLoading = AppUtil.beginButtonLoading(e.target);
+      try {
+        await AppApi.updateEvent({ eventId: ctx.eventId, userId: ctx.identity.userId, title, description, deadline });
+        await refresh();
+      } catch (err) {
+        alert('更新に失敗しました: ' + err.message);
+        stopLoading();
+      }
+    });
   }
 
   function shareButtonHtml(label) {
@@ -78,17 +120,26 @@ const DetailView = (() => {
       const answerByUser = {};
       ['○', '△', '×'].forEach((a) => (row.respondents[a] || []).forEach((r) => { answerByUser[r.userId] = a; }));
       const enrichedComments = (row.comments || []).map((c) => ({ ...c, answer: answerByUser[c.userId] }));
-      const commentedUserIds = new Set((row.comments || []).map((c) => c.userId));
+      const commentTextByUser = {};
+      (row.comments || []).forEach((c) => {
+        (commentTextByUser[c.userId] = commentTextByUser[c.userId] || []).push(c.text);
+      });
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
         if (!list.length) return '<p class="empty-respondents">なし</p>';
+        const sorted = [...list].sort((a, b) => (commentTextByUser[b.userId] ? 1 : 0) - (commentTextByUser[a.userId] ? 1 : 0));
         return `<div class="respondent-list">
-          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">
-            <span class="avatar-wrap">
-              ${AppUtil.avatarHtml(r.displayName, r.pictureUrl, answer)}
-              ${commentedUserIds.has(r.userId) ? '<span class="avatar-comment-badge">💬</span>' : ''}
-            </span>
-            <span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span></span>`).join('')}
+          ${sorted.map((r) => {
+            const comments = commentTextByUser[r.userId];
+            return `<span class="respondent${r.userId === myUserId ? ' me' : ''}">
+              <span class="avatar-wrap"${comments ? ' role="button" tabindex="0" data-comment-toggle="1"' : ''}>
+                ${AppUtil.avatarHtml(r.displayName, r.pictureUrl, answer)}
+                ${comments ? '<span class="avatar-comment-badge">💬</span>' : ''}
+              </span>
+              <span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span>
+              ${comments ? `<span class="respondent-comment-popup" hidden>${comments.map((t) => AppUtil.escapeHtml(t)).join('<br>')}</span>` : ''}
+            </span>`;
+          }).join('')}
         </div>`;
       };
       const groupBlock = (answer) => `
@@ -102,8 +153,7 @@ const DetailView = (() => {
         if (names.length) groups[a] = names;
       });
       const totalCount = row.counts['○'] + row.counts['△'] + row.counts['×'];
-      return `
-        <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
+      const cardBody = `
           ${OptionCard.metaHtml(row.option, canEdit, enrichedComments, myUserId)}
           <div class="summary-answer-row">
             ${OptionCard.answerButtonsHtml(row.option.optionId, myAnswers[row.option.optionId], row.counts)}
@@ -118,9 +168,36 @@ const DetailView = (() => {
           <details>
             <summary>回答者を見る（${totalCount}人）</summary>
             ${groupBlock('○')}${groupBlock('△')}${groupBlock('×')}
-          </details>
+          </details>`;
+      const isPast = isOptionPast(row.option);
+      if (isPast) {
+        return `
+        <details class="summary-row-collapsed">
+          <summary>${AppUtil.titleIconHtml(row.option.title || '(タイトルなし)')}（終了）</summary>
+          <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
+            ${cardBody}
+          </div>
+        </details>`;
+      }
+      return `
+        <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
+          ${cardBody}
         </div>`;
     }).join('');
+  }
+
+  function isOptionPast(opt) {
+    const end = opt.endAt || opt.startAt;
+    return !!end && new Date(end) < new Date();
+  }
+
+  function wireRespondentComments(root) {
+    root.querySelectorAll('.avatar-wrap[data-comment-toggle]').forEach((wrap) => {
+      wrap.addEventListener('click', () => {
+        const popup = wrap.parentElement.querySelector('.respondent-comment-popup');
+        if (popup) popup.hidden = !popup.hidden;
+      });
+    });
   }
 
   function wireRemindButtons(root, eventTitle, eventId) {
@@ -157,7 +234,7 @@ const DetailView = (() => {
     const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId, data.myAnswers);
 
     root.innerHTML = `
-      ${headerHtml(data.event, data)}
+      ${headerHtml(data.event, data, canEdit)}
       <p class="event-meta">タップすると自動的に保存されます。</p>
       <section>
         <p class="event-meta">イベント数：${data.options.length}件 / 回答者数：${summaryData.totalRespondents}人</p>
@@ -187,6 +264,8 @@ const DetailView = (() => {
     `;
 
     wireRemindButtons(root, data.event.title, ctx.eventId);
+    wireRespondentComments(root);
+    wireEventEdit(root, ctx, refresh);
     OptionCard.wireAnswerButtons(root, ctx, refresh);
     OptionCard.wireComments(root, ctx, refresh);
     wireCommonActions(root, ctx, { canShare: canEdit, isCreator: data.isCreator });

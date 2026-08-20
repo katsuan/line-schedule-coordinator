@@ -31,17 +31,25 @@ function _createInfoRow_(label, value) {
 }
 
 const ANSWER_COLOR = { '○': '#2D8A4E', '△': '#C9862B', '×': '#D93025' };
+const ANSWER_BG = { '○': '#E9F7EF', '△': '#FFF6E5', '×': '#FDEDEB' };
 
 function _createAnswerGroupRow_(answer, value) {
   return {
     type: 'box',
     layout: 'baseline',
     spacing: 'sm',
+    backgroundColor: ANSWER_BG[answer] || undefined,
+    cornerRadius: 'md',
+    paddingAll: 'sm',
     contents: [
       { type: 'text', text: answer, size: 'sm', weight: 'bold', color: ANSWER_COLOR[answer] || COLOR.SUB_TEXT, flex: 2 },
       { type: 'text', text: String(value), size: 'sm', color: COLOR.TEXT, flex: 5, wrap: true },
     ],
   };
+}
+
+function _createSnapshotNoteRow_() {
+  return { type: 'text', text: '※送信時点の回答状況です', size: 'xxs', color: COLOR.SUB_TEXT, margin: 'md' };
 }
 
 function _createFlexBody_(rows) {

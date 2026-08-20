@@ -45,6 +45,30 @@ function createEvent_(payload) {
   return { eventId };
 }
 
+function updateEvent_(payload) {
+  const { eventId, userId, title, description, deadline } = payload;
+  if (!eventId || !title) {
+    throw new Error('eventId / title は必須です');
+  }
+  const event = findEventById_(eventId);
+  if (!event) {
+    throw new Error('イベントが見つかりません');
+  }
+  if (!isEditorOrCreator_(event, userId)) {
+    throw new Error('編集できるのは作成者・編集者のみです');
+  }
+
+  updateRowObject_(SHEET.EVENTS, event._rowIndex, {
+    ...event,
+    title,
+    description: description !== undefined ? description : event.description,
+    deadline: deadline !== undefined ? deadline : event.deadline,
+    updatedAt: new Date(),
+  });
+
+  return { ok: true };
+}
+
 function addOptions_(payload) {
   const { eventId, userId, options } = payload;
   if (!eventId || !options || !options.length) {
