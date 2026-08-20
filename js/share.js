@@ -12,12 +12,19 @@ const AppShare = (() => {
   }
 
   const BUTTON_LINE_PREFIX = ' BTN ';
+  const TITLE_LINE_PREFIX = ' TTL ';
+  const CARD_START = ' CARDSTART ';
+  const CARD_END = ' CARDEND ';
   const ANSWER_LINE_PREFIX = { '○': ' ANSok ', '△': ' ANSmb ', '×': ' ANSng ' };
 
   function walkPreviewLines(node, lines) {
     if (!node) return;
     if (node.type === 'separator') { lines.push('---'); return; }
-    if (node.type === 'text') { lines.push(collectText(node)); return; }
+    if (node.type === 'text') {
+      const text = collectText(node);
+      lines.push(node.weight === 'bold' ? TITLE_LINE_PREFIX + text : text);
+      return;
+    }
     if (node.type === 'button') { lines.push(BUTTON_LINE_PREFIX + node.action.label); return; }
     if (node.type === 'box') {
       if (node.action) { lines.push(BUTTON_LINE_PREFIX + collectText(node)); return; }
@@ -28,7 +35,10 @@ const AppShare = (() => {
         const prefix = ANSWER_LINE_PREFIX[label] || '';
         lines.push(prefix + line);
       } else if (node.contents) {
+        const isCard = !!node.backgroundColor;
+        if (isCard) lines.push(CARD_START);
         node.contents.forEach((c) => walkPreviewLines(c, lines));
+        if (isCard) lines.push(CARD_END);
       }
     }
   }
@@ -44,9 +54,14 @@ const AppShare = (() => {
 
   function renderPreviewLinesHtml(lines) {
     return lines.map((l) => {
+      if (l === CARD_START) return '<div class="flex-preview-card">';
+      if (l === CARD_END) return '</div>';
       if (l === '---') return '<hr class="flex-preview-sep">';
       if (l.startsWith(BUTTON_LINE_PREFIX)) {
         return `<div class="flex-preview-button">${AppUtil.escapeHtml(l.slice(BUTTON_LINE_PREFIX.length))}</div>`;
+      }
+      if (l.startsWith(TITLE_LINE_PREFIX)) {
+        return `<p class="flex-preview-line flex-preview-title">${AppUtil.escapeHtml(l.slice(TITLE_LINE_PREFIX.length))}</p>`;
       }
       const ansPrefix = Object.keys(ANSWER_LINE_CLASS).find((p) => l.startsWith(p));
       if (ansPrefix) {
@@ -376,5 +391,45 @@ const AppShare = (() => {
     return sendFlexMessage(flex, { closeAfter: false });
   }
 
-  return { shareEvent, remindRespondents, inviteEditor, notifyChange };
+  async function shareApp() {
+    const config = await AppConfig.load();
+    const liffUrl = config.liffId ? `https://liff.line.me/${config.liffId}` : '';
+    const flex = {
+      altText: 'Botの追加なしで日程調整ができるアプリです',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          paddingBottom: 'md',
+          contents: [
+            { type: 'text', text: '🗓️ 日程調整', weight: 'bold', size: 'lg', color: '#111111' },
+            {
+              type: 'text', size: 'sm', color: '#8C8C8C', wrap: true, margin: 'md',
+              text: 'Botの追加なしで、候補日をつくって共有するだけ。○△×で回答が集まります。',
+            },
+          ],
+        },
+        footer: liffUrl ? {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'sm',
+          paddingAll: 'lg',
+          contents: [{
+            type: 'box',
+            layout: 'vertical',
+            backgroundColor: '#4F46E5',
+            cornerRadius: 'xxl',
+            paddingAll: 'md',
+            action: { type: 'uri', label: '使ってみる', uri: liffUrl },
+            contents: [{ type: 'text', text: '使ってみる', color: '#ffffff', align: 'center', weight: 'bold', size: 'md' }],
+          }],
+        } : undefined,
+        styles: liffUrl ? { footer: { separator: true, separatorColor: '#EEEEEE' } } : undefined,
+      },
+    };
+    return sendFlexMessage(flex, { closeAfter: false });
+  }
+
+  return { shareEvent, remindRespondents, inviteEditor, notifyChange, shareApp };
 })();

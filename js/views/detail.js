@@ -34,7 +34,10 @@ const DetailView = (() => {
       <div class="page-header">
         <div class="page-header-top-row">
           <a class="btn-back" href="?view=list">← 一覧へ</a>
-          <button type="button" id="refresh-event" class="btn-refresh" aria-label="最新の状態に更新">🔄</button>
+          <div class="page-header-top-actions">
+            <button type="button" id="share-app-btn" class="btn-refresh" aria-label="このアプリを紹介する">📣</button>
+            <button type="button" id="refresh-event" class="btn-refresh" aria-label="最新の状態に更新">🔄</button>
+          </div>
         </div>
         <div id="event-header-view">
           <div class="page-header-title-row">
@@ -105,6 +108,9 @@ const DetailView = (() => {
   }
 
   function wireCommonActions(root, ctx, { canShare, isCreator }) {
+    AppUtil.wireAsyncButton(root.querySelector('#share-app-btn'), () => AppShare.shareApp(), {
+      errorPrefix: '共有に失敗しました',
+    });
     if (canShare) {
       AppUtil.wireAsyncButton(root.querySelector('#share-event'), () => AppShare.shareEvent(ctx.eventId), {
         errorPrefix: '共有に失敗しました',
