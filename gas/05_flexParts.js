@@ -30,6 +30,20 @@ function _createInfoRow_(label, value) {
   };
 }
 
+const ANSWER_COLOR = { '○': '#2D8A4E', '△': '#C9862B', '×': '#D93025' };
+
+function _createAnswerGroupRow_(answer, value) {
+  return {
+    type: 'box',
+    layout: 'baseline',
+    spacing: 'sm',
+    contents: [
+      { type: 'text', text: answer, size: 'sm', weight: 'bold', color: ANSWER_COLOR[answer] || COLOR.SUB_TEXT, flex: 2 },
+      { type: 'text', text: String(value), size: 'sm', color: COLOR.TEXT, flex: 5, wrap: true },
+    ],
+  };
+}
+
 function _createFlexBody_(rows) {
   return {
     type: 'box',
@@ -47,10 +61,15 @@ function _createFlexButtonFooter_(label, uri) {
     paddingAll: 'lg',
     contents: [
       {
-        type: 'button',
-        style: 'primary',
-        color: COLOR.PRIMARY,
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: COLOR.PRIMARY,
+        cornerRadius: 'xxl',
+        paddingAll: 'md',
         action: { type: 'uri', label, uri },
+        contents: [
+          { type: 'text', text: label, color: '#ffffff', align: 'center', weight: 'bold', size: 'md' },
+        ],
       },
     ],
   };

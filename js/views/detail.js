@@ -255,16 +255,18 @@ const DetailView = (() => {
       </section>
       ${canEdit ? `
         <section>
-          <h2>イベントを追加</h2>
-          <p class="event-meta">追加すると、既に回答した人も新しいイベントへの回答が必要になります。</p>
-          <div class="option-card">
-            <div class="option-card-head">
-              <span class="option-card-icon">🗓️</span>
-              ${OptionCard.titleFieldHtml('new-option')}
+          <details>
+            <summary>＋ イベントを追加</summary>
+            <p class="event-meta">追加すると、既に回答した人も新しいイベントへの回答が必要になります。</p>
+            <div class="option-card">
+              <div class="option-card-head">
+                <span class="option-card-icon">🗓️</span>
+                ${OptionCard.titleFieldHtml('new-option')}
+              </div>
+              ${OptionCard.rangeLocationFieldsHtml('new-option')}
+              <button id="add-option-btn" class="btn btn-primary" type="button">＋ このカードの内容でイベントを追加する</button>
             </div>
-            ${OptionCard.rangeLocationFieldsHtml('new-option')}
-            <button id="add-option-btn" class="btn btn-primary" type="button">＋ このカードの内容でイベントを追加する</button>
-          </div>
+          </details>
         </section>
         <section>
           ${shareButtonHtml('LINEで共有する')}
