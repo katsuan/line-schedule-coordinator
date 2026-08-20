@@ -42,7 +42,7 @@ const ListView = (() => {
       <div class="page-header">
         <h1>自分の予定</h1>
         <div class="header-actions">
-          <a class="btn" href="?view=calendar">📅 カレンダー</a>
+          <a class="btn" href="?view=calendar">🗓️ カレンダー</a>
           <a class="btn btn-primary" href="?view=create">＋ 新規作成</a>
         </div>
       </div>

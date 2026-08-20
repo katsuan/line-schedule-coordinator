@@ -3,7 +3,7 @@ const CreateView = (() => {
     return `
       <div class="option-card" data-index="${index}">
         <div class="option-card-head">
-          <span class="option-card-icon">📅</span>
+          <span class="option-card-icon">🗓️</span>
           ${OptionCard.titleFieldHtml('option', null, 'イベント名（例: BBQ）')}
           <button type="button" class="btn-remove-option" aria-label="このイベントを削除">×</button>
         </div>

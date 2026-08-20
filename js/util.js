@@ -42,7 +42,7 @@ const AppUtil = (() => {
   function extractIcon(title) {
     const trimmed = String(title || '').trim();
     const firstChar = Array.from(trimmed)[0] || '';
-    return (firstChar && EMOJI_REGEX.test(firstChar)) ? firstChar : '📅';
+    return (firstChar && EMOJI_REGEX.test(firstChar)) ? firstChar : '🗓️';
   }
 
   function titleIconHtml(title) {
@@ -52,7 +52,7 @@ const AppUtil = (() => {
       const rest = trimmed.slice(firstChar.length).trim();
       return `${firstChar} ${escapeHtml(rest || trimmed)}`;
     }
-    return `📅 ${escapeHtml(trimmed)}`;
+    return `🗓️ ${escapeHtml(trimmed)}`;
   }
 
   function shortTime(isoLike) {
