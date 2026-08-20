@@ -21,13 +21,9 @@ const OptionCard = (() => {
   }
 
   function answerInlineHtml(optionId, myAnswer) {
-    const cls = ANSWER_CLASS[myAnswer] || 'dot-none';
     return `
       <span class="answer-inline" data-option-id="${optionId}">
-        <button type="button" class="answer-icon answer-inline-badge ${cls}" aria-label="回答を変更">${myAnswer || '-'}</button>
-        <span class="answer-inline-choices" hidden>
-          ${ANSWERS.map((a) => `<button type="button" class="choice-btn choice-inline ${ANSWER_CLASS[a]} ${myAnswer === a ? 'selected' : ''}" data-value="${a}">${a}</button>`).join('')}
-        </span>
+        ${ANSWERS.map((a) => `<button type="button" class="choice-btn choice-inline ${ANSWER_CLASS[a]} ${myAnswer === a ? 'selected' : ''}" data-value="${a}">${a}</button>`).join('')}
       </span>`;
   }
 
@@ -113,8 +109,8 @@ const OptionCard = (() => {
     values = values || {};
     return `
       <div class="option-range">
-        <label class="option-sublabel">開始<input type="datetime-local" step="900" class="${prefix}-start" value="${AppUtil.toDatetimeLocalValue(values.startAt)}"></label>
-        <label class="option-sublabel">完了<input type="datetime-local" step="900" class="${prefix}-end" value="${AppUtil.toDatetimeLocalValue(values.endAt)}"></label>
+        <label class="option-sublabel">開始<input type="datetime-local" class="${prefix}-start" value="${AppUtil.toDatetimeLocalValue(values.startAt)}"></label>
+        <label class="option-sublabel">完了<input type="datetime-local" class="${prefix}-end" value="${AppUtil.toDatetimeLocalValue(values.endAt)}"></label>
       </div>
       <input type="text" class="${prefix}-location option-location" value="${AppUtil.escapeHtml(values.location || '')}" placeholder="📍 場所（任意）">`;
   }
@@ -141,11 +137,11 @@ const OptionCard = (() => {
             ${myAnswer !== undefined ? answerInlineHtml(opt.optionId, myAnswer) : ''}
             ${canEdit ? `<button type="button" class="edit-option-btn" aria-label="編集">✏️</button>` : ''}
           </div>
-          <div class="option-meta-info-row">
+          <div class="option-meta-info-row option-meta-info-row-split">
             <span class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)} ${AppUtil.relativeDayPillHtml(opt.startAt)}</span>
-            ${opt.location ? `<span class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</span>` : ''}
             ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
           </div>
+          ${opt.location ? `<div class="option-meta-info-row"><span class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</span></div>` : ''}
           ${myAnswer !== undefined ? commentHtml(opt.optionId, myComments) : ''}
         </div>
         ${canEdit ? `
@@ -214,20 +210,12 @@ const OptionCard = (() => {
 
   function wireInlineAnswerToggles(root, ctx, refresh) {
     root.querySelectorAll('.answer-inline').forEach((wrap) => {
-      const badge = wrap.querySelector('.answer-inline-badge');
-      const choices = wrap.querySelector('.answer-inline-choices');
-
-      badge.addEventListener('click', () => {
-        badge.hidden = true;
-        choices.hidden = false;
-      });
-
-      choices.addEventListener('click', async (e) => {
+      wrap.addEventListener('click', async (e) => {
         const btn = e.target.closest('.choice-btn');
         if (!btn) return;
         const optionId = wrap.dataset.optionId;
         const value = btn.dataset.value;
-        choices.querySelectorAll('.choice-btn').forEach((b) => {
+        wrap.querySelectorAll('.choice-btn').forEach((b) => {
           b.classList.toggle('selected', b === btn);
           b.disabled = true;
         });
@@ -244,7 +232,7 @@ const OptionCard = (() => {
         } catch (err) {
           alert('回答の保存に失敗しました: ' + err.message);
           stopLoading();
-          choices.querySelectorAll('.choice-btn').forEach((b) => { b.disabled = false; });
+          wrap.querySelectorAll('.choice-btn').forEach((b) => { b.disabled = false; });
         }
       });
     });
