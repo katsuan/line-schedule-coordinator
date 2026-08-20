@@ -12,11 +12,14 @@
       CreateView.render(root, ctx);
     } else if (view === 'calendar') {
       await CalendarView.render(root, ctx);
-    } else {
+    } else if (view === 'list') {
       await ListView.render(root, ctx);
+    } else {
+      // パラメータなしでの起動（LIFFルートURLへの直接アクセスなど）はガイド画面を入口にする
+      GuideView.render(root, ctx);
     }
   } catch (err) {
     console.error(err);
-    root.innerHTML = `<div class="error">エラーが発生しました: ${AppUtil.escapeHtml(err.message)}</div>`;
+    GuideView.render(root, {}, { errorMessage: err.message });
   }
 })();

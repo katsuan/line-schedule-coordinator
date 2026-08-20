@@ -650,6 +650,80 @@
     cursor: pointer;
   }
   .preset-chip.selected { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .guide-notice {
+    background: #FDF3F2;
+    color: #D93025;
+    border: 1px solid #F3D4D1;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+  .guide-hero { text-align: center; margin: 8px 0 20px; }
+  .guide-hero-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 14px;
+    border-radius: 14px;
+    background: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+  }
+  .guide-hero h1 { font-size: 1.35rem; line-height: 1.5; margin: 0 0 8px; }
+  .guide-hero .event-meta { max-width: 32ch; margin: 0 auto; }
+  .guide-section { margin-top: 32px; }
+  .guide-label {
+    font-size: 0.72rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin: 0 0 6px;
+  }
+  .guide-section-title { margin: 0 0 12px; }
+  .guide-step-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: var(--bg);
+  }
+  .guide-step-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+  .guide-step-list li { display: flex; gap: 12px; align-items: flex-start; }
+  .guide-step-num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #EEF0FF;
+    color: var(--primary);
+    font-weight: bold;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .guide-step-title { font-weight: bold; font-size: 0.88rem; margin: 0 0 2px; }
+  .guide-answer-demo { display: flex; justify-content: center; gap: 22px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .guide-answer-demo-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .guide-answer-demo-item .choice-btn { pointer-events: none; }
+  .guide-role-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    background: var(--bg);
+    margin-bottom: 10px;
+  }
+  .guide-role-card .status-badge { display: inline-block; margin-bottom: 10px; }
+  .guide-role-can { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+  .guide-role-can li { font-size: 0.85rem; color: var(--sub-text); padding-left: 18px; position: relative; }
+  .guide-role-can li::before { content: "✓"; position: absolute; left: 0; color: var(--primary); font-weight: bold; }
+  .guide-faq-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .guide-faq-q { font-weight: bold; font-size: 0.86rem; margin: 0 0 4px; }
 </style>
 </head>
 <body>
@@ -673,6 +747,7 @@
 <script src="js/views/create.js?v=202608202314"></script>
 <script src="js/views/detail.js?v=202608202314"></script>
 <script src="js/views/calendar.js?v=202608202314"></script>
-<script src="js/app.js?v=202608202314"></script>
+<script src="js/views/guide.js?v=202608202356"></script>
+<script src="js/app.js?v=202608202356"></script>
 </body>
 </html>
