@@ -75,24 +75,25 @@ const DetailView = (() => {
     myAnswers = myAnswers || {};
     myComments = myComments || {};
     return summary.map((row, rowIndex) => {
+      const commentsByUser = (row.comments || []).reduce((map, c) => {
+        (map[c.userId] = map[c.userId] || []).push(c);
+        return map;
+      }, {});
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
         if (!list.length) return '<p class="empty-respondents">なし</p>';
         return `<div class="respondent-list">
-          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span></span>`).join('')}
+          ${list.map((r) => `<span class="respondent${r.userId === myUserId ? ' me' : ''}">${avatarHtml(r.displayName, r.pictureUrl)}<span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}${(commentsByUser[r.userId] || []).map((c) => `<br><span class="respondent-comment">💬 ${AppUtil.escapeHtml(c.text)}</span>`).join('')}</span></span>`).join('')}
         </div>`;
       };
-      const groupLabel = (answer) => {
-        const list = row.respondents[answer] || [];
-        const names = list.map((r) => r.displayName).join(',');
-        return `<label class="respondent-label remind-check-label">
-          <input type="checkbox" class="remind-check" data-answer="${answer}" data-names="${AppUtil.escapeHtml(names)}" ${list.length ? '' : 'disabled'}>
-          ${answer}
-        </label>`;
-      };
+      const groups = {};
+      ['○', '△', '×'].forEach((a) => {
+        const names = (row.respondents[a] || []).map((r) => r.displayName);
+        if (names.length) groups[a] = names;
+      });
       const totalCount = row.counts['○'] + row.counts['△'] + row.counts['×'];
       return `
-        <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}">
+        <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
           ${OptionCard.metaHtml(row.option, canEdit, myAnswers[row.option.optionId], myComments[row.option.optionId])}
           <div class="summary-counts">
             <span>${OptionCard.answerIcon('○')} ${row.counts['○']}</span>
@@ -100,12 +101,12 @@ const DetailView = (() => {
             <span>${OptionCard.answerIcon('×')} ${row.counts['×']}</span>
             ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
           </div>
+          ${totalCount ? `<button type="button" class="btn remind-btn" data-row="${rowIndex}">連絡する</button>` : ''}
           <details>
             <summary>回答者を見る（${totalCount}人）</summary>
-            ${groupLabel('○')}${respondentsHtml('○')}
-            ${groupLabel('△')}${respondentsHtml('△')}
-            ${groupLabel('×')}${respondentsHtml('×')}
-            <button type="button" class="btn remind-btn" data-row="${rowIndex}">選択した人に連絡する</button>
+            <p class="respondent-label">○</p>${respondentsHtml('○')}
+            <p class="respondent-label">△</p>${respondentsHtml('△')}
+            <p class="respondent-label">×</p>${respondentsHtml('×')}
           </details>
         </div>`;
     }).join('');
@@ -115,11 +116,8 @@ const DetailView = (() => {
     root.querySelectorAll('.remind-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const rowEl = btn.closest('.summary-row');
-        const groups = {};
-        (rowEl || root).querySelectorAll('.remind-check:checked').forEach((cb) => {
-          groups[cb.dataset.answer] = cb.dataset.names.split(',').filter(Boolean);
-        });
-        if (!Object.keys(groups).length) { alert('連絡先を選択してください'); return; }
+        const groups = rowEl && rowEl.dataset.groups ? JSON.parse(rowEl.dataset.groups) : {};
+        if (!Object.keys(groups).length) return;
 
         btn.disabled = true;
         btn.textContent = '送信中...';
@@ -132,10 +130,10 @@ const DetailView = (() => {
             optionLocation: rowEl ? rowEl.dataset.optionLocation : '',
           });
           btn.textContent = '送信しました';
-          setTimeout(() => { btn.textContent = '選択した人に連絡する'; btn.disabled = false; }, 2000);
+          setTimeout(() => { btn.textContent = '連絡する'; btn.disabled = false; }, 2000);
         } catch (err) {
           alert('連絡の送信に失敗しました: ' + err.message);
-          btn.textContent = '選択した人に連絡する';
+          btn.textContent = '連絡する';
           btn.disabled = false;
         }
       });

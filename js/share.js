@@ -82,16 +82,18 @@ const AppShare = (() => {
     node.contents.forEach((child) => removeRowsByLabel(child, labels));
   }
 
-  function stripRecipientInfo(flex) {
+  function filterGroups(flex, unselectedAnswers) {
+    if (!unselectedAnswers || !unselectedAnswers.length) return flex;
     const bubble = JSON.parse(JSON.stringify(flex.contents));
-    removeRowsByLabel(bubble.body, ['○', '△', '×']);
-    return { altText: flex.altText.replace(/^.+?への連絡/, '連絡'), contents: bubble };
+    removeRowsByLabel(bubble.body, unselectedAnswers);
+    return { altText: flex.altText, contents: bubble };
   }
 
   function showPreviewModal(flex, opts) {
     const presets = (opts && opts.presets) || [];
     const defaultIndex = (opts && opts.defaultPresetIndex) || 0;
-    const allowHideRecipients = !!(opts && opts.allowHideRecipients);
+    const groups = (opts && opts.groups) || null;
+    const groupAnswers = groups ? ['○', '△', '×'].filter((a) => groups[a] && groups[a].length) : [];
     return new Promise((resolve) => {
       const lines = buildPreviewLines(flex);
       const overlay = document.createElement('div');
@@ -108,11 +110,15 @@ const AppShare = (() => {
               ? '<hr class="flex-preview-sep">'
               : `<p class="flex-preview-line">${AppUtil.escapeHtml(l)}</p>`).join('')}
           </div>
-          ${allowHideRecipients ? `
-            <label class="preview-checkbox-label">
-              <input type="checkbox" id="preview-hide-recipients">
-              宛先の名前を隠して送信する（グループ転送などを想定する場合）
-            </label>` : ''}
+          ${groupAnswers.length ? `
+            <p class="event-meta">送信対象</p>
+            <div class="preview-group-select">
+              ${groupAnswers.map((a) => `
+                <label class="preview-checkbox-label">
+                  <input type="checkbox" class="preview-group-check" data-answer="${a}" checked>
+                  ${a}（${groups[a].length}人）
+                </label>`).join('')}
+            </div>` : ''}
           <label class="preview-comment-label">
             コメントを追加（任意）
             ${presets.length ? `
@@ -143,10 +149,15 @@ const AppShare = (() => {
       overlay.querySelector('#preview-cancel').addEventListener('click', () => close(null));
       overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
       overlay.querySelector('#preview-confirm').addEventListener('click', () => {
-        const hideCheckbox = overlay.querySelector('#preview-hide-recipients');
+        const groupChecks = overlay.querySelectorAll('.preview-group-check');
+        const unselectedAnswers = Array.from(groupChecks).filter((cb) => !cb.checked).map((cb) => cb.dataset.answer);
+        if (groupChecks.length && unselectedAnswers.length === groupChecks.length) {
+          alert('連絡先を1つ以上選択してください');
+          return;
+        }
         close({
           comment: textarea.value.trim(),
-          hideRecipients: !!(hideCheckbox && hideCheckbox.checked),
+          unselectedAnswers,
           presetIndex,
         });
       });
@@ -157,7 +168,7 @@ const AppShare = (() => {
     const result = await showPreviewModal(flex, opts);
     if (result === null) return false;
 
-    let finalFlex = result.hideRecipients ? stripRecipientInfo(flex) : flex;
+    let finalFlex = filterGroups(flex, result.unselectedAnswers);
     finalFlex = applyComment(finalFlex, result.comment, result.presetIndex);
     const message = {
       type: 'flex',
@@ -200,7 +211,7 @@ const AppShare = (() => {
     const flex = await AppApi.buildReminderFlex(params);
     const hasMaybe = !!(params.groups && params.groups['△'] && params.groups['△'].length);
     const defaultPresetIndex = hasMaybe ? 1 : 0;
-    return sendFlexMessage(flex, { closeAfter: false, presets: REMIND_PRESETS, defaultPresetIndex, allowHideRecipients: true });
+    return sendFlexMessage(flex, { closeAfter: false, presets: REMIND_PRESETS, defaultPresetIndex, groups: params.groups });
   }
 
   async function inviteEditor(eventId) {
