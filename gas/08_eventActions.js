@@ -27,7 +27,7 @@ function createEvent_(payload) {
     createdAt: now,
     updatedAt: now,
     editorUserIds: '',
-    icon: icon || '📅',
+    icon: icon || '🗓️',
   });
 
   options.forEach((opt, index) => {
