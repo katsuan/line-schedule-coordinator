@@ -20,7 +20,6 @@ const CreateView = (() => {
       <form id="create-form">
         <label>予定のタイトル（例: 8月）<input type="text" id="f-title" required></label>
         <label>説明（任意）<textarea id="f-description"></textarea></label>
-        <label>回答期限（任意）<input type="datetime-local" id="f-deadline"></label>
         <div class="options-block">
           <label>イベント</label>
           <div id="option-list">${optionCardHtml(0)}</div>
@@ -50,7 +49,6 @@ const CreateView = (() => {
       e.preventDefault();
       const title = root.querySelector('#f-title').value.trim();
       const description = root.querySelector('#f-description').value.trim();
-      const deadline = root.querySelector('#f-deadline').value;
 
       const optionCards = Array.from(optionList.querySelectorAll('.option-card'));
       const options = optionCards
@@ -71,7 +69,7 @@ const CreateView = (() => {
       submitBtn.disabled = true;
       try {
         const { eventId } = await AppApi.createEvent({
-          title, description, deadline, options,
+          title, description, options,
           creatorUserId: ctx.identity.userId,
           creatorDisplayName: ctx.identity.displayName,
           creatorPictureUrl: ctx.identity.pictureUrl,

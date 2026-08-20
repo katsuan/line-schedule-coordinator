@@ -30,7 +30,6 @@ const ListView = (() => {
             <span class="event-title">${AppUtil.titleIconHtml(e.title)}</span>
             <span class="event-row-right">
               ${statusBadge(e)}
-              <span class="event-meta">${e.deadline ? '期限 ' + AppUtil.formatDateTimeLocal(e.deadline) : ''}</span>
             </span>
           </a>
         </li>`).join('')}</ul>`;

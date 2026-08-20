@@ -299,10 +299,22 @@
     cursor: pointer;
     padding: 2px 4px;
   }
-  .page-header-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .page-header-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .page-header-title-row h1 { flex: 1; min-width: 0; }
   .status-pill { flex-shrink: 0; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: bold; }
   .status-pill-creator { background: #EAF0FE; color: #4F46E5; }
   .status-pill-editor { background: #F0F0F0; color: var(--sub-text); }
+  .editors-count-btn {
+    flex-shrink: 0;
+    border: none;
+    background: #F0F0F0;
+    color: var(--sub-text);
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
   .cal-link {
     display: inline-flex;
     align-items: center;

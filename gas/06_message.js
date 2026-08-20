@@ -15,10 +15,8 @@ function buildEventShareFlex_(eventId) {
   const responses = getEventResponses_(eventId);
 
   const answeredUserIds = new Set(responses.map((r) => r.userId));
-  const deadlineText = event.deadline ? formatDateTime_(event.deadline) : 'なし';
 
   const headerRows = [
-    _createInfoRow_('回答期限', deadlineText),
     _createInfoRow_('回答', answeredUserIds.size + '人'),
   ];
 
