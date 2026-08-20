@@ -31,7 +31,10 @@ const DetailView = (() => {
         : '';
     return `
       <div class="page-header">
-        <a class="btn-back" href="?view=list">← 一覧へ</a>
+        <div class="page-header-top-row">
+          <a class="btn-back" href="?view=list">← 一覧へ</a>
+          <button type="button" id="refresh-event" class="btn-refresh" aria-label="最新の状態に更新">🔄 更新</button>
+        </div>
         <div class="page-header-title-row">
           <h1>${AppUtil.titleIconHtml(event.title)}</h1>
           ${statusPill}
@@ -184,6 +187,15 @@ const DetailView = (() => {
     OptionCard.wireAnswerButtons(root, ctx, refresh);
     OptionCard.wireComments(root, ctx, refresh);
     wireCommonActions(root, ctx, { canShare: canEdit, isCreator: data.isCreator });
+
+    root.querySelector('#refresh-event').addEventListener('click', async (e) => {
+      const stopLoading = AppUtil.beginButtonLoading(e.currentTarget);
+      try {
+        await refresh();
+      } finally {
+        stopLoading();
+      }
+    });
 
     if (canEdit) {
       OptionCard.wireEditForms(root, ctx, refresh);

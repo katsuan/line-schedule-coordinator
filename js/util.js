@@ -103,14 +103,14 @@ const AppUtil = (() => {
   function calendarLinkHtml(title, description, startAt, endAt, location) {
     const url = buildGoogleCalendarUrl(title, description, startAt, endAt, location);
     if (!url) return '';
-    return `<a class="cal-link" href="${url}" target="_blank" rel="noopener">${CALENDAR_ICON_SVG}<span>カレンダーに追加</span></a>`;
+    return `<a class="cal-link" href="${url}" target="_blank" rel="noopener">${CALENDAR_ICON_SVG}<span>カレンダー追加</span></a>`;
   }
 
   const TIPS = [
     'イベントごとに○（参加）／△（未定）／×（不参加）で回答できます。',
     '回答はタップした瞬間に自動保存されます。送信ボタンは不要です。',
     'イベントには個別のタイトルを付けられます（例: BBQ、飲み会）。',
-    '各イベントの「カレンダーに追加」からGoogleカレンダーに直接登録できます。',
+    '各イベントの「カレンダー追加」からGoogleカレンダーに直接登録できます。',
     '作成者はイベントをあとから追加できます。全員の回答状況もいつでも確認できます。',
     '回答状況は、作成者だけでなく参加者もいつでも確認できます。',
     '共有ボタンからLINEでこの予定を友だちやグループに送れます。',
