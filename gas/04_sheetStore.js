@@ -11,6 +11,7 @@ const SCHEMA = {
   ],
   [SHEET.EVENT_OPTIONS]: ['optionId', 'eventId', 'startAt', 'endAt', 'sort', 'title', 'location'],
   [SHEET.RESPONSES]: ['eventId', 'optionId', 'userId', 'answer', 'answeredAt', 'updatedAt', 'comment'],
+  [SHEET.COMMENTS]: ['commentId', 'eventId', 'optionId', 'userId', 'text', 'createdAt'],
 };
 
 function getSpreadsheet_() {

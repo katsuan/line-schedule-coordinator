@@ -23,6 +23,8 @@ const AppApi = (() => {
     createEvent: (payload) => call('createEvent', payload),
     getEvent: (payload) => call('getEvent', payload),
     submitAnswer: (payload) => call('submitAnswer', payload),
+    addComment: (payload) => call('addComment', payload),
+    deleteComment: (payload) => call('deleteComment', payload),
     getSummary: (payload) => call('getSummary', payload),
     listMyEvents: (payload) => call('listMyEvents', payload),
     buildShareFlex: (payload) => call('buildShareFlex', payload),

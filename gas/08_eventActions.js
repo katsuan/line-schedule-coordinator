@@ -114,11 +114,20 @@ function getEvent_(payload) {
   const responses = getEventResponses_(eventId);
   const myResponses = responses.filter((r) => r.userId === userId);
   const myAnswers = {};
-  const myComments = {};
   myResponses.forEach((r) => {
     myAnswers[r.optionId] = r.answer;
-    if (r.comment) myComments[r.optionId] = r.comment;
   });
+
+  const { rows: allComments } = sheetRowsAsObjects_(SHEET.COMMENTS);
+  const myComments = {};
+  allComments
+    .filter((c) => c.eventId === eventId && c.userId === userId)
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .forEach((c) => {
+      (myComments[c.optionId] = myComments[c.optionId] || []).push({
+        commentId: c.commentId, text: c.text, createdAt: c.createdAt,
+      });
+    });
 
   return {
     event: stripRowMeta_(event),
@@ -168,9 +177,11 @@ function deleteEvent_(payload) {
 
   const { rows: optionRows } = sheetRowsAsObjects_(SHEET.EVENT_OPTIONS);
   const { rows: responseRows } = sheetRowsAsObjects_(SHEET.RESPONSES);
+  const { rows: commentRows } = sheetRowsAsObjects_(SHEET.COMMENTS);
 
   deleteRows_(SHEET.EVENT_OPTIONS, optionRows.filter((r) => r.eventId === eventId).map((r) => r._rowIndex));
   deleteRows_(SHEET.RESPONSES, responseRows.filter((r) => r.eventId === eventId).map((r) => r._rowIndex));
+  deleteRows_(SHEET.COMMENTS, commentRows.filter((r) => r.eventId === eventId).map((r) => r._rowIndex));
   deleteRows_(SHEET.EVENTS, [event._rowIndex]);
 
   return { ok: true };

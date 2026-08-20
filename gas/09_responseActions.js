@@ -17,22 +17,60 @@ function submitAnswer_(payload) {
   const { rows } = sheetRowsAsObjects_(SHEET.RESPONSES);
   const now = new Date();
 
-  answers.forEach(({ optionId, answer, comment }) => {
+  answers.forEach(({ optionId, answer }) => {
     const existing = rows.find((r) => r.eventId === eventId && r.optionId === optionId && r.userId === userId);
     if (existing) {
       updateRowObject_(SHEET.RESPONSES, existing._rowIndex, {
         eventId, optionId, userId, answer,
         answeredAt: existing.answeredAt || now,
         updatedAt: now,
-        comment: comment !== undefined ? comment : existing.comment,
+        comment: existing.comment,
       });
     } else {
       appendRowObject_(SHEET.RESPONSES, {
-        eventId, optionId, userId, answer, answeredAt: now, updatedAt: now, comment: comment || '',
+        eventId, optionId, userId, answer, answeredAt: now, updatedAt: now, comment: '',
       });
     }
   });
 
+  return { ok: true };
+}
+
+function addComment_(payload) {
+  const { eventId, optionId, userId, displayName, pictureUrl, text } = payload;
+  if (!eventId || !optionId || !userId || !text || !text.trim()) {
+    throw new Error('eventId / optionId / userId / text は必須です');
+  }
+  const event = findEventById_(eventId);
+  if (!event) {
+    throw new Error('イベントが見つかりません');
+  }
+
+  upsertUser_(userId, displayName, pictureUrl);
+
+  const commentId = 'CMT_' + Utilities.getUuid();
+  appendRowObject_(SHEET.COMMENTS, {
+    commentId, eventId, optionId, userId, text: text.trim(), createdAt: new Date(),
+  });
+
+  return { commentId };
+}
+
+function deleteComment_(payload) {
+  const { eventId, userId, commentId } = payload;
+  if (!eventId || !userId || !commentId) {
+    throw new Error('eventId / userId / commentId は必須です');
+  }
+  const { rows } = sheetRowsAsObjects_(SHEET.COMMENTS);
+  const comment = rows.find((r) => r.commentId === commentId && r.eventId === eventId);
+  if (!comment) {
+    throw new Error('コメントが見つかりません');
+  }
+  if (comment.userId !== userId) {
+    throw new Error('削除できるのは投稿者のみです');
+  }
+
+  deleteRows_(SHEET.COMMENTS, [comment._rowIndex]);
   return { ok: true };
 }
 
@@ -44,6 +82,7 @@ function getSummary_(payload) {
   }
   const options = getEventOptions_(eventId);
   const responses = getEventResponses_(eventId);
+  const { rows: comments } = sheetRowsAsObjects_(SHEET.COMMENTS);
 
   const { rows: users } = sheetRowsAsObjects_(SHEET.USERS);
   const userOf = (uid) => users.find((u) => u.userId === uid) || {};
@@ -53,19 +92,29 @@ function getSummary_(payload) {
   const summary = options.map((opt) => {
     const optResponses = responses.filter((r) => r.optionId === opt.optionId);
     const byAnswer = { [ANSWER.OK]: [], [ANSWER.MAYBE]: [], [ANSWER.NG]: [] };
-    let commentCount = 0;
     optResponses.forEach((r) => {
       if (byAnswer[r.answer]) {
         const u = userOf(r.userId);
-        if (r.comment) commentCount++;
         byAnswer[r.answer].push({
           userId: r.userId,
           displayName: u.displayName || '(名前未取得)',
           pictureUrl: u.pictureUrl || '',
-          comment: r.comment || '',
         });
       }
     });
+    const optComments = comments
+      .filter((c) => c.optionId === opt.optionId)
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      .map((c) => {
+        const u = userOf(c.userId);
+        return {
+          commentId: c.commentId,
+          userId: c.userId,
+          displayName: u.displayName || '(名前未取得)',
+          text: c.text,
+          createdAt: c.createdAt,
+        };
+      });
     return {
       option: stripRowMeta_(opt),
       counts: {
@@ -73,7 +122,8 @@ function getSummary_(payload) {
         [ANSWER.MAYBE]: byAnswer[ANSWER.MAYBE].length,
         [ANSWER.NG]: byAnswer[ANSWER.NG].length,
       },
-      commentCount,
+      commentCount: optComments.length,
+      comments: optComments,
       respondents: byAnswer,
     };
   });
