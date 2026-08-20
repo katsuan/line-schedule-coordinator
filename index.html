@@ -301,14 +301,6 @@
     border: none;
   }
   .remind-btn { display: block; margin-top: 10px; font-size: 0.8rem; }
-  .remind-check-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    margin-right: 8px;
-  }
-  .remind-check-label input { cursor: pointer; }
   .cal-link {
     display: inline-flex;
     align-items: center;
@@ -325,6 +317,8 @@
   .respondent-label { font-size: 0.75rem; color: var(--sub-text); margin: 8px 0 4px; }
   .respondent-list { display: flex; flex-wrap: wrap; gap: 10px; }
   .respondent { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.7rem; width: 48px; }
+  .respondent-comment { color: var(--sub-text); font-size: 0.65rem; }
+  .preview-group-select { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
   .avatar {
     display: inline-flex;
     align-items: center;
@@ -397,11 +391,11 @@
     transition: transform 0.1s ease;
   }
   .choice-btn.selected { transform: scale(1.08); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-  .choice-ok { background: #E9F7EF; color: #2D8A4E; }
+  .choice-ok { background: #E9F7EF; color: #2D8A4E; border-color: #BFE5D1; }
   .choice-ok.selected { background: #2D8A4E; border-color: #2D8A4E; color: #fff; }
-  .choice-maybe { background: #FFF6E5; color: #C9862B; }
+  .choice-maybe { background: #FFF6E5; color: #C9862B; border-color: #F0D9A6; }
   .choice-maybe.selected { background: #E8A33D; border-color: #E8A33D; color: #fff; }
-  .choice-ng { background: #FDEDEB; color: #D93025; }
+  .choice-ng { background: #FDEDEB; color: #D93025; border-color: #F5C6C0; }
   .choice-ng.selected { background: #D93025; border-color: #D93025; color: #fff; }
   .cal-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 12px; }
   .cal-month-label { font-weight: bold; min-width: 90px; text-align: center; }
