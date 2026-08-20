@@ -56,6 +56,6 @@ GASはファイル名に関係なく全ファイルが1つのグローバルス�
 ## デプロイ
 
 - `cd gas && clasp push -f` でGASへ反映。`.clasp.json` はgitignore対象。
-- フロントは `git push` するとGitHub Pagesへ自動反映。
+- フロントは `git push` するとGitHub Pagesへ自動反映。LINEアプリ内ブラウザ・GitHub Pages双方がJSを強くキャッシュするため、`index.html` の `<script src="js/....js?v=...">` のバージョン文字列（現在はコミットハッシュ）は **`js/`配下を変更するたびに新しいコミットハッシュへ更新する**こと。忘れると「直したのに実機で反映されない」問題が再発する。
 - 動作確認は `python3 -m http.server <port>` + Browserツールで行う。ローカルではLIFF未初期化のままデバッグユーザーにフォールバックするが、`config.json` の `gasUrl` が設定されていれば実際のGASバックエンドと通信する。**テストで作成したイベントは `AppApi.deleteEvent` で必ず削除してから終える。**
 - `test/scenario.js`: パラメータ化された手動シナリオテスト（作成→回答を自動でクリックして流す）。DevToolsコンソールに貼り付けて実行する専用スクリプトで、`index.html` からは読み込まれない。予定作成でページ遷移が入るため `runCreatePhase` → （遷移後に再度貼り付けて）`runAnswerPhase` の2フェーズに分かれている。クリックした要素をハイライト表示する機能付き。
