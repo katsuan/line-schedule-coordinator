@@ -153,6 +153,12 @@ function getEvent_(payload) {
       });
     });
 
+  const { rows: users } = sheetRowsAsObjects_(SHEET.USERS);
+  const editors = editorIdsOf_(event).map((id) => {
+    const u = users.find((r) => r.userId === id);
+    return { userId: id, displayName: (u && u.displayName) || '(名前未取得)' };
+  });
+
   return {
     event: stripRowMeta_(event),
     options: options.map(stripRowMeta_),
@@ -161,6 +167,7 @@ function getEvent_(payload) {
     hasAnswered: options.length > 0 && options.every((opt) => myAnswers[opt.optionId] !== undefined),
     myAnswers,
     myComments,
+    editors,
   };
 }
 

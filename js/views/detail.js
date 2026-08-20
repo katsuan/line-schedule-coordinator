@@ -29,6 +29,7 @@ const DetailView = (() => {
       : data.isEditor
         ? '<span class="status-pill status-pill-editor">編集者</span>'
         : '';
+    const editors = data.editors || [];
     return `
       <div class="page-header">
         <div class="page-header-top-row">
@@ -39,16 +40,17 @@ const DetailView = (() => {
           <div class="page-header-title-row">
             <h1>${AppUtil.titleIconHtml(event.title)}</h1>
             ${statusPill}
+            ${editors.length ? `<button type="button" id="toggle-editors" class="editors-count-btn">編集者${editors.length}人</button>` : ''}
+            ${data.isCreator ? `<button type="button" id="invite-editor" class="edit-option-btn" aria-label="編集者を招待する">👥</button>` : ''}
             ${canEdit ? `<button type="button" id="edit-event-btn" class="edit-option-btn" aria-label="予定を編集">✏️</button>` : ''}
           </div>
+          ${editors.length ? `<p id="editors-list" class="event-meta" hidden>編集者: ${editors.map((ed) => AppUtil.escapeHtml(ed.displayName)).join('、')}</p>` : ''}
           ${event.description ? `<p class="event-description">${AppUtil.escapeHtml(event.description)}</p>` : ''}
-          ${event.deadline ? `<p class="event-meta">回答期限: ${AppUtil.formatDateTimeLocal(event.deadline)}</p>` : ''}
         </div>
         ${canEdit ? `
         <div id="event-header-edit" class="option-edit-form" hidden>
           <input type="text" id="edit-event-title" value="${AppUtil.escapeHtml(event.title)}" placeholder="予定のタイトル">
           <textarea id="edit-event-description" placeholder="説明（任意）">${AppUtil.escapeHtml(event.description || '')}</textarea>
-          <input type="datetime-local" id="edit-event-deadline" value="${AppUtil.toDatetimeLocalValue(event.deadline)}">
           <div class="option-edit-actions">
             <button type="button" class="btn" id="save-event-btn">保存</button>
             <button type="button" class="btn" id="cancel-event-btn">キャンセル</button>
@@ -59,31 +61,39 @@ const DetailView = (() => {
 
   function wireEventEdit(root, ctx, refresh) {
     const editBtn = root.querySelector('#edit-event-btn');
-    if (!editBtn) return;
-    const view = root.querySelector('#event-header-view');
-    const form = root.querySelector('#event-header-edit');
-    editBtn.addEventListener('click', () => {
-      view.hidden = true;
-      form.hidden = false;
-    });
-    root.querySelector('#cancel-event-btn').addEventListener('click', () => {
-      form.hidden = true;
-      view.hidden = false;
-    });
-    root.querySelector('#save-event-btn').addEventListener('click', async (e) => {
-      const title = root.querySelector('#edit-event-title').value.trim();
-      if (!title) { alert('タイトルを入力してください'); return; }
-      const description = root.querySelector('#edit-event-description').value.trim();
-      const deadline = root.querySelector('#edit-event-deadline').value;
-      const stopLoading = AppUtil.beginButtonLoading(e.target);
-      try {
-        await AppApi.updateEvent({ eventId: ctx.eventId, userId: ctx.identity.userId, title, description, deadline });
-        await refresh();
-      } catch (err) {
-        alert('更新に失敗しました: ' + err.message);
-        stopLoading();
-      }
-    });
+    if (editBtn) {
+      const view = root.querySelector('#event-header-view');
+      const form = root.querySelector('#event-header-edit');
+      editBtn.addEventListener('click', () => {
+        view.hidden = true;
+        form.hidden = false;
+      });
+      root.querySelector('#cancel-event-btn').addEventListener('click', () => {
+        form.hidden = true;
+        view.hidden = false;
+      });
+      root.querySelector('#save-event-btn').addEventListener('click', async (e) => {
+        const title = root.querySelector('#edit-event-title').value.trim();
+        if (!title) { alert('タイトルを入力してください'); return; }
+        const description = root.querySelector('#edit-event-description').value.trim();
+        const stopLoading = AppUtil.beginButtonLoading(e.target);
+        try {
+          await AppApi.updateEvent({ eventId: ctx.eventId, userId: ctx.identity.userId, title, description });
+          await refresh();
+        } catch (err) {
+          alert('更新に失敗しました: ' + err.message);
+          stopLoading();
+        }
+      });
+    }
+
+    const toggleEditorsBtn = root.querySelector('#toggle-editors');
+    if (toggleEditorsBtn) {
+      toggleEditorsBtn.addEventListener('click', () => {
+        const list = root.querySelector('#editors-list');
+        if (list) list.hidden = !list.hidden;
+      });
+    }
   }
 
   function shareButtonHtml(label) {
@@ -257,9 +267,7 @@ const DetailView = (() => {
         </section>
         <section>
           ${shareButtonHtml('LINEで共有する')}
-          ${data.isCreator ? `
-            <button id="invite-editor" class="btn" type="button">編集者を招待する</button>
-            ${deleteButtonHtml()}` : ''}
+          ${data.isCreator ? deleteButtonHtml() : ''}
         </section>` : ''}
     `;
 
