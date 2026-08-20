@@ -5,7 +5,6 @@
 function routeAction_(action, payload) {
   switch (action) {
     case 'createEvent': return createEvent_(payload);
-    case 'getEvent': return getEvent_(payload);
     case 'addOptions': return addOptions_(payload);
     case 'updateOption': return updateOption_(payload);
     case 'updateEvent': return updateEvent_(payload);

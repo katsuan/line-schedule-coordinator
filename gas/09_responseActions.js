@@ -74,6 +74,18 @@ function deleteComment_(payload) {
   return { ok: true };
 }
 
+function _groupBy_(items, key) {
+  const map = new Map();
+  items.forEach((item) => {
+    const k = item[key];
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(item);
+  });
+  return map;
+}
+
+// getEvent_ 相当（自分の回答状況・権限判定・編集者一覧）と getSummary_ 相当（全員の回答集計）を
+// まとめて1回のシート読み込みで返す。detail画面が2回APIを呼んで同じシートを二重に読んでいたのを解消。
 function getSummary_(payload) {
   const { eventId, userId } = payload;
   const event = findEventById_(eventId);
@@ -83,14 +95,19 @@ function getSummary_(payload) {
   const options = getEventOptions_(eventId);
   const responses = getEventResponses_(eventId);
   const { rows: comments } = sheetRowsAsObjects_(SHEET.COMMENTS);
-
   const { rows: users } = sheetRowsAsObjects_(SHEET.USERS);
-  const userOf = (uid) => users.find((u) => u.userId === uid) || {};
+
+  const userById = new Map(users.map((u) => [u.userId, u]));
+  const userOf = (uid) => userById.get(uid) || {};
+  const responsesByOption = _groupBy_(responses, 'optionId');
+  const commentsByOption = _groupBy_(comments, 'optionId');
 
   const answeredUserIds = new Set(responses.map((r) => r.userId));
+  const myAnswers = {};
+  responses.forEach((r) => { if (r.userId === userId) myAnswers[r.optionId] = r.answer; });
 
   const summary = options.map((opt) => {
-    const optResponses = responses.filter((r) => r.optionId === opt.optionId);
+    const optResponses = responsesByOption.get(opt.optionId) || [];
     const byAnswer = { [ANSWER.OK]: [], [ANSWER.MAYBE]: [], [ANSWER.NG]: [] };
     optResponses.forEach((r) => {
       if (byAnswer[r.answer]) {
@@ -102,8 +119,8 @@ function getSummary_(payload) {
         });
       }
     });
-    const optComments = comments
-      .filter((c) => c.optionId === opt.optionId)
+    const optComments = (commentsByOption.get(opt.optionId) || [])
+      .slice()
       .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
       .map((c) => {
         const u = userOf(c.userId);
@@ -129,8 +146,19 @@ function getSummary_(payload) {
     };
   });
 
+  const editors = editorIdsOf_(event).map((id) => {
+    const u = userById.get(id);
+    return { userId: id, displayName: (u && u.displayName) || '(名前未取得)' };
+  });
+
   return {
     event: stripRowMeta_(event),
+    options: options.map(stripRowMeta_),
+    isCreator: event.creatorUserId === userId,
+    isEditor: isEditorOrCreator_(event, userId),
+    hasAnswered: options.length > 0 && options.every((opt) => myAnswers[opt.optionId] !== undefined),
+    myAnswers,
+    editors,
     totalRespondents: answeredUserIds.size,
     summary,
   };

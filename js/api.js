@@ -21,7 +21,6 @@ const AppApi = (() => {
 
   return {
     createEvent: (payload) => call('createEvent', payload),
-    getEvent: (payload) => call('getEvent', payload),
     submitAnswer: (payload) => call('submitAnswer', payload),
     addComment: (payload) => call('addComment', payload),
     deleteComment: (payload) => call('deleteComment', payload),
