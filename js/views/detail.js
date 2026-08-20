@@ -257,7 +257,7 @@ const DetailView = (() => {
           <p class="event-meta">追加すると、既に回答した人も新しいイベントへの回答が必要になります。</p>
           <div class="option-card">
             <div class="option-card-head">
-              <span class="option-card-icon">📅</span>
+              <span class="option-card-icon">🗓️</span>
               ${OptionCard.titleFieldHtml('new-option')}
             </div>
             ${OptionCard.rangeLocationFieldsHtml('new-option')}

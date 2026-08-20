@@ -162,7 +162,7 @@ function listMyEvents_(payload) {
   const list = related.map((e) => ({
     eventId: e.eventId,
     title: e.title,
-    icon: e.icon || '📅',
+    icon: e.icon || '🗓️',
     deadline: e.deadline || '',
     status: e.status,
     isCreator: e.creatorUserId === userId,
@@ -200,7 +200,7 @@ function listMyOptions_(payload) {
         optionId: o.optionId,
         eventId: o.eventId,
         eventTitle: e.title,
-        eventIcon: e.icon || '📅',
+        eventIcon: e.icon || '🗓️',
         optionTitle: o.title || '',
         startAt: o.startAt,
         endAt: o.endAt || '',
