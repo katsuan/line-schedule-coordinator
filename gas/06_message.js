@@ -85,7 +85,7 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
   [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].forEach((ans) => {
     const names = groups[ans];
     if (names && names.length) {
-      rows.push(_createAnswerGroupRow_(ans, `${names.length}人：` + names.map((n) => n + 'さん').join('、')));
+      rows.push(_createAnswerGroupRow_(ans, names.length, names.map((n) => n + 'さん').join('、')));
     }
   });
   rows.push(_createSnapshotNoteRow_());
