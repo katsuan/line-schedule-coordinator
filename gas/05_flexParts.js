@@ -78,13 +78,14 @@ function _createEventTimeRow_(label, startAt, endAt) {
     contents: [
       { type: 'text', text: label, size: 'sm', color: COLOR.SUB_TEXT, flex: 2 },
       {
-        type: 'box',
-        layout: 'horizontal',
+        type: 'text',
+        size: 'sm',
         flex: 5,
+        wrap: true,
         contents: [
-          { type: 'text', text: datePart, size: 'sm', color: COLOR.TEXT },
-          { type: 'text', text: '(' + weekday + ')', size: 'sm', color: _weekdayColor_(start), margin: 'xs' },
-          { type: 'text', text: ' ' + timePart, size: 'sm', color: COLOR.TEXT, margin: 'xs', wrap: true },
+          { type: 'span', text: datePart + ' ', color: COLOR.TEXT },
+          { type: 'span', text: '(' + weekday + ') ', color: _weekdayColor_(start) },
+          { type: 'span', text: timePart, color: COLOR.TEXT },
         ],
       },
     ],
