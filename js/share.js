@@ -95,7 +95,8 @@ const AppShare = (() => {
     const groups = (opts && opts.groups) || null;
     const groupAnswers = groups ? ['○', '△', '×'].filter((a) => groups[a] && groups[a].length) : [];
     return new Promise((resolve) => {
-      const lines = buildPreviewLines(flex);
+      const linesFor = (unselectedAnswers) => buildPreviewLines(filterGroups(flex, unselectedAnswers));
+      const lines = linesFor([]);
       const overlay = document.createElement('div');
       overlay.className = 'modal-overlay';
       overlay.innerHTML = `
@@ -133,6 +134,25 @@ const AppShare = (() => {
           </div>
         </div>`;
       document.body.appendChild(overlay);
+
+      const previewBox = overlay.querySelector('.flex-preview');
+      const renderPreview = () => {
+        const checked = overlay.querySelectorAll('.preview-group-check:checked');
+        const allChecked = overlay.querySelectorAll('.preview-group-check');
+        const unselectedAnswers = allChecked.length
+          ? Array.from(allChecked).filter((cb) => !cb.checked).map((cb) => cb.dataset.answer)
+          : [];
+        if (allChecked.length && !checked.length) {
+          previewBox.innerHTML = '<p class="flex-preview-line">送信先が選択されていません</p>';
+          return;
+        }
+        previewBox.innerHTML = linesFor(unselectedAnswers).map((l) => l === '---'
+          ? '<hr class="flex-preview-sep">'
+          : `<p class="flex-preview-line">${AppUtil.escapeHtml(l)}</p>`).join('');
+      };
+      overlay.querySelectorAll('.preview-group-check').forEach((cb) => {
+        cb.addEventListener('change', renderPreview);
+      });
 
       const textarea = overlay.querySelector('#preview-comment');
       let presetIndex = presets.length ? defaultIndex : null;
