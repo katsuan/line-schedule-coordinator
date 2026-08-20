@@ -196,9 +196,10 @@ const AppShare = (() => {
     return new Promise((resolve) => {
       let presetIndex = presets.length ? defaultIndex : null;
       let commentText = '';
+      let embedComment = false;
       const linesFor = (unselectedAnswers, hiddenAnswers) => buildPreviewLines(applyComment(
         hideNames(filterGroups(flex, unselectedAnswers), hiddenAnswers),
-        commentText, presetIndex, presetIndex != null ? presets[presetIndex] : null
+        embedComment ? commentText : '', presetIndex, presetIndex != null ? presets[presetIndex] : null
       ));
       const lines = linesFor([]);
       const overlay = document.createElement('div');
@@ -220,6 +221,7 @@ const AppShare = (() => {
             <div class="flex-preview">
               ${renderPreviewLinesHtml(lines)}
             </div>
+            <div class="preview-chat-bubble" id="preview-chat-bubble" hidden></div>
           </div>
           ${presets.length ? `
             <p class="event-meta">送信ヘッダー（任意）</p>
@@ -241,6 +243,10 @@ const AppShare = (() => {
           <label class="preview-comment-label">
             コメントを追加（任意）
             <textarea id="preview-comment" rows="2" class="preview-comment-input" placeholder="自由にコメントを入力できます"></textarea>
+          </label>
+          <label class="preview-checkbox-label-inline">
+            <input type="checkbox" id="preview-embed-comment">
+            コメントをFlexに埋め込む（OFF: 別のチャットメッセージとして送信）
           </label>
           <div class="option-edit-actions" style="margin-top:12px">
             <button type="button" class="btn btn-primary" id="preview-confirm">送信先を選ぶ</button>
@@ -278,17 +284,32 @@ const AppShare = (() => {
       const banner = overlay.querySelector('#preview-header-banner');
       const bannerLabel = overlay.querySelector('#preview-header-label');
       const bannerComment = overlay.querySelector('#preview-header-comment');
+      const embedCheckbox = overlay.querySelector('#preview-embed-comment');
+      const chatBubble = overlay.querySelector('#preview-chat-bubble');
       const updateBanner = () => {
         if (!banner) return;
         const color = HEADER_COLORS[presetIndex];
         banner.style.background = color ? color.bg : '';
         banner.style.color = color ? color.text : '';
         if (bannerLabel) bannerLabel.textContent = presetIndex != null ? presets[presetIndex] : '';
-        if (bannerComment) bannerComment.textContent = commentText;
+        if (bannerComment) bannerComment.textContent = embedComment ? commentText : '';
+      };
+      const updateChatBubble = () => {
+        if (!chatBubble) return;
+        const show = !!commentText && !embedComment;
+        chatBubble.hidden = !show;
+        if (show) chatBubble.textContent = commentText;
       };
       textarea.addEventListener('input', () => {
         commentText = textarea.value.trim();
         updateBanner();
+        updateChatBubble();
+        renderPreview();
+      });
+      if (embedCheckbox) embedCheckbox.addEventListener('change', () => {
+        embedComment = embedCheckbox.checked;
+        updateBanner();
+        updateChatBubble();
         renderPreview();
       });
       const paintChips = () => {
@@ -309,6 +330,7 @@ const AppShare = (() => {
         });
       };
       updateBanner();
+      updateChatBubble();
       paintChips();
       overlay.querySelectorAll('.preset-chip').forEach((chip) => {
         chip.addEventListener('click', () => {
@@ -337,6 +359,7 @@ const AppShare = (() => {
           : [];
         close({
           comment: textarea.value.trim(),
+          embedComment,
           unselectedAnswers,
           hiddenAnswers,
           presetIndex,
@@ -352,12 +375,15 @@ const AppShare = (() => {
 
     let finalFlex = filterGroups(flex, result.unselectedAnswers);
     finalFlex = hideNames(finalFlex, result.hiddenAnswers);
-    finalFlex = applyComment(finalFlex, result.comment, result.presetIndex, result.presetLabel);
-    const message = {
+    finalFlex = applyComment(finalFlex, result.embedComment ? result.comment : '', result.presetIndex, result.presetLabel);
+    const messages = [{
       type: 'flex',
       altText: finalFlex.altText,
       contents: finalFlex.contents,
-    };
+    }];
+    if (result.comment && !result.embedComment) {
+      messages.push({ type: 'text', text: result.comment });
+    }
 
     let available = false;
     try {
@@ -367,9 +393,9 @@ const AppShare = (() => {
     }
 
     if (available) {
-      const result = await liff.shareTargetPicker([message]);
-      console.log('shareTargetPicker result', result);
-      if (result && result.status === 'cancel') {
+      const pickerResult = await liff.shareTargetPicker(messages);
+      console.log('shareTargetPicker result', pickerResult);
+      if (pickerResult && pickerResult.status === 'cancel') {
         return false;
       }
       if ((!opts || opts.closeAfter !== false) && liff.isInClient && liff.isInClient()) {
@@ -378,7 +404,7 @@ const AppShare = (() => {
       return true;
     }
 
-    console.warn('shareTargetPicker は利用できません（LIFF外またはローカルプレビュー）。生成されたFlexを表示します。', message);
+    console.warn('shareTargetPicker は利用できません（LIFF外またはローカルプレビュー）。生成されたFlexを表示します。', messages);
     alert('この環境では共有できません（LINEアプリ内のLIFFでのみ動作します）。コンソールにFlex内容を出力しました。');
     return false;
   }
