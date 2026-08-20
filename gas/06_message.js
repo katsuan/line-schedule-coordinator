@@ -7,7 +7,11 @@ function buildEventShareFlex_(eventId) {
   if (!event) {
     throw new Error('イベントが見つかりません: ' + eventId);
   }
-  const options = getEventOptions_(eventId);
+  const now = new Date();
+  const options = getEventOptions_(eventId).filter((opt) => {
+    const end = opt.endAt || opt.startAt;
+    return !end || new Date(end) >= now;
+  });
   const responses = getEventResponses_(eventId);
 
   const answeredUserIds = new Set(responses.map((r) => r.userId));
@@ -86,6 +90,7 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
       rows.push(_createAnswerGroupRow_(ans, `${names.length}人：` + names.map((n) => n + 'さん').join('、')));
     }
   });
+  rows.push(_createSnapshotNoteRow_());
 
   const allNames = [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].reduce((acc, ans) => acc.concat(groups[ans] || []), []);
   const nameLabel = allNames.length > 3
