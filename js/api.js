@@ -32,6 +32,7 @@ const AppApi = (() => {
     addOptions: (payload) => call('addOptions', payload),
     claimEditor: (payload) => call('claimEditor', payload),
     updateOption: (payload) => call('updateOption', payload),
+    updateEvent: (payload) => call('updateEvent', payload),
     listMyOptions: (payload) => call('listMyOptions', payload),
     buildReminderFlex: (payload) => call('buildReminderFlex', payload),
     buildEditorInviteFlex: (payload) => call('buildEditorInviteFlex', payload),
