@@ -128,49 +128,6 @@ function updateOption_(payload) {
   return { ok: true };
 }
 
-function getEvent_(payload) {
-  const { eventId, userId } = payload;
-  const event = findEventById_(eventId);
-  if (!event) {
-    throw new Error('イベントが見つかりません');
-  }
-  const options = getEventOptions_(eventId);
-  const responses = getEventResponses_(eventId);
-  const myResponses = responses.filter((r) => r.userId === userId);
-  const myAnswers = {};
-  myResponses.forEach((r) => {
-    myAnswers[r.optionId] = r.answer;
-  });
-
-  const { rows: allComments } = sheetRowsAsObjects_(SHEET.COMMENTS);
-  const myComments = {};
-  allComments
-    .filter((c) => c.eventId === eventId && c.userId === userId)
-    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-    .forEach((c) => {
-      (myComments[c.optionId] = myComments[c.optionId] || []).push({
-        commentId: c.commentId, text: c.text, createdAt: c.createdAt,
-      });
-    });
-
-  const { rows: users } = sheetRowsAsObjects_(SHEET.USERS);
-  const editors = editorIdsOf_(event).map((id) => {
-    const u = users.find((r) => r.userId === id);
-    return { userId: id, displayName: (u && u.displayName) || '(名前未取得)' };
-  });
-
-  return {
-    event: stripRowMeta_(event),
-    options: options.map(stripRowMeta_),
-    isCreator: event.creatorUserId === userId,
-    isEditor: isEditorOrCreator_(event, userId),
-    hasAnswered: options.length > 0 && options.every((opt) => myAnswers[opt.optionId] !== undefined),
-    myAnswers,
-    myComments,
-    editors,
-  };
-}
-
 function claimEditor_(payload) {
   const { eventId, userId, displayName, pictureUrl } = payload;
   if (!eventId || !userId) {

@@ -14,17 +14,29 @@ const SCHEMA = {
   [SHEET.COMMENTS]: ['commentId', 'eventId', 'optionId', 'userId', 'text', 'createdAt'],
 };
 
+// 1回のリクエスト実行内で SpreadsheetApp.openById / シート取得 / 行読み込みを使い回すためのキャッシュ。
+// GASの openById はネットワーク往復を伴い遅いため、同一実行内での再オープンを避けるのが目的。
+// 書き込み（append/update/delete）のたびに該当シートの行キャッシュだけ破棄する。
+let _spreadsheetCache_ = null;
+let _sheetCache_ = {};
+let _rowsCache_ = {};
+
 function getSpreadsheet_() {
-  return SpreadsheetApp.openById(getSpreadsheetId_());
+  if (!_spreadsheetCache_) {
+    _spreadsheetCache_ = SpreadsheetApp.openById(getSpreadsheetId_());
+  }
+  return _spreadsheetCache_;
 }
 
 function getOrCreateSheet_(sheetName) {
+  if (_sheetCache_[sheetName]) return _sheetCache_[sheetName];
   const ss = getSpreadsheet_();
   let sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
     sheet = ss.insertSheet(sheetName);
   }
   ensureSheetSchema_(sheet, sheetName);
+  _sheetCache_[sheetName] = sheet;
   return sheet;
 }
 
@@ -45,19 +57,24 @@ function ensureSheetSchema_(sheet, sheetName) {
 }
 
 function sheetRowsAsObjects_(sheetName) {
+  if (_rowsCache_[sheetName]) return _rowsCache_[sheetName];
   const sheet = getOrCreateSheet_(sheetName);
   const headers = SCHEMA[sheetName];
   const lastRow = sheet.getLastRow();
+  let rows;
   if (lastRow < 2) {
-    return { sheet, headers, rows: [] };
+    rows = [];
+  } else {
+    const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    rows = values.map((row, i) => {
+      const obj = { _rowIndex: i + 2 };
+      headers.forEach((h, idx) => { obj[h] = row[idx]; });
+      return obj;
+    });
   }
-  const values = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
-  const rows = values.map((row, i) => {
-    const obj = { _rowIndex: i + 2 };
-    headers.forEach((h, idx) => { obj[h] = row[idx]; });
-    return obj;
-  });
-  return { sheet, headers, rows };
+  const result = { sheet, headers, rows };
+  _rowsCache_[sheetName] = result;
+  return result;
 }
 
 function appendRowObject_(sheetName, obj) {
@@ -65,12 +82,14 @@ function appendRowObject_(sheetName, obj) {
   const headers = SCHEMA[sheetName];
   const row = headers.map((h) => (obj[h] !== undefined ? obj[h] : ''));
   sheet.appendRow(row);
+  delete _rowsCache_[sheetName];
 }
 
 function deleteRows_(sheetName, rowIndices) {
   const sheet = getOrCreateSheet_(sheetName);
   const sorted = [...rowIndices].sort((a, b) => b - a);
   sorted.forEach((rowIndex) => sheet.deleteRow(rowIndex));
+  delete _rowsCache_[sheetName];
 }
 
 function updateRowObject_(sheetName, rowIndex, obj) {
@@ -78,6 +97,7 @@ function updateRowObject_(sheetName, rowIndex, obj) {
   const headers = SCHEMA[sheetName];
   const row = headers.map((h) => (obj[h] !== undefined ? obj[h] : ''));
   sheet.getRange(rowIndex, 1, 1, headers.length).setValues([row]);
+  delete _rowsCache_[sheetName];
 }
 
 function upsertUser_(userId, displayName, pictureUrl) {

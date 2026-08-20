@@ -17,10 +17,10 @@ const DetailView = (() => {
       }
     }
 
-    const data = await AppApi.getEvent({ eventId: ctx.eventId, userId: ctx.identity.userId });
+    const data = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
     const refresh = () => render(root, ctx, { silent: true });
 
-    await renderSummary(root, ctx, data, refresh);
+    renderSummary(root, ctx, data, refresh);
   }
 
   function headerHtml(event, data, canEdit) {
@@ -244,16 +244,15 @@ const DetailView = (() => {
     });
   }
 
-  async function renderSummary(root, ctx, data, refresh) {
-    const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
+  function renderSummary(root, ctx, data, refresh) {
     const canEdit = data.isCreator || data.isEditor;
-    const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId, data.myAnswers);
+    const rows = summaryRowsHtml(data.event, data.summary, canEdit, ctx.identity.userId, data.myAnswers);
 
     root.innerHTML = `
       ${headerHtml(data.event, data, canEdit)}
       <p class="event-meta">タップすると自動的に保存されます。</p>
       <section>
-        <p class="event-meta">イベント数：${data.options.length}件 / 回答者数：${summaryData.totalRespondents}人</p>
+        <p class="event-meta">イベント数：${data.options.length}件 / 回答者数：${data.totalRespondents}人</p>
         <div class="summary-list">${rows}</div>
       </section>
       ${canEdit ? `
