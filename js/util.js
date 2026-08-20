@@ -59,7 +59,7 @@ const AppUtil = (() => {
     const firstChar = Array.from(trimmed)[0] || '';
     if (firstChar && EMOJI_REGEX.test(firstChar)) {
       const rest = trimmed.slice(firstChar.length).trim();
-      return `${firstChar} ${escapeHtml(rest || trimmed)}`;
+      return rest ? `${firstChar} ${escapeHtml(rest)}` : firstChar;
     }
     return `🗓️ ${escapeHtml(trimmed)}`;
   }
