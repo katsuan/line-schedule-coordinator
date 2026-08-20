@@ -16,7 +16,10 @@ function getEventOptions_(eventId) {
   const { rows } = sheetRowsAsObjects_(SHEET.EVENT_OPTIONS);
   return rows
     .filter((r) => r.eventId === eventId)
-    .sort((a, b) => Number(a.sort) - Number(b.sort));
+    .sort((a, b) => {
+      const diff = new Date(a.startAt) - new Date(b.startAt);
+      return diff !== 0 ? diff : Number(a.sort) - Number(b.sort);
+    });
 }
 
 function getEventResponses_(eventId) {

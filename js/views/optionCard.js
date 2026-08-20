@@ -62,7 +62,8 @@ const OptionCard = (() => {
       wrap.querySelector('.comment-save-btn').addEventListener('click', async (e) => {
         const comment = input.value.trim();
         if (!comment) return;
-        e.target.disabled = true;
+        const stopLoading = AppUtil.beginButtonLoading(e.target);
+        input.disabled = true;
         try {
           await AppApi.submitAnswer({
             eventId: ctx.eventId,
@@ -74,7 +75,8 @@ const OptionCard = (() => {
           await refresh();
         } catch (err) {
           alert('コメントの保存に失敗しました: ' + err.message);
-          e.target.disabled = false;
+          input.disabled = false;
+          stopLoading();
         }
       });
     });
@@ -82,7 +84,7 @@ const OptionCard = (() => {
     root.querySelectorAll('.option-comment').forEach((wrap) => {
       wrap.querySelector('.comment-delete-btn').addEventListener('click', async (e) => {
         if (!confirm('コメントを削除しますか？')) return;
-        e.target.disabled = true;
+        const stopLoading = AppUtil.beginButtonLoading(e.target);
         try {
           await AppApi.submitAnswer({
             eventId: ctx.eventId,
@@ -94,7 +96,7 @@ const OptionCard = (() => {
           await refresh();
         } catch (err) {
           alert('コメントの削除に失敗しました: ' + err.message);
-          e.target.disabled = false;
+          stopLoading();
         }
       });
     });
@@ -175,7 +177,7 @@ const OptionCard = (() => {
         const error = AppUtil.validateEventFields(fields);
         if (error) { alert(error); return; }
 
-        e.target.disabled = true;
+        const stopLoading = AppUtil.beginButtonLoading(e.target);
         const optionId = meta.dataset.optionId;
         try {
           const summaryBefore = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
@@ -200,7 +202,7 @@ const OptionCard = (() => {
           await refresh();
         } catch (err) {
           alert('更新に失敗しました: ' + err.message);
-          e.target.disabled = false;
+          stopLoading();
         }
       });
     });
@@ -225,6 +227,7 @@ const OptionCard = (() => {
           b.classList.toggle('selected', b === btn);
           b.disabled = true;
         });
+        const stopLoading = AppUtil.beginButtonLoading(btn);
         try {
           await AppApi.submitAnswer({
             eventId: ctx.eventId,
@@ -236,6 +239,7 @@ const OptionCard = (() => {
           await refresh();
         } catch (err) {
           alert('回答の保存に失敗しました: ' + err.message);
+          stopLoading();
           choices.querySelectorAll('.choice-btn').forEach((b) => { b.disabled = false; });
         }
       });
