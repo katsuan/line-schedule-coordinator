@@ -141,9 +141,11 @@ const OptionCard = (() => {
             ${myAnswer !== undefined ? answerInlineHtml(opt.optionId, myAnswer) : ''}
             ${canEdit ? `<button type="button" class="edit-option-btn" aria-label="編集">✏️</button>` : ''}
           </div>
-          <div class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)} ${AppUtil.relativeDayPillHtml(opt.startAt)}</div>
-          ${opt.location ? `<div class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</div>` : ''}
-          ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
+          <div class="option-meta-info-row">
+            <span class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)} ${AppUtil.relativeDayPillHtml(opt.startAt)}</span>
+            ${opt.location ? `<span class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</span>` : ''}
+            ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
+          </div>
           ${myAnswer !== undefined ? commentHtml(opt.optionId, myComments) : ''}
         </div>
         ${canEdit ? `
