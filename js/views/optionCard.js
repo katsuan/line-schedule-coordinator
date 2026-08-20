@@ -11,20 +11,19 @@ const OptionCard = (() => {
       <button type="button" class="choice-btn ${ANSWER_CLASS[a]} ${myAnswers[optionId] === a ? 'selected' : ''}" data-value="${a}">${a}</button>`).join('');
   }
 
-  function answerIcon(answer) {
-    const cls = ANSWER_CLASS[answer] || 'dot-none';
-    return `<span class="answer-icon ${cls}">${answer || '-'}</span>`;
-  }
-
   function statusClass(answer) {
     return ANSWER_CLASS[answer] || 'status-none';
   }
 
-  function answerInlineHtml(optionId, myAnswer) {
+  function answerButtonsHtml(optionId, myAnswer, counts) {
     return `
-      <span class="answer-inline" data-option-id="${optionId}">
-        ${ANSWERS.map((a) => `<button type="button" class="choice-btn choice-inline ${ANSWER_CLASS[a]} ${myAnswer === a ? 'selected' : ''}" data-value="${a}">${a}</button>`).join('')}
-      </span>`;
+      <div class="answer-buttons" data-option-id="${optionId}">
+        ${ANSWERS.map((a) => `
+          <span class="choice-count-wrap">
+            <button type="button" class="choice-btn ${ANSWER_CLASS[a]} ${myAnswer === a ? 'selected' : ''}" data-value="${a}">${a}</button>
+            ${counts ? `<span class="choice-count">${counts[a] || 0}</span>` : ''}
+          </span>`).join('')}
+      </div>`;
   }
 
   function myCommentHtml(comment) {
@@ -35,10 +34,13 @@ const OptionCard = (() => {
       </div>`;
   }
 
-  function commentHtml(optionId, myComments) {
+  function myCommentsHtml(myComments) {
     myComments = myComments || [];
+    return myComments.map(myCommentHtml).join('');
+  }
+
+  function commentAddToggleHtml(optionId) {
     return `
-      ${myComments.map(myCommentHtml).join('')}
       <div class="option-comment-add" data-option-id="${optionId}">
         <button type="button" class="comment-add-toggle">💬 コメントを追加</button>
         <div class="comment-add-form" hidden>
@@ -128,13 +130,12 @@ const OptionCard = (() => {
     };
   }
 
-  function metaHtml(opt, canEdit, myAnswer, myComments) {
+  function metaHtml(opt, canEdit, myComments) {
     return `
       <div class="option-meta" data-option-id="${opt.optionId}">
         <div class="option-meta-view">
           <div class="option-meta-title-row">
             <div class="option-meta-title">${AppUtil.titleIconHtml(opt.title || '(タイトルなし)')}</div>
-            ${myAnswer !== undefined ? answerInlineHtml(opt.optionId, myAnswer) : ''}
             ${canEdit ? `<button type="button" class="edit-option-btn" aria-label="編集">✏️</button>` : ''}
           </div>
           <div class="option-meta-info-row option-meta-info-row-split">
@@ -142,7 +143,7 @@ const OptionCard = (() => {
             ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
           </div>
           ${opt.location ? `<div class="option-meta-info-row"><span class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</span></div>` : ''}
-          ${myAnswer !== undefined ? commentHtml(opt.optionId, myComments) : ''}
+          ${myCommentsHtml(myComments)}
         </div>
         ${canEdit ? `
         <div class="option-edit-form" hidden>
@@ -208,8 +209,8 @@ const OptionCard = (() => {
     });
   }
 
-  function wireInlineAnswerToggles(root, ctx, refresh) {
-    root.querySelectorAll('.answer-inline').forEach((wrap) => {
+  function wireAnswerButtons(root, ctx, refresh) {
+    root.querySelectorAll('.answer-buttons').forEach((wrap) => {
       wrap.addEventListener('click', async (e) => {
         const btn = e.target.closest('.choice-btn');
         if (!btn) return;
@@ -240,6 +241,6 @@ const OptionCard = (() => {
 
   return {
     metaHtml, fieldsHtml, titleFieldHtml, rangeLocationFieldsHtml, readFields,
-    choiceButtonsHtml, answerIcon, statusClass, wireEditForms, wireInlineAnswerToggles, wireComments,
+    choiceButtonsHtml, answerButtonsHtml, commentAddToggleHtml, statusClass, wireEditForms, wireAnswerButtons, wireComments,
   };
 })();

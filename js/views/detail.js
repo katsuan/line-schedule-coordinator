@@ -20,18 +20,22 @@ const DetailView = (() => {
     const data = await AppApi.getEvent({ eventId: ctx.eventId, userId: ctx.identity.userId });
     const refresh = () => render(root, ctx, { silent: true });
 
-    if (!data.hasAnswered) {
-      renderAnswerForm(root, ctx, data, refresh);
-    } else {
-      await renderSummary(root, ctx, data, refresh);
-    }
+    await renderSummary(root, ctx, data, refresh);
   }
 
-  function headerHtml(event) {
+  function headerHtml(event, data) {
+    const statusPill = data.isCreator
+      ? '<span class="status-pill status-pill-creator">作成者</span>'
+      : data.isEditor
+        ? '<span class="status-pill status-pill-editor">編集者</span>'
+        : '';
     return `
       <div class="page-header">
         <a class="btn-back" href="?view=list">← 一覧へ</a>
-        <h1>${AppUtil.titleIconHtml(event.title)}</h1>
+        <div class="page-header-title-row">
+          <h1>${AppUtil.titleIconHtml(event.title)}</h1>
+          ${statusPill}
+        </div>
         ${event.description ? `<p class="event-description">${AppUtil.escapeHtml(event.description)}</p>` : ''}
         ${event.deadline ? `<p class="event-meta">回答期限: ${AppUtil.formatDateTimeLocal(event.deadline)}</p>` : ''}
       </div>`;
@@ -94,15 +98,14 @@ const DetailView = (() => {
       const totalCount = row.counts['○'] + row.counts['△'] + row.counts['×'];
       return `
         <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
-          ${OptionCard.metaHtml(row.option, canEdit, myAnswers[row.option.optionId], myComments[row.option.optionId])}
-          <div class="summary-counts">
-            <span class="summary-counts-values">
-              <span>${OptionCard.answerIcon('○')} ${row.counts['○']}</span>
-              <span>${OptionCard.answerIcon('△')} ${row.counts['△']}</span>
-              <span>${OptionCard.answerIcon('×')} ${row.counts['×']}</span>
+          ${OptionCard.metaHtml(row.option, canEdit, myComments[row.option.optionId])}
+          <div class="summary-answer-row">
+            ${OptionCard.answerButtonsHtml(row.option.optionId, myAnswers[row.option.optionId], row.counts)}
+            <div class="summary-answer-side">
+              ${OptionCard.commentAddToggleHtml(row.option.optionId)}
               ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
-            </span>
-            ${totalCount ? `<button type="button" class="btn remind-btn" data-row="${rowIndex}">連絡する</button>` : ''}
+              ${totalCount ? `<button type="button" class="btn remind-btn" data-row="${rowIndex}">連絡する</button>` : ''}
+            </div>
           </div>
           <details>
             <summary>回答者を見る（${totalCount}人）</summary>
@@ -142,115 +145,16 @@ const DetailView = (() => {
     });
   }
 
-  function wireSummaryPreview(root, ctx, data) {
-    const toggleBtn = root.querySelector('#toggle-summary');
-    const previewBox = root.querySelector('#summary-preview');
-    let previewLoaded = false;
-    toggleBtn.addEventListener('click', async () => {
-      if (!previewBox.hidden) {
-        previewBox.hidden = true;
-        toggleBtn.textContent = '現在の回答状況を見る';
-        return;
-      }
-      toggleBtn.textContent = '閉じる';
-      previewBox.hidden = false;
-      if (!previewLoaded) {
-        previewBox.innerHTML = AppUtil.loadingHtml();
-        try {
-          const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
-          previewBox.innerHTML = summaryRowsHtml(data.event, summaryData.summary, false, ctx.identity.userId, data.myAnswers, data.myComments);
-          wireRemindButtons(previewBox, data.event.title, ctx.eventId);
-          const previewRefresh = () => render(root, ctx, { silent: true });
-          OptionCard.wireInlineAnswerToggles(previewBox, ctx, previewRefresh);
-          OptionCard.wireComments(previewBox, ctx, previewRefresh);
-          previewLoaded = true;
-        } catch (err) {
-          previewBox.innerHTML = `<p class="error">${AppUtil.escapeHtml(err.message)}</p>`;
-        }
-      }
-    });
-  }
-
-  function renderAnswerForm(root, ctx, data, refresh) {
-    const canEdit = data.isCreator || data.isEditor;
-    const rows = data.options.map((opt) => `
-      <div class="answer-row ${OptionCard.statusClass(data.myAnswers[opt.optionId])}" data-option-id="${opt.optionId}">
-        ${OptionCard.metaHtml(opt, canEdit)}
-        <span class="answer-choices" data-option-id="${opt.optionId}">
-          ${OptionCard.choiceButtonsHtml(opt.optionId, data.myAnswers)}
-        </span>
-      </div>`).join('');
-
-    root.innerHTML = `
-      ${headerHtml(data.event)}
-      <p class="event-meta">タップすると自動的に保存されます。</p>
-      <div id="answer-rows">${rows}</div>
-      <section>
-        <button id="toggle-summary" class="btn" type="button">現在の回答状況を見る</button>
-        <div id="summary-preview" class="summary-list" hidden></div>
-      </section>
-      ${canEdit ? `
-        <section>
-          <p class="event-meta">${data.isCreator ? '作成者' : '編集者'}として、回答前でも共有できます。</p>
-          ${shareButtonHtml('LINEで共有する')}
-          ${data.isCreator ? deleteButtonHtml() : ''}
-        </section>` : ''}
-    `;
-
-    wireCommonActions(root, ctx, { canShare: canEdit, isCreator: data.isCreator });
-    if (canEdit) OptionCard.wireEditForms(root, ctx, refresh);
-    wireSummaryPreview(root, ctx, data);
-
-    const answeredMap = { ...data.myAnswers };
-    const savingOptionIds = new Set();
-
-    root.querySelector('#answer-rows').addEventListener('click', async (e) => {
-      const btn = e.target.closest('.choice-btn');
-      if (!btn) return;
-      const container = btn.closest('.answer-choices');
-      const optionId = container.dataset.optionId;
-      if (savingOptionIds.has(optionId)) return;
-      const value = btn.dataset.value;
-
-      container.querySelectorAll('.choice-btn').forEach((b) => b.classList.toggle('selected', b === btn));
-      const row = container.closest('.answer-row');
-      row.classList.remove('choice-ok', 'choice-maybe', 'choice-ng', 'status-none');
-      row.classList.add(OptionCard.statusClass(value));
-
-      savingOptionIds.add(optionId);
-      const stopLoading = AppUtil.beginButtonLoading(btn);
-      try {
-        await AppApi.submitAnswer({
-          eventId: ctx.eventId,
-          userId: ctx.identity.userId,
-          displayName: ctx.identity.displayName,
-          pictureUrl: ctx.identity.pictureUrl,
-          answers: [{ optionId, answer: value }],
-        });
-        answeredMap[optionId] = value;
-        if (data.options.every((opt) => answeredMap[opt.optionId] !== undefined)) {
-          data.myAnswers = answeredMap;
-          await refresh();
-          return;
-        }
-      } catch (err) {
-        alert('回答の保存に失敗しました: ' + err.message);
-      } finally {
-        savingOptionIds.delete(optionId);
-        stopLoading();
-      }
-    });
-  }
-
   async function renderSummary(root, ctx, data, refresh) {
     const summaryData = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
     const canEdit = data.isCreator || data.isEditor;
     const rows = summaryRowsHtml(data.event, summaryData.summary, canEdit, ctx.identity.userId, data.myAnswers, data.myComments);
 
     root.innerHTML = `
-      ${headerHtml(data.event)}
+      ${headerHtml(data.event, data)}
+      <p class="event-meta">タップすると自動的に保存されます。</p>
       <section>
-        <p class="event-meta">回答者数: ${summaryData.totalRespondents}人</p>
+        <p class="event-meta">イベント数：${data.options.length}件 / 回答者数：${summaryData.totalRespondents}人</p>
         <div class="summary-list">${rows}</div>
       </section>
       ${canEdit ? `
@@ -277,7 +181,7 @@ const DetailView = (() => {
     `;
 
     wireRemindButtons(root, data.event.title, ctx.eventId);
-    OptionCard.wireInlineAnswerToggles(root, ctx, refresh);
+    OptionCard.wireAnswerButtons(root, ctx, refresh);
     OptionCard.wireComments(root, ctx, refresh);
     wireCommonActions(root, ctx, { canShare: canEdit, isCreator: data.isCreator });
 
