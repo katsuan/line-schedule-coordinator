@@ -33,7 +33,7 @@ function _createInfoRow_(label, value) {
 const ANSWER_COLOR = { '○': '#2D8A4E', '△': '#C9862B', '×': '#D93025' };
 const ANSWER_BG = { '○': '#E9F7EF', '△': '#FFF6E5', '×': '#FDEDEB' };
 
-function _createAnswerGroupRow_(answer, value) {
+function _createAnswerGroupRow_(answer, count, nameList) {
   return {
     type: 'box',
     layout: 'baseline',
@@ -42,8 +42,8 @@ function _createAnswerGroupRow_(answer, value) {
     cornerRadius: 'md',
     paddingAll: 'sm',
     contents: [
-      { type: 'text', text: answer, size: 'sm', weight: 'bold', color: ANSWER_COLOR[answer] || COLOR.SUB_TEXT, flex: 2 },
-      { type: 'text', text: String(value), size: 'sm', color: COLOR.TEXT, flex: 5, wrap: true },
+      { type: 'text', text: answer + count + '人', size: 'sm', weight: 'bold', color: ANSWER_COLOR[answer] || COLOR.SUB_TEXT, flex: 2, wrap: true },
+      { type: 'text', text: String(nameList), size: 'sm', color: COLOR.TEXT, flex: 5, wrap: true },
     ],
   };
 }

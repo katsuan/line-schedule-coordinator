@@ -16,6 +16,12 @@ const AppShare = (() => {
   const CARD_START = ' CARDSTART ';
   const CARD_END = ' CARDEND ';
   const ANSWER_LINE_PREFIX = { '○': ' ANSok ', '△': ' ANSmb ', '×': ' ANSng ' };
+  const ANSWER_SYMBOLS = ['○', '△', '×'];
+
+  function answerSymbolOf(label) {
+    if (!label) return null;
+    return ANSWER_SYMBOLS.find((a) => label.startsWith(a)) || null;
+  }
 
   function walkPreviewLines(node, lines) {
     if (!node) return;
@@ -32,7 +38,8 @@ const AppShare = (() => {
         const line = collectText(node);
         if (!line) return;
         const label = node.contents && node.contents[0] && node.contents[0].text;
-        const prefix = ANSWER_LINE_PREFIX[label] || '';
+        const ans = answerSymbolOf(label);
+        const prefix = ans ? ANSWER_LINE_PREFIX[ans] : '';
         lines.push(prefix + line);
       } else if (node.contents) {
         const isCard = !!node.backgroundColor;
@@ -124,7 +131,8 @@ const AppShare = (() => {
     node.contents = node.contents.filter((child) => {
       const label = child.type === 'box' && child.layout === 'baseline' && child.contents && child.contents[0]
         ? child.contents[0].text : null;
-      return !labels.includes(label);
+      const ans = answerSymbolOf(label);
+      return !(ans && labels.includes(ans));
     });
     node.contents.forEach((child) => removeRowsByLabel(child, labels));
   }
@@ -142,7 +150,8 @@ const AppShare = (() => {
     node.contents.forEach((child, i) => {
       const label = child.type === 'box' && child.layout === 'baseline' && child.contents && child.contents[0]
         ? child.contents[0].text : null;
-      if (label && hiddenAnswers.includes(label)) idxs.push(i);
+      const ans = answerSymbolOf(label);
+      if (ans && hiddenAnswers.includes(ans)) idxs.push(i);
     });
     if (idxs.length) {
       const spans = [];
@@ -150,9 +159,7 @@ const AppShare = (() => {
         const row = node.contents[i];
         const label = row.contents[0].text;
         const color = row.contents[0].color;
-        const valueText = (row.contents[1] && row.contents[1].text) || '';
-        const match = valueText.match(/^(\d+人)/);
-        spans.push({ type: 'span', text: label + (match ? match[1] : ''), color });
+        spans.push({ type: 'span', text: label, color });
         if (pos < idxs.length - 1) spans.push({ type: 'span', text: '　' });
       });
       const combinedRow = {
@@ -187,7 +194,12 @@ const AppShare = (() => {
     const headerTitleNode = headerNode && headerNode.contents && headerNode.contents[0];
     const headerTitle = headerTitleNode ? headerTitleNode.text : null;
     return new Promise((resolve) => {
-      const linesFor = (unselectedAnswers, hiddenAnswers) => buildPreviewLines(hideNames(filterGroups(flex, unselectedAnswers), hiddenAnswers));
+      let presetIndex = presets.length ? defaultIndex : null;
+      let commentText = '';
+      const linesFor = (unselectedAnswers, hiddenAnswers) => buildPreviewLines(applyComment(
+        hideNames(filterGroups(flex, unselectedAnswers), hiddenAnswers),
+        commentText, presetIndex, presetIndex != null ? presets[presetIndex] : null
+      ));
       const lines = linesFor([]);
       const overlay = document.createElement('div');
       overlay.className = 'modal-overlay';
@@ -266,16 +278,19 @@ const AppShare = (() => {
       const banner = overlay.querySelector('#preview-header-banner');
       const bannerLabel = overlay.querySelector('#preview-header-label');
       const bannerComment = overlay.querySelector('#preview-header-comment');
-      let presetIndex = presets.length ? defaultIndex : null;
       const updateBanner = () => {
         if (!banner) return;
         const color = HEADER_COLORS[presetIndex];
         banner.style.background = color ? color.bg : '';
         banner.style.color = color ? color.text : '';
         if (bannerLabel) bannerLabel.textContent = presetIndex != null ? presets[presetIndex] : '';
-        if (bannerComment) bannerComment.textContent = textarea.value.trim();
+        if (bannerComment) bannerComment.textContent = commentText;
       };
-      textarea.addEventListener('input', updateBanner);
+      textarea.addEventListener('input', () => {
+        commentText = textarea.value.trim();
+        updateBanner();
+        renderPreview();
+      });
       const paintChips = () => {
         overlay.querySelectorAll('.preset-chip').forEach((chip) => {
           const idx = Number(chip.dataset.index);
@@ -300,6 +315,7 @@ const AppShare = (() => {
           const isSame = Number(chip.dataset.index) === presetIndex;
           presetIndex = isSame ? null : Number(chip.dataset.index);
           updateBanner();
+          renderPreview();
           paintChips();
         });
       });
