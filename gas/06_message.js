@@ -112,7 +112,7 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
   };
 
   return {
-    altText: nameLabel + 'への連絡（' + targetTitle + '）',
+    altText: targetTitle + 'への連絡（' + nameLabel + '）',
     contents: bubble,
   };
 }
