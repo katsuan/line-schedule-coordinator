@@ -191,13 +191,13 @@ const DetailView = (() => {
         return `
         <details class="summary-row-collapsed">
           <summary>${AppUtil.titleIconHtml(row.option.title || '(タイトルなし)')}（終了）</summary>
-          <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
+          <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-id="${AppUtil.escapeHtml(row.option.optionId)}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
             ${cardBody}
           </div>
         </details>`;
       }
       return `
-        <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
+        <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-id="${AppUtil.escapeHtml(row.option.optionId)}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
           ${cardBody}
         </div>`;
     }).join('');
@@ -229,6 +229,7 @@ const DetailView = (() => {
         try {
           await AppShare.remindRespondents({
             eventId, groups,
+            optionId: rowEl ? rowEl.dataset.optionId : '',
             optionTitle: rowEl ? rowEl.dataset.optionTitle : eventTitle,
             optionStartAt: rowEl ? rowEl.dataset.optionStart : '',
             optionEndAt: rowEl ? rowEl.dataset.optionEnd : '',
