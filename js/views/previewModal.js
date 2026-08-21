@@ -90,10 +90,6 @@ const PreviewModal = (() => {
         const unselectedAnswers = allChips.length
           ? Array.from(allChips).filter((c) => !c.classList.contains('selected')).map((c) => c.dataset.answer)
           : [];
-        if (allChips.length && !selectedChips.length) {
-          previewBox.innerHTML = '<p class="flex-preview-line">送信先が選択されていません</p>';
-          return;
-        }
         const hiddenAnswers = hideNamesCheckbox && hideNamesCheckbox.checked
           ? selectedChips.map((c) => c.dataset.answer)
           : [];
@@ -177,10 +173,6 @@ const PreviewModal = (() => {
         const allChips = overlay.querySelectorAll('.answer-toggle-chip');
         const selectedChips = Array.from(allChips).filter((c) => c.classList.contains('selected'));
         const unselectedAnswers = Array.from(allChips).filter((c) => !c.classList.contains('selected')).map((c) => c.dataset.answer);
-        if (allChips.length && !selectedChips.length) {
-          alert('連絡先を1つ以上選択してください');
-          return;
-        }
         const hiddenAnswers = hideNamesCheckbox && hideNamesCheckbox.checked
           ? selectedChips.map((c) => c.dataset.answer)
           : [];
