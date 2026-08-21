@@ -269,10 +269,11 @@ const DetailView = (() => {
             </div>
           </details>
         </section>
-        <section>
-          ${shareButtonHtml('LINEで共有する')}
-          ${data.isCreator ? deleteButtonHtml() : ''}
-        </section>` : ''}
+        ${data.isCreator ? `<section>${deleteButtonHtml()}</section>` : ''}
+        <div class="fixed-share-bar-spacer"></div>
+        <div class="fixed-share-bar">
+          ${shareButtonHtml('イベント一覧をLINEで送信')}
+        </div>` : ''}
     `;
 
     wireRemindButtons(root, data.event.title, ctx.eventId);

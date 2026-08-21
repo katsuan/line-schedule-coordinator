@@ -49,7 +49,7 @@ function _createAnswerGroupRow_(answer, count, nameList) {
 }
 
 function _createSnapshotNoteRow_() {
-  return { type: 'text', text: '※送信時点の回答状況です', size: 'xxs', color: COLOR.SUB_TEXT, margin: 'md' };
+  return { type: 'text', text: '※敬称略・送信時点の回答状況です', size: 'xxs', color: COLOR.SUB_TEXT, margin: 'md' };
 }
 
 function _createFlexBody_(rows) {
