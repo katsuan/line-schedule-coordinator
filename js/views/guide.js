@@ -55,15 +55,15 @@ const GuideView = (() => {
           </div>
           <div class="guide-answer-demo">
             <div class="guide-answer-demo-item">
-              <span class="choice-btn choice-ok" aria-hidden="true">○</span>
+              <span class="choice-btn choice-ok selected" aria-hidden="true">○</span>
               <span class="event-meta">参加できる</span>
             </div>
             <div class="guide-answer-demo-item">
-              <span class="choice-btn choice-maybe" aria-hidden="true">△</span>
+              <span class="choice-btn choice-maybe selected" aria-hidden="true">△</span>
               <span class="event-meta">未定</span>
             </div>
             <div class="guide-answer-demo-item">
-              <span class="choice-btn choice-ng" aria-hidden="true">×</span>
+              <span class="choice-btn choice-ng selected" aria-hidden="true">×</span>
               <span class="event-meta">参加できない</span>
             </div>
           </div>
@@ -109,7 +109,7 @@ const GuideView = (() => {
         <p class="guide-label">💡 知っておくと便利</p>
         <h2 class="guide-section-title">よくある操作</h2>
         ${faqItem('common', '共通', '複数の予定をまとめて見たい', '一覧の「🗓️ カレンダー」から月表示で確認できます。日付をタップすると、その日の候補にその場で回答できます。')}
-        ${faqItem('organizer', '幹事', '連絡するとき、名前を出したくない', '「LINE送信」のプレビュー画面で「名前を隠す（人数のみ表示）」にチェックすると、○◯人／△◯人のように人数だけが伝わる形式に変わります。')}
+        ${faqItem('organizer', '幹事', '連絡するとき、名前を出したくない', '「LINE送信」のプレビュー画面で「名前を隠す（人数のみ表示）」にチェックすると、○10人／△5人のように人数だけが伝わる形式に変わります。')}
         ${faqItem('organizer', '幹事', 'コメントの届き方を選びたい', '送信プレビューの「コメントをチャット形式で送信する」がONなら、予定カードとは別の普通のメッセージとして届きます。OFFにすると、予定カードの中に埋め込んで1通にまとめられます。')}
         ${faqItem('organizer', '幹事', '予定の内容が変わったとき', '日時やメモを編集すると、すでに回答している人がいれば「変更を知らせますか？」と確認が出ます。「はい」を選ぶと自動で通知メッセージが用意されます。')}
       </section>
