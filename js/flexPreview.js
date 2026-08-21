@@ -1,6 +1,6 @@
 /**
  * Flex Messageのツリーを操作する純粋関数群と、送信プレビュー用のテキスト変換。
- * DOM操作は行わない（モーダルUI自体は js/share.js の showPreviewModal が担当）。
+ * DOM操作は行わない（モーダルUI自体は js/views/previewModal.js の PreviewModal が担当）。
  */
 const FlexPreview = (() => {
   function collectText(node) {
