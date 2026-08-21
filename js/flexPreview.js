@@ -212,10 +212,20 @@ const FlexPreview = (() => {
     node.contents.forEach((child) => mergeHiddenRows(child, hiddenAnswers));
   }
 
+  // 名前を隠しているときは「敬称略」の注記が意味を持たないため取り除く。
+  function stripHonorificNote(node) {
+    if (!node) return;
+    if (node.type === 'text' && typeof node.text === 'string' && node.text.indexOf('敬称略') >= 0) {
+      node.text = node.text.replace('敬称略・', '').replace('敬称略', '');
+    }
+    if (node.contents) node.contents.forEach(stripHonorificNote);
+  }
+
   function hideNames(flex, hiddenAnswers) {
     if (!hiddenAnswers || !hiddenAnswers.length) return flex;
     const bubble = JSON.parse(JSON.stringify(flex.contents));
     mergeHiddenRows(bubble.body, hiddenAnswers);
+    stripHonorificNote(bubble.body);
     return { altText: flex.altText, contents: bubble };
   }
 
