@@ -26,7 +26,7 @@ const DetailHeader = (() => {
             <h1>${AppUtil.titleIconHtml(event.title)}</h1>
             ${statusPill}
             ${editors.length ? `<button type="button" id="toggle-editors" class="editors-count-btn">編集者${editors.length}人</button>` : ''}
-            ${showRequestChip ? `<button type="button" id="request-edit-btn" class="editors-count-btn">🔑 ${AppUtil.escapeHtml(data.creator.displayName)}さんに依頼</button>` : ''}
+            ${showRequestChip ? `<button type="button" id="request-edit-btn" class="editors-count-btn">🔑 編集を依頼</button>` : ''}
             ${showApproveChip ? `<button type="button" id="approve-edit-btn" class="editors-count-btn edit-request-chip-pending">🔑 ${AppUtil.escapeHtml(ctx.requesterName || '依頼者')}さんを承認</button>` : ''}
             ${data.isCreator ? `<button type="button" id="invite-editor" class="edit-option-btn" aria-label="編集者を招待する">👥</button>` : ''}
             ${canEdit ? `<button type="button" id="edit-event-btn" class="edit-option-btn" aria-label="予定を編集">✏️</button>` : ''}
@@ -54,7 +54,6 @@ const DetailHeader = (() => {
         displayName: ctx.identity.displayName,
         pictureUrl: ctx.identity.pictureUrl,
       }, data.creator.displayName), {
-        confirmMessage: `作成者（${data.creator.displayName}）に編集権限を依頼します。送信先は次の画面でLINEのトークから選んでください。よろしいですか？`,
         errorPrefix: '依頼の送信に失敗しました',
       });
     }
