@@ -32,8 +32,20 @@ const CreateView = (() => {
     const optionList = root.querySelector('#option-list');
     let index = 1;
 
+    // カードが1枚だけのときは削除ボタンを押しても何も起きず分かりにくいため、
+    // そもそも押せない（非表示）状態にしておく。
+    const updateRemoveButtons = () => {
+      const cards = optionList.querySelectorAll('.option-card');
+      const onlyOne = cards.length <= 1;
+      cards.forEach((card) => {
+        card.querySelector('.btn-remove-option').hidden = onlyOne;
+      });
+    };
+    updateRemoveButtons();
+
     root.querySelector('#add-option').addEventListener('click', () => {
       optionList.insertAdjacentHTML('beforeend', optionCardHtml(index++));
+      updateRemoveButtons();
     });
 
     optionList.addEventListener('click', (e) => {
@@ -41,6 +53,7 @@ const CreateView = (() => {
         const cards = optionList.querySelectorAll('.option-card');
         if (cards.length > 1) {
           e.target.closest('.option-card').remove();
+          updateRemoveButtons();
         }
       }
     });
@@ -68,7 +81,7 @@ const CreateView = (() => {
       }
 
       const submitBtn = root.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
+      const stopLoading = AppUtil.beginButtonLoading(submitBtn);
       try {
         const { eventId } = await AppApi.createEvent({
           title, description, options,
@@ -79,7 +92,7 @@ const CreateView = (() => {
         AppRouter.navigate({ event: eventId });
       } catch (err) {
         alert('作成に失敗しました: ' + err.message);
-        submitBtn.disabled = false;
+        stopLoading();
       }
     });
   }
