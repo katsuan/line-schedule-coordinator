@@ -153,6 +153,36 @@ function claimEditor_(payload) {
   return { ok: true };
 }
 
+// claimEditor_ は「自分を編集者にする」（招待リンク経由の自己登録）。
+// こちらは「作成者が特定のユーザーを編集者として承認する」（編集権限の依頼フロー）用。
+function approveEditRequest_(payload) {
+  const { eventId, userId, targetUserId, targetDisplayName, targetPictureUrl } = payload;
+  if (!eventId || !userId || !targetUserId) {
+    throw new Error('eventId / userId / targetUserId は必須です');
+  }
+  const event = findEventById_(eventId);
+  if (!event) {
+    throw new Error('イベントが見つかりません');
+  }
+  if (event.creatorUserId !== userId) {
+    throw new Error('編集権限を許可できるのは作成者のみです');
+  }
+
+  upsertUser_(targetUserId, targetDisplayName, targetPictureUrl);
+
+  if (!isEditorOrCreator_(event, targetUserId)) {
+    const ids = editorIdsOf_(event);
+    ids.push(targetUserId);
+    updateRowObject_(SHEET.EVENTS, event._rowIndex, {
+      ...event,
+      editorUserIds: ids.join(','),
+      updatedAt: new Date(),
+    });
+  }
+
+  return { ok: true };
+}
+
 function deleteEvent_(payload) {
   const { eventId, userId } = payload;
   const event = findEventById_(eventId);

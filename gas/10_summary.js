@@ -79,6 +79,7 @@ function getSummary_(payload) {
     const u = userById.get(id);
     return { userId: id, displayName: (u && u.displayName) || '(名前未取得)' };
   });
+  const creatorUser = userById.get(event.creatorUserId);
 
   return {
     event: stripRowMeta_(event),
@@ -88,6 +89,11 @@ function getSummary_(payload) {
     hasAnswered: options.length > 0 && options.every((opt) => myAnswers[opt.optionId] !== undefined),
     myAnswers,
     editors,
+    creator: {
+      userId: event.creatorUserId,
+      displayName: (creatorUser && creatorUser.displayName) || '(名前未取得)',
+      pictureUrl: (creatorUser && creatorUser.pictureUrl) || '',
+    },
     totalRespondents: answeredUserIds.size,
     summary,
   };

@@ -48,6 +48,7 @@ const AppApi = (() => {
     deleteEvent: (payload) => call('deleteEvent', payload),
     addOptions: (payload) => call('addOptions', payload),
     claimEditor: (payload) => call('claimEditor', payload),
+    approveEditRequest: (payload) => call('approveEditRequest', payload),
     updateOption: (payload) => call('updateOption', payload),
     updateEvent: (payload) => call('updateEvent', payload),
     listMyOptions: (payload) => call('listMyOptions', payload),
