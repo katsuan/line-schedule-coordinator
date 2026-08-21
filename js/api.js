@@ -1,11 +1,14 @@
 const AppApi = (() => {
-  async function call(action, payload) {
-    const config = await AppConfig.load();
-    if (!config.gasUrl || config.gasUrl === 'YOUR_DEPLOYMENT_ID' || config.gasUrl.indexOf('YOUR_DEPLOYMENT_ID') >= 0) {
-      throw new Error('config.json に gasUrl が設定されていません（config.example.json を参考に設定してください）');
-    }
+  // ネットワーク環境（一部のLINEアプリ内ブラウザ等）ではPOSTがGASに正しく届かず
+  // 「GET は未対応です」等の一時的なエラーになることがあるため、1回だけ自動リトライする。
+  const TRANSIENT_ERROR_PATTERNS = ['GET は未対応', 'サービスに接続できなくなりました', 'Failed to fetch'];
 
-    const res = await fetch(config.gasUrl, {
+  function isTransientError_(message) {
+    return TRANSIENT_ERROR_PATTERNS.some((p) => message && message.indexOf(p) >= 0);
+  }
+
+  async function callOnce_(gasUrl, action, payload) {
+    const res = await fetch(gasUrl, {
       method: 'POST',
       // GASはカスタムCORSヘッダーを返せないため、text/plainでpreflightを回避する
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -17,6 +20,21 @@ const AppApi = (() => {
       throw new Error(json.error || '不明なエラーが発生しました');
     }
     return json.data;
+  }
+
+  async function call(action, payload) {
+    const config = await AppConfig.load();
+    if (!config.gasUrl || config.gasUrl === 'YOUR_DEPLOYMENT_ID' || config.gasUrl.indexOf('YOUR_DEPLOYMENT_ID') >= 0) {
+      throw new Error('config.json に gasUrl が設定されていません（config.example.json を参考に設定してください）');
+    }
+
+    try {
+      return await callOnce_(config.gasUrl, action, payload);
+    } catch (err) {
+      if (!isTransientError_(err.message)) throw err;
+      console.warn('一時的なエラーのため再試行します', action, err.message);
+      return await callOnce_(config.gasUrl, action, payload);
+    }
   }
 
   return {
