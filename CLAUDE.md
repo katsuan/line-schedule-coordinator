@@ -14,6 +14,7 @@ LINE LIFF + Google Apps Script (GAS) + Spreadsheet で作る、Botなし日程�
 
 - `js/util.js` (`AppUtil`): 日付フォーマット、バリデーション、`wireAsyncButton` などの汎用ヘルパー。
 - `js/config.js` (`AppConfig`) / `js/platform.js` (`AppPlatform`) / `js/api.js` (`AppApi`) / `js/router.js` (`AppRouter`) / `js/share.js` (`AppShare`): インフラ層。
+- `js/flexPreview.js` (`FlexPreview`): Flex MessageツリーのDOM非依存な変換ロジック（対象の絞り込み・名前を隠す・コメント埋め込み・送信プレビュー用テキスト生成）。DOM操作を伴うプレビューモーダルUI本体は `AppShare` 側。
 - `js/views/*.js`: 画面単位（`ListView`/`CreateView`/`DetailView`/`CalendarView`）。
 - `js/views/optionCard.js` (`OptionCard`): 画面をまたいで再利用される「イベントカード」コンポーネント（表示・編集フォーム・インライン回答・カラーリング）。
 
@@ -45,7 +46,8 @@ GASはファイル名に関係なく全ファイルが1つのグローバルス�
 - `gas/03_routing.js`: `routeAction_` のディスパッチのみ。ロジックは書かない。
 - `gas/07_lookups.js`: 検索・権限判定の共有ヘルパー（`findEventById_`/`isEditorOrCreator_`など）。
 - `gas/08_eventActions.js`: 予定・イベント本体のCRUD（`createEvent_`/`updateOption_`/`deleteEvent_`など）。
-- `gas/09_responseActions.js`: 回答の登録・集計・一覧（`submitAnswer_`/`getSummary_`/`listMyOptions_`など）。
+- `gas/09_responseActions.js`: 回答・コメントの登録/削除（`submitAnswer_`/`addComment_`/`deleteComment_`）。
+- `gas/10_summary.js`: 集計・一覧クエリ（`getSummary_`/`listMyEvents_`/`listMyOptions_`）。
 - `gas/06_message.js` / `05_flexParts.js`: Flex Message組み立て。
 - 新しいドメイン（例: 通知まわり、集計まわり）が増えたら、既存ファイルに詰め込まず `10_xxx.js` のように新ファイルへ切り出す。1ファイルが150〜200行を超えて役割が混ざってきたら分割を検討する。
 
