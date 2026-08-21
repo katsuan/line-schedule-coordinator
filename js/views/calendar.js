@@ -57,9 +57,15 @@ const CalendarView = (() => {
       return `<div class="cal-grid-header">${weekHeader}</div><div class="cal-grid">${dayCells}</div>`;
     }
 
+    function isPast(it) {
+      const end = it.endAt || it.startAt;
+      return !!end && new Date(end) < new Date();
+    }
+
     function listHtml() {
-      if (!items.length) return '<p class="empty">関連する予定はありません。</p>';
-      return items.map((it) => {
+      const upcoming = items.filter((it) => !isPast(it));
+      if (!upcoming.length) return '<p class="empty">今後の予定はありません。</p>';
+      return upcoming.map((it) => {
         const statusText = it.myAnswer ? STATUS_LABEL[it.myAnswer] : '未回答';
         const rowClass = OptionCard.statusClass(it.myAnswer);
         const badgeClass = BADGE_CLASS[it.myAnswer] || 'badge-none';
