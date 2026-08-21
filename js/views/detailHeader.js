@@ -27,7 +27,7 @@ const DetailHeader = (() => {
             ${statusPill}
             ${editors.length ? `<button type="button" id="toggle-editors" class="editors-count-btn">編集者${editors.length}人</button>` : ''}
             ${showRequestChip ? `<button type="button" id="request-edit-btn" class="editors-count-btn">🔑 編集を依頼</button>` : ''}
-            ${showApproveChip ? `<button type="button" id="approve-edit-btn" class="editors-count-btn edit-request-chip-pending">🔑 ${AppUtil.escapeHtml(ctx.requesterName || '依頼者')}さんを承認</button>` : ''}
+            ${showApproveChip ? `<button type="button" id="approve-edit-btn" class="editors-count-btn edit-request-chip-pending">🔑 承認する</button>` : ''}
             ${data.isCreator ? `<button type="button" id="invite-editor" class="edit-option-btn" aria-label="編集者を招待する">👥</button>` : ''}
             ${canEdit ? `<button type="button" id="edit-event-btn" class="edit-option-btn" aria-label="予定を編集">✏️</button>` : ''}
           </div>
@@ -46,6 +46,35 @@ const DetailHeader = (() => {
       </div>`;
   }
 
+  function showApproveConfirmModal(eventTitle, requesterName, requesterPic) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      overlay.innerHTML = `
+        <div class="modal-box">
+          <div class="modal-header">
+            <h2 style="margin:0">編集権限の承認</h2>
+            <button type="button" class="modal-close" aria-label="閉じる">×</button>
+          </div>
+          <p class="event-meta">${AppUtil.escapeHtml(eventTitle)}</p>
+          <div class="preview-confirm-target" style="justify-content:flex-start;margin:12px 0">
+            ${AppUtil.avatarHtml(requesterName, requesterPic)}
+            <span>${AppUtil.escapeHtml(requesterName || '依頼者')}さんに編集権限を許可します</span>
+          </div>
+          <div class="option-edit-actions">
+            <button type="button" class="btn btn-primary" id="approve-confirm">承認する</button>
+            <button type="button" class="btn" id="approve-cancel">キャンセル</button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+      const close = (result) => { overlay.remove(); resolve(result); };
+      overlay.querySelector('.modal-close').addEventListener('click', () => close(false));
+      overlay.querySelector('#approve-cancel').addEventListener('click', () => close(false));
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
+      overlay.querySelector('#approve-confirm').addEventListener('click', () => close(true));
+    });
+  }
+
   function wireEditAccessSection(root, ctx, data) {
     const requestBtn = root.querySelector('#request-edit-btn');
     if (requestBtn) {
@@ -61,6 +90,8 @@ const DetailHeader = (() => {
     const approveBtn = root.querySelector('#approve-edit-btn');
     if (approveBtn) {
       approveBtn.addEventListener('click', async () => {
+        const confirmed = await showApproveConfirmModal(data.event.title, ctx.requesterName, ctx.requesterPic);
+        if (!confirmed) return;
         const stopLoading = AppUtil.beginButtonLoading(approveBtn);
         try {
           await AppApi.approveEditRequest({

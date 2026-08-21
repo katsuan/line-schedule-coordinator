@@ -169,7 +169,7 @@ const AppShare = (() => {
       target: {
         displayName: creator.displayName,
         pictureUrl: creator.pictureUrl,
-        note: '予定作成者に依頼を送信してください',
+        note: '次の画面でLINEのトークから予定作成者を選んで依頼を送信してください',
       },
     });
   }
