@@ -1,19 +1,28 @@
 const GuideView = (() => {
   function stepItem(num, title, desc) {
     return `
-      <li>
+      <div class="guide-step-item">
         <span class="guide-step-num">${num}</span>
         <div class="guide-step-body">
           <p class="guide-step-title">${title}</p>
           <p class="event-meta">${desc}</p>
         </div>
-      </li>`;
+      </div>`;
   }
 
-  function faqItem(q, a) {
+  const AUDIENCE_BADGE = {
+    common: 'status-common',
+    organizer: 'status-creator',
+    member: 'status-answered',
+  };
+
+  function faqItem(audience, audienceLabel, q, a) {
     return `
       <div class="guide-faq-item">
-        <p class="guide-faq-q">Q. ${q}</p>
+        <p class="guide-faq-q">
+          <span class="status-badge ${AUDIENCE_BADGE[audience]}">${audienceLabel}</span>
+          Q. ${q}
+        </p>
         <p class="event-meta">${a}</p>
       </div>`;
   }
@@ -40,11 +49,10 @@ const GuideView = (() => {
         <p class="guide-label">👤 参加者のとき</p>
         <h2 class="guide-section-title">予定に回答する</h2>
         <div class="guide-step-card">
-          <ol class="guide-step-list">
+          <div class="guide-step-list">
             ${stepItem(1, '届いたメッセージの「回答する」を開く', '幹事から届いたカード形式のメッセージから、そのまま開けます。')}
             ${stepItem(2, '候補ごとに○△×をタップ', '複数の候補日があれば、それぞれに回答します。あとから何度でも変更できます。')}
-            ${stepItem(3, '伝えたいことがあれば「💬 コメントを追加」', '「19時以降なら参加できます」など、○△×だけで伝えきれないことを書き添えられます。他の参加者にも見えます。')}
-          </ol>
+          </div>
           <div class="guide-answer-demo">
             <div class="guide-answer-demo-item">
               <span class="choice-btn choice-ok" aria-hidden="true">○</span>
@@ -59,6 +67,9 @@ const GuideView = (() => {
               <span class="event-meta">参加できない</span>
             </div>
           </div>
+          <div class="guide-step-list guide-step-list-divider">
+            ${stepItem(3, '伝えたいことがあれば「💬 コメントを追加」', '例えば「19時以降なら参加できます」など、○△×だけで伝えきれないことを書き添えられます。他の参加者にも見えます。')}
+          </div>
         </div>
       </section>
 
@@ -66,11 +77,11 @@ const GuideView = (() => {
         <p class="guide-label">🎌 幹事のとき</p>
         <h2 class="guide-section-title">予定をつくって共有する</h2>
         <div class="guide-step-card">
-          <ol class="guide-step-list">
+          <div class="guide-step-list">
             ${stepItem(1, '一覧の「＋ 新規作成」', 'タイトルと、候補日時を1つ以上入力します（複数候補もOK）。')}
             ${stepItem(2, '「LINEで共有する」で参加者に送る', '送る前に内容のプレビューを確認できます。')}
             ${stepItem(3, '予定ページで回答状況をいつでも確認', '候補ごとの人数・回答者・コメントがまとまって見られます。')}
-          </ol>
+          </div>
         </div>
       </section>
 
@@ -97,10 +108,10 @@ const GuideView = (() => {
       <section class="guide-section">
         <p class="guide-label">💡 知っておくと便利</p>
         <h2 class="guide-section-title">よくある操作</h2>
-        ${faqItem('複数の予定をまとめて見たい', '一覧の「🗓️ カレンダー」から月表示で確認できます。日付をタップすると、その日の候補にその場で回答できます。')}
-        ${faqItem('連絡するとき、名前を出したくない', '「LINE送信」のプレビュー画面で「名前を隠す（人数のみ表示）」にチェックすると、○◯人／△◯人のように人数だけが伝わる形式に変わります。')}
-        ${faqItem('コメントの届き方を選びたい', '送信プレビューの「コメントをチャット形式で送信する」がONなら、予定カードとは別の普通のメッセージとして届きます。OFFにすると、予定カードの中に埋め込んで1通にまとめられます。')}
-        ${faqItem('予定の内容が変わったとき', '日時や場所を編集すると、すでに回答している人がいれば「変更を知らせますか？」と確認が出ます。「はい」を選ぶと自動で通知メッセージが用意されます。')}
+        ${faqItem('common', '共通', '複数の予定をまとめて見たい', '一覧の「🗓️ カレンダー」から月表示で確認できます。日付をタップすると、その日の候補にその場で回答できます。')}
+        ${faqItem('organizer', '幹事', '連絡するとき、名前を出したくない', '「LINE送信」のプレビュー画面で「名前を隠す（人数のみ表示）」にチェックすると、○◯人／△◯人のように人数だけが伝わる形式に変わります。')}
+        ${faqItem('organizer', '幹事', 'コメントの届き方を選びたい', '送信プレビューの「コメントをチャット形式で送信する」がONなら、予定カードとは別の普通のメッセージとして届きます。OFFにすると、予定カードの中に埋め込んで1通にまとめられます。')}
+        ${faqItem('organizer', '幹事', '予定の内容が変わったとき', '日時や場所を編集すると、すでに回答している人がいれば「変更を知らせますか？」と確認が出ます。「はい」を選ぶと自動で通知メッセージが用意されます。')}
       </section>
 
       ${ctaHtml()}
