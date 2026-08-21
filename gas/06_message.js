@@ -13,6 +13,11 @@ function buildEventShareFlex_(eventId) {
     return !end || new Date(end) >= now;
   });
   const responses = getEventResponses_(eventId);
+  const { rows: comments } = sheetRowsAsObjects_(SHEET.COMMENTS);
+  const commentCountByOption = {};
+  comments.forEach((c) => {
+    if (c.eventId === eventId) commentCountByOption[c.optionId] = (commentCountByOption[c.optionId] || 0) + 1;
+  });
 
   const answeredUserIds = new Set(responses.map((r) => r.userId));
 
@@ -23,9 +28,12 @@ function buildEventShareFlex_(eventId) {
   const optionCards = options.map((opt) => {
     const optResponses = responses.filter((r) => r.optionId === opt.optionId);
     const count = (a) => optResponses.filter((r) => r.answer === a).length;
+    const commentCount = commentCountByOption[opt.optionId] || 0;
     const cardRows = [_createEventTimeRow_('日時', opt.startAt, opt.endAt)];
     if (opt.location) cardRows.push(_createInfoRow_('メモ', opt.location));
-    cardRows.push(_createInfoRow_('回答', `○${count(ANSWER.OK)} △${count(ANSWER.MAYBE)} ×${count(ANSWER.NG)}`));
+    const answerText = `○${count(ANSWER.OK)} △${count(ANSWER.MAYBE)} ×${count(ANSWER.NG)}`
+      + (commentCount ? `　💬${commentCount}件` : '');
+    cardRows.push(_createInfoRow_('回答', answerText));
     return {
       type: 'box',
       layout: 'vertical',

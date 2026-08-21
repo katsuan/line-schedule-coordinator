@@ -42,7 +42,7 @@ function _createAnswerGroupRow_(answer, count, nameList) {
     cornerRadius: 'md',
     paddingAll: 'sm',
     contents: [
-      { type: 'text', text: answer + count + '人', size: 'sm', weight: 'bold', color: ANSWER_COLOR[answer] || COLOR.SUB_TEXT, flex: 2, wrap: true },
+      { type: 'text', text: answer + ' ' + count + '人', size: 'sm', weight: 'bold', color: ANSWER_COLOR[answer] || COLOR.SUB_TEXT, flex: 2, wrap: true },
       { type: 'text', text: String(nameList), size: 'sm', color: COLOR.TEXT, flex: 5, wrap: true },
     ],
   };
