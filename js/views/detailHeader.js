@@ -53,7 +53,7 @@ const DetailHeader = (() => {
         userId: ctx.identity.userId,
         displayName: ctx.identity.displayName,
         pictureUrl: ctx.identity.pictureUrl,
-      }, data.creator.displayName), {
+      }, data.creator), {
         errorPrefix: '依頼の送信に失敗しました',
       });
     }
