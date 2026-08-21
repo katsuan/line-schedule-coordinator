@@ -5,6 +5,10 @@ const AppRouter = (() => {
       view: params.get('view') || '',
       eventId: params.get('event') || '',
       claimEditor: params.get('claimEditor') === '1',
+      approveEditor: params.get('approveEditor') === '1',
+      requesterId: params.get('requesterId') || '',
+      requesterName: params.get('requesterName') || '',
+      requesterPic: params.get('requesterPic') || '',
     };
   }
 
