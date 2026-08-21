@@ -237,18 +237,21 @@ const AppShare = (() => {
             <button type="button" class="modal-close" aria-label="閉じる">×</button>
           </div>
           <p class="event-meta">※実際の見え方は端末によって異なります</p>
-          <div class="flex-preview-wrap">
-            ${headerTitle ? `
-              <div class="preview-header-banner" id="preview-header-banner">
-                <strong>${AppUtil.escapeHtml(headerTitle)}</strong>
-                <span id="preview-header-label"></span>
-                <span id="preview-header-comment"></span>
-              </div>` : ''}
-            <div class="flex-preview">
-              ${renderPreviewLinesHtml(lines)}
+          <p class="preview-scope-label">👇 プレビュー範囲（実際に送信される内容）</p>
+          <div class="preview-scope">
+            <div class="flex-preview-wrap">
+              ${headerTitle ? `
+                <div class="preview-header-banner" id="preview-header-banner">
+                  <strong>${AppUtil.escapeHtml(headerTitle)}</strong>
+                  <span id="preview-header-label"></span>
+                  <span id="preview-header-comment"></span>
+                </div>` : ''}
+              <div class="flex-preview">
+                ${renderPreviewLinesHtml(lines)}
+              </div>
             </div>
+            <div class="preview-chat-bubble" id="preview-chat-bubble" hidden></div>
           </div>
-          <div class="preview-chat-bubble" id="preview-chat-bubble" hidden></div>
           ${presets.length ? `
             <p class="event-meta">送信ヘッダー（任意）</p>
             <div class="preset-chip-row">
@@ -419,6 +422,11 @@ const AppShare = (() => {
     }
 
     if (available) {
+      const hasPermission = await ensureChatPermission_();
+      if (!hasPermission) {
+        alert('メッセージの送信が許可されていません。LINEアプリの設定からこのアプリへの「トークへの送信」を許可してから、もう一度お試しください。');
+        return false;
+      }
       const pickerResult = await liff.shareTargetPicker(messages);
       console.log('shareTargetPicker result', pickerResult);
       if (pickerResult && pickerResult.status === 'cancel') {
@@ -433,6 +441,25 @@ const AppShare = (() => {
     console.warn('shareTargetPicker は利用できません（LIFF外またはローカルプレビュー）。生成されたメッセージを表示します。', messages);
     alert('この環境では共有できません（LINEアプリ内のLIFFでのみ動作します）。コンソールに送信内容を出力しました。');
     return false;
+  }
+
+  // shareTargetPicker には chat_message.write 権限が必要。未確定（prompt）なら明示的にリクエストする。
+  async function ensureChatPermission_() {
+    try {
+      if (!window.liff || !liff.permission || typeof liff.permission.query !== 'function') return true;
+      const result = await liff.permission.query('chat_message.write');
+      if (!result) return true;
+      if (result.state === 'granted') return true;
+      if (result.state === 'prompt' && typeof liff.permission.requestAll === 'function') {
+        await liff.permission.requestAll();
+        const after = await liff.permission.query('chat_message.write');
+        return !!(after && after.state === 'granted');
+      }
+      return result.state !== 'unavailable';
+    } catch (err) {
+      console.warn('permission.query に失敗したため権限チェックをスキップします', err);
+      return true;
+    }
   }
 
   async function shareEvent(eventId) {
