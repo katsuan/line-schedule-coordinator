@@ -72,10 +72,10 @@ const PreviewModal = (() => {
             <input type="checkbox" id="preview-comment-as-chat" checked>
             コメントをチャット形式で送信する（OFFでカードに埋め込む）
           </label>
-          ${target ? `<p class="event-meta">${AppUtil.escapeHtml(target.note || '')}</p>` : ''}
+          ${target && target.note ? `<p class="event-meta">${AppUtil.escapeHtml(target.note)}</p>` : ''}
           <div class="option-edit-actions" style="margin-top:12px">
-            <button type="button" class="btn btn-primary preview-confirm-target" id="preview-confirm">
-              ${target ? `${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}を選ぶ` : '送信先を選ぶ'}
+            <button type="button" class="btn btn-primary${target && target.displayName ? ' preview-confirm-target' : ''}" id="preview-confirm">
+              ${target && target.displayName ? `${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}を選ぶ` : '送信先を選ぶ'}
             </button>
             <button type="button" class="btn" id="preview-cancel">キャンセル</button>
           </div>

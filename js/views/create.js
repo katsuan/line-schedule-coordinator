@@ -51,9 +51,11 @@ const CreateView = (() => {
       const description = root.querySelector('#f-description').value.trim();
 
       const optionCards = Array.from(optionList.querySelectorAll('.option-card'));
-      const options = optionCards
-        .map((card) => OptionCard.readFields(card, 'option'))
-        .filter((opt) => opt.startAt && opt.endAt && opt.title);
+      const allFields = optionCards.map((card) => OptionCard.readFields(card, 'option'));
+      // 何も入力されていないカード（追加だけして使わなかった等）は無視するが、
+      // 一部だけ入力されたカードは不備として弾く（黙って消えるとデータ欠落に気づけないため）。
+      const isBlank = (opt) => !opt.title && !opt.startAt && !opt.endAt && !opt.location;
+      const options = allFields.filter((opt) => !isBlank(opt));
 
       if (!title || !options.length) {
         alert('予定のタイトルと、イベント（タイトル・開始・完了とも）を1件以上入力してください');
