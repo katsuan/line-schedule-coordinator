@@ -138,6 +138,7 @@
   .status-badge.status-answered { background: #E9F7EF; color: #2D8A4E; }
   .status-badge.status-pending { background: #FDEDEB; color: #D93025; }
   .status-badge.status-creator { background: #EEF0FF; color: #4F46E5; }
+  .status-badge.status-common { background: #F0F0F0; color: var(--sub-text); }
   .event-meta { color: var(--sub-text); font-size: 0.8rem; }
   .tab-bar {
     display: flex;
@@ -483,12 +484,6 @@
     justify-content: center;
   }
   .cal-daynum { font-size: 0.8rem; }
-  .cal-dots { display: flex; gap: 2px; min-height: 6px; }
-  .cal-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
-  .cal-dot.dot-ok { background: #2D8A4E; }
-  .cal-dot.dot-maybe { background: #E8A33D; }
-  .cal-dot.dot-ng { background: #D93025; }
-  .cal-dot.dot-none { background: #B0B0B0; }
   .cal-pills { display: flex; flex-direction: column; gap: 1px; align-items: center; min-height: 12px; }
   .cal-pill {
     font-size: 0.5rem;
@@ -506,18 +501,27 @@
   .cal-pill-more { font-size: 0.5rem; color: var(--sub-text); }
   .cal-item-list { margin-top: 8px; }
   .cal-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-    text-decoration: none;
+    display: block;
+    width: 100%;
+    text-align: left;
+    font: inherit;
     color: var(--text);
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
   }
-  .cal-item .cal-dot { width: 10px; height: 10px; flex-shrink: 0; }
-  .cal-item-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-  .cal-item-title { font-weight: bold; font-size: 0.9rem; }
-  .cal-item-date { font-size: 0.75rem; color: var(--sub-text); }
+  .cal-status-badge {
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .cal-status-badge.badge-ok { background: #E9F7EF; color: #2D8A4E; }
+  .cal-status-badge.badge-maybe { background: #FFF6E5; color: #C9862B; }
+  .cal-status-badge.badge-ng { background: #FDEDEB; color: #D93025; }
+  .cal-status-badge.badge-none { background: #EEEEEE; color: #8C8C8C; }
   .cal-item-status { font-size: 0.75rem; color: var(--sub-text); flex-shrink: 0; }
   .modal-overlay {
     position: fixed;
@@ -687,8 +691,9 @@
     padding: 14px 16px;
     background: var(--bg);
   }
-  .guide-step-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
-  .guide-step-list li { display: flex; gap: 12px; align-items: flex-start; }
+  .guide-step-list { display: flex; flex-direction: column; gap: 14px; }
+  .guide-step-list-divider { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .guide-step-item { display: flex; gap: 12px; align-items: flex-start; }
   .guide-step-num {
     flex-shrink: 0;
     width: 22px;
@@ -723,7 +728,8 @@
     padding: 12px 14px;
     margin-bottom: 8px;
   }
-  .guide-faq-q { font-weight: bold; font-size: 0.86rem; margin: 0 0 4px; }
+  .guide-faq-q { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.86rem; margin: 0 0 4px; }
+  .guide-faq-q .status-badge { flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -733,21 +739,21 @@
     <span>読み込み中...</span>
   </div>
 </div>
-<script src="js/util.js?v=202608202314"></script>
+<script src="js/util.js?v=202608210013"></script>
 <script>
   document.getElementById('app').innerHTML = AppUtil.loadingHtml();
 </script>
-<script src="js/config.js?v=202608202314"></script>
-<script src="js/platform.js?v=202608202314"></script>
-<script src="js/api.js?v=202608202314"></script>
-<script src="js/router.js?v=202608202314"></script>
-<script src="js/share.js?v=202608202314"></script>
-<script src="js/views/optionCard.js?v=202608202314"></script>
-<script src="js/views/list.js?v=202608202314"></script>
-<script src="js/views/create.js?v=202608202314"></script>
-<script src="js/views/detail.js?v=202608202314"></script>
-<script src="js/views/calendar.js?v=202608202314"></script>
-<script src="js/views/guide.js?v=202608202356"></script>
-<script src="js/app.js?v=202608202356"></script>
+<script src="js/config.js?v=202608210013"></script>
+<script src="js/platform.js?v=202608210013"></script>
+<script src="js/api.js?v=202608210013"></script>
+<script src="js/router.js?v=202608210013"></script>
+<script src="js/share.js?v=202608210013"></script>
+<script src="js/views/optionCard.js?v=202608210013"></script>
+<script src="js/views/list.js?v=202608210013"></script>
+<script src="js/views/create.js?v=202608210013"></script>
+<script src="js/views/detail.js?v=202608210013"></script>
+<script src="js/views/calendar.js?v=202608210013"></script>
+<script src="js/views/guide.js?v=202608210013"></script>
+<script src="js/app.js?v=202608210013"></script>
 </body>
 </html>
