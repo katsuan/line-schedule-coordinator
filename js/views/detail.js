@@ -23,13 +23,15 @@ const DetailView = (() => {
     renderSummary(root, ctx, data, refresh);
   }
 
-  function headerHtml(event, data, canEdit) {
+  function headerHtml(event, data, canEdit, ctx) {
     const statusPill = data.isCreator
       ? '<span class="status-pill status-pill-creator">作成者</span>'
       : data.isEditor
         ? '<span class="status-pill status-pill-editor">編集者</span>'
         : '';
     const editors = data.editors || [];
+    const showRequestChip = !canEdit && !data.isCreator && data.creator;
+    const showApproveChip = ctx.approveEditor && data.isCreator;
     return `
       <div class="page-header">
         <div class="page-header-top-row">
@@ -44,6 +46,8 @@ const DetailView = (() => {
             <h1>${AppUtil.titleIconHtml(event.title)}</h1>
             ${statusPill}
             ${editors.length ? `<button type="button" id="toggle-editors" class="editors-count-btn">編集者${editors.length}人</button>` : ''}
+            ${showRequestChip ? `<button type="button" id="request-edit-btn" class="editors-count-btn">🔑 ${AppUtil.escapeHtml(data.creator.displayName)}さんに依頼</button>` : ''}
+            ${showApproveChip ? `<button type="button" id="approve-edit-btn" class="editors-count-btn edit-request-chip-pending">🔑 ${AppUtil.escapeHtml(ctx.requesterName || '依頼者')}さんを承認</button>` : ''}
             ${data.isCreator ? `<button type="button" id="invite-editor" class="edit-option-btn" aria-label="編集者を招待する">👥</button>` : ''}
             ${canEdit ? `<button type="button" id="edit-event-btn" class="edit-option-btn" aria-label="予定を編集">✏️</button>` : ''}
           </div>
@@ -62,31 +66,6 @@ const DetailView = (() => {
       </div>`;
   }
 
-  function editAccessSectionHtml(data, canEdit, ctx) {
-    if (ctx.approveEditor && data.isCreator) {
-      const name = ctx.requesterName || '(名前未取得)';
-      return `
-        <section class="edit-request-card" id="approve-request-card">
-          <div class="edit-request-row">
-            ${AppUtil.avatarHtml(name, ctx.requesterPic, null)}
-            <p class="edit-request-text"><strong>${AppUtil.escapeHtml(name)}</strong>さんが編集権限を依頼しています</p>
-          </div>
-          <button type="button" id="approve-edit-btn" class="btn btn-primary">許可する</button>
-        </section>`;
-    }
-    if (!canEdit && !data.isCreator && data.creator) {
-      return `
-        <section class="edit-request-card">
-          <div class="edit-request-row">
-            ${AppUtil.avatarHtml(data.creator.displayName, data.creator.pictureUrl, null)}
-            <p class="edit-request-text">編集権限がありません（作成者: <strong>${AppUtil.escapeHtml(data.creator.displayName)}</strong>）</p>
-          </div>
-          <button type="button" id="request-edit-btn" class="btn">🔑 編集権限を依頼する</button>
-        </section>`;
-    }
-    return '';
-  }
-
   function wireEditAccessSection(root, ctx, data) {
     const requestBtn = root.querySelector('#request-edit-btn');
     if (requestBtn) {
@@ -94,30 +73,38 @@ const DetailView = (() => {
         userId: ctx.identity.userId,
         displayName: ctx.identity.displayName,
         pictureUrl: ctx.identity.pictureUrl,
-      }), { errorPrefix: '依頼の送信に失敗しました' });
+      }), {
+        confirmMessage: `作成者（${data.creator.displayName}）に編集権限を依頼します。送信先は次の画面でLINEのトークから選んでください。よろしいですか？`,
+        errorPrefix: '依頼の送信に失敗しました',
+      });
     }
 
     const approveBtn = root.querySelector('#approve-edit-btn');
     if (approveBtn) {
-      AppUtil.wireAsyncButton(approveBtn, async () => {
-        await AppApi.approveEditRequest({
-          eventId: ctx.eventId,
-          userId: ctx.identity.userId,
-          targetUserId: ctx.requesterId,
-          targetDisplayName: ctx.requesterName,
-          targetPictureUrl: ctx.requesterPic,
-        });
-        const card = root.querySelector('#approve-request-card');
-        if (card) {
-          const name = ctx.requesterName || '依頼者';
-          card.innerHTML = `
-            <p class="edit-request-text">✅ ${AppUtil.escapeHtml(name)}さんの編集権限を許可しました</p>
-            <button type="button" id="reply-approved-btn" class="btn btn-primary">同じトークに返信する</button>`;
-          AppUtil.wireAsyncButton(card.querySelector('#reply-approved-btn'), () => AppShare.replyInChat(
+      approveBtn.addEventListener('click', async () => {
+        const stopLoading = AppUtil.beginButtonLoading(approveBtn);
+        try {
+          await AppApi.approveEditRequest({
+            eventId: ctx.eventId,
+            userId: ctx.identity.userId,
+            targetUserId: ctx.requesterId,
+            targetDisplayName: ctx.requesterName,
+            targetPictureUrl: ctx.requesterPic,
+          });
+          const replyBtn = document.createElement('button');
+          replyBtn.type = 'button';
+          replyBtn.id = 'reply-approved-btn';
+          replyBtn.className = 'editors-count-btn';
+          replyBtn.textContent = '✅ 返信する';
+          approveBtn.replaceWith(replyBtn);
+          AppUtil.wireAsyncButton(replyBtn, () => AppShare.replyInChat(
             `✅ ${data.event.title} の編集権限を承認しました`
           ), { errorPrefix: '返信に失敗しました' });
+        } catch (err) {
+          alert('許可に失敗しました: ' + err.message);
+          stopLoading();
         }
-      }, { errorPrefix: '許可に失敗しました' });
+      });
     }
   }
 
@@ -310,8 +297,7 @@ const DetailView = (() => {
     const rows = summaryRowsHtml(data.event, data.summary, canEdit, ctx.identity.userId, data.myAnswers);
 
     root.innerHTML = `
-      ${headerHtml(data.event, data, canEdit)}
-      ${editAccessSectionHtml(data, canEdit, ctx)}
+      ${headerHtml(data.event, data, canEdit, ctx)}
       <section>
         <p class="event-meta">イベント数：${data.options.length}件 / 回答者数：${data.totalRespondents}人</p>
         <div class="summary-list">${rows}</div>
