@@ -156,11 +156,11 @@ const OptionCard = (() => {
       <div class="option-meta" data-option-id="${opt.optionId}">
         <div class="option-meta-view">
           <div class="option-meta-title-row">
-            <div class="option-meta-title">${AppUtil.titleIconHtml(opt.title || '(タイトルなし)')}</div>
+            <div class="option-meta-title">${AppUtil.titleIconHtml(opt.title || '(タイトルなし)')} ${AppUtil.relativeDayPillHtml(opt.startAt)}</div>
             ${canEdit ? `<button type="button" class="edit-option-btn" aria-label="編集">✏️</button>` : ''}
           </div>
           <div class="option-meta-info-row option-meta-info-row-split">
-            <span class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)} ${AppUtil.relativeDayPillHtml(opt.startAt)}</span>
+            <span class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</span>
             ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
           </div>
           ${opt.location ? `<div class="option-meta-info-row"><span class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</span></div>` : ''}
