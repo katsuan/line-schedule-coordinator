@@ -247,8 +247,8 @@ const AppShare = (() => {
             <div class="flex-preview">
               ${renderPreviewLinesHtml(lines)}
             </div>
-            <div class="preview-chat-bubble" id="preview-chat-bubble" hidden></div>
           </div>
+          <div class="preview-chat-bubble" id="preview-chat-bubble" hidden></div>
           ${presets.length ? `
             <p class="event-meta">送信ヘッダー（任意）</p>
             <div class="preset-chip-row">
@@ -256,7 +256,7 @@ const AppShare = (() => {
             </div>` : ''}
           ${groupAnswers.length ? `
             <div class="preview-section-header">
-              <p class="event-meta">送信対象</p>
+              <p class="event-meta">回答者</p>
               <label class="preview-checkbox-label-inline">
                 <input type="checkbox" id="preview-hide-names">
                 名前を隠す（人数のみ表示）

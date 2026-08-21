@@ -143,7 +143,8 @@ const DetailView = (() => {
       const respondentsHtml = (answer) => {
         const list = row.respondents[answer] || [];
         if (!list.length) return '<p class="empty-respondents">なし</p>';
-        const sorted = [...list].sort((a, b) => (commentTextByUser[b.userId] ? 1 : 0) - (commentTextByUser[a.userId] ? 1 : 0));
+        const rank = (r) => (r.userId === myUserId ? 2 : commentTextByUser[r.userId] ? 1 : 0);
+        const sorted = [...list].sort((a, b) => rank(b) - rank(a));
         return `<div class="respondent-list">
           ${sorted.map((r) => {
             const comments = commentTextByUser[r.userId];
