@@ -39,7 +39,7 @@ const DetailView = (() => {
             <button type="button" id="refresh-event" class="btn-refresh" aria-label="最新の状態に更新">🔄</button>
           </div>
         </div>
-        <div id="event-header-view">
+        <div id="event-header-view" class="event-title-banner">
           <div class="page-header-title-row">
             <h1>${AppUtil.titleIconHtml(event.title)}</h1>
             ${statusPill}
