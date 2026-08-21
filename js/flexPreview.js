@@ -221,11 +221,27 @@ const FlexPreview = (() => {
     if (node.contents) node.contents.forEach(stripHonorificNote);
   }
 
+  // 実名（○2人 のような回答者名の行）が残っているかどうか。
+  // 人数のみの「対象」ピル行（mergeHiddenRows後）は実名ではないためカウントしない。
+  function hasVisibleNames_(node) {
+    if (!node) return false;
+    if (node.type === 'box' && node.layout === 'baseline' && node.contents && node.contents[0]) {
+      if (answerSymbolOf(node.contents[0].text)) return true;
+    }
+    if (node.contents) return node.contents.some(hasVisibleNames_);
+    return false;
+  }
+
   function hideNames(flex, hiddenAnswers) {
-    if (!hiddenAnswers || !hiddenAnswers.length) return flex;
     const bubble = JSON.parse(JSON.stringify(flex.contents));
-    mergeHiddenRows(bubble.body, hiddenAnswers);
-    stripHonorificNote(bubble.body);
+    if (hiddenAnswers && hiddenAnswers.length) {
+      mergeHiddenRows(bubble.body, hiddenAnswers);
+    }
+    // 名前を隠した、または回答者グループが絞り込まれて実名が1件も残っていない場合は
+    // 「敬称略」の注記自体が意味を持たないため取り除く。
+    if (!hasVisibleNames_(bubble.body)) {
+      stripHonorificNote(bubble.body);
+    }
     return { altText: flex.altText, contents: bubble };
   }
 
