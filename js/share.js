@@ -110,7 +110,7 @@ const AppShare = (() => {
 
   // 編集権限の依頼Flexを生成して送る（送信先は依頼者自身がピッカーで選ぶ＝作成者のトークへ）。
   // 「許可する」は作成者側でLIFFを開いてapproveEditRequestを叩くuriリンク（postbackはBotなし構成では使えないため不採用）。
-  async function requestEditAccess(eventId, eventTitle, requester, creatorName) {
+  async function requestEditAccess(eventId, eventTitle, requester, creator) {
     const config = await AppConfig.load();
     const liffUrl = config.liffId ? `https://liff.line.me/${config.liffId}` : '';
     const approveUrl = liffUrl
@@ -141,7 +141,7 @@ const AppShare = (() => {
               type: 'box', layout: 'baseline', spacing: 'sm', margin: 'sm',
               contents: [
                 { type: 'text', text: '依頼先', size: 'sm', color: '#8C8C8C', flex: 2 },
-                { type: 'text', text: creatorName || '(名前未取得)', size: 'sm', color: '#111111', flex: 5, wrap: true },
+                { type: 'text', text: creator.displayName || '(名前未取得)', size: 'sm', color: '#111111', flex: 5, wrap: true },
               ],
             },
           ],
@@ -164,7 +164,14 @@ const AppShare = (() => {
         styles: approveUrl ? { footer: { separator: true, separatorColor: '#EEEEEE' } } : undefined,
       },
     };
-    return sendFlexMessage(flex, { closeAfter: false });
+    return sendFlexMessage(flex, {
+      closeAfter: false,
+      target: {
+        displayName: creator.displayName,
+        pictureUrl: creator.pictureUrl,
+        note: '予定作成者に依頼を送信してください',
+      },
+    });
   }
 
   // sendMessagesにはchat_message.write権限が必要（shareTargetPickerと異なり、
