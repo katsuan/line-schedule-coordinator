@@ -9,6 +9,7 @@ function routeAction_(action, payload) {
     case 'updateOption': return updateOption_(payload);
     case 'updateEvent': return updateEvent_(payload);
     case 'claimEditor': return claimEditor_(payload);
+    case 'approveEditRequest': return approveEditRequest_(payload);
     case 'deleteEvent': return deleteEvent_(payload);
     case 'submitAnswer': return submitAnswer_(payload);
     case 'addComment': return addComment_(payload);

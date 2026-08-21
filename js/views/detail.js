@@ -62,6 +62,65 @@ const DetailView = (() => {
       </div>`;
   }
 
+  function editAccessSectionHtml(data, canEdit, ctx) {
+    if (ctx.approveEditor && data.isCreator) {
+      const name = ctx.requesterName || '(名前未取得)';
+      return `
+        <section class="edit-request-card" id="approve-request-card">
+          <div class="edit-request-row">
+            ${AppUtil.avatarHtml(name, ctx.requesterPic, null)}
+            <p class="edit-request-text"><strong>${AppUtil.escapeHtml(name)}</strong>さんが編集権限を依頼しています</p>
+          </div>
+          <button type="button" id="approve-edit-btn" class="btn btn-primary">許可する</button>
+        </section>`;
+    }
+    if (!canEdit && !data.isCreator && data.creator) {
+      return `
+        <section class="edit-request-card">
+          <div class="edit-request-row">
+            ${AppUtil.avatarHtml(data.creator.displayName, data.creator.pictureUrl, null)}
+            <p class="edit-request-text">編集権限がありません（作成者: <strong>${AppUtil.escapeHtml(data.creator.displayName)}</strong>）</p>
+          </div>
+          <button type="button" id="request-edit-btn" class="btn">🔑 編集権限を依頼する</button>
+        </section>`;
+    }
+    return '';
+  }
+
+  function wireEditAccessSection(root, ctx, data) {
+    const requestBtn = root.querySelector('#request-edit-btn');
+    if (requestBtn) {
+      AppUtil.wireAsyncButton(requestBtn, () => AppShare.requestEditAccess(ctx.eventId, data.event.title, {
+        userId: ctx.identity.userId,
+        displayName: ctx.identity.displayName,
+        pictureUrl: ctx.identity.pictureUrl,
+      }), { errorPrefix: '依頼の送信に失敗しました' });
+    }
+
+    const approveBtn = root.querySelector('#approve-edit-btn');
+    if (approveBtn) {
+      AppUtil.wireAsyncButton(approveBtn, async () => {
+        await AppApi.approveEditRequest({
+          eventId: ctx.eventId,
+          userId: ctx.identity.userId,
+          targetUserId: ctx.requesterId,
+          targetDisplayName: ctx.requesterName,
+          targetPictureUrl: ctx.requesterPic,
+        });
+        const card = root.querySelector('#approve-request-card');
+        if (card) {
+          const name = ctx.requesterName || '依頼者';
+          card.innerHTML = `
+            <p class="edit-request-text">✅ ${AppUtil.escapeHtml(name)}さんの編集権限を許可しました</p>
+            <button type="button" id="reply-approved-btn" class="btn btn-primary">同じトークに返信する</button>`;
+          AppUtil.wireAsyncButton(card.querySelector('#reply-approved-btn'), () => AppShare.replyInChat(
+            `✅ ${data.event.title} の編集権限を承認しました`
+          ), { errorPrefix: '返信に失敗しました' });
+        }
+      }, { errorPrefix: '許可に失敗しました' });
+    }
+  }
+
   function wireEventEdit(root, ctx, refresh) {
     const editBtn = root.querySelector('#edit-event-btn');
     if (editBtn) {
@@ -252,6 +311,7 @@ const DetailView = (() => {
 
     root.innerHTML = `
       ${headerHtml(data.event, data, canEdit)}
+      ${editAccessSectionHtml(data, canEdit, ctx)}
       <section>
         <p class="event-meta">イベント数：${data.options.length}件 / 回答者数：${data.totalRespondents}人</p>
         <div class="summary-list">${rows}</div>
@@ -281,6 +341,7 @@ const DetailView = (() => {
     wireRemindButtons(root, data.event.title, ctx.eventId);
     wireRespondentComments(root);
     wireEventEdit(root, ctx, refresh);
+    wireEditAccessSection(root, ctx, data);
     OptionCard.wireAnswerButtons(root, ctx, refresh);
     OptionCard.wireComments(root, ctx, refresh);
     wireCommonActions(root, ctx, { canShare: canEdit, isCreator: data.isCreator });
