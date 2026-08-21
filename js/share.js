@@ -13,6 +13,7 @@ const AppShare = (() => {
 
   const BUTTON_LINE_PREFIX = ' BTN ';
   const TITLE_LINE_PREFIX = ' TTL ';
+  const PILL_ROW_PREFIX = ' PILLROW ';
   const CARD_START = ' CARDSTART ';
   const CARD_END = ' CARDEND ';
   const ANSWER_LINE_PREFIX = { '○': ' ANSok ', '△': ' ANSmb ', '×': ' ANSng ' };
@@ -21,6 +22,11 @@ const AppShare = (() => {
   function answerSymbolOf(label) {
     if (!label) return null;
     return ANSWER_SYMBOLS.find((a) => label.startsWith(a)) || null;
+  }
+
+  function isPillGroupBox(node) {
+    return node && node.type === 'box' && node.layout === 'horizontal' && Array.isArray(node.contents)
+      && node.contents.every((c) => c.type === 'box' && Array.isArray(c.contents) && c.contents[0]);
   }
 
   function walkPreviewLines(node, lines) {
@@ -34,6 +40,16 @@ const AppShare = (() => {
     if (node.type === 'button') { lines.push(BUTTON_LINE_PREFIX + node.action.label); return; }
     if (node.type === 'box') {
       if (node.action) { lines.push(BUTTON_LINE_PREFIX + collectText(node)); return; }
+      if (node.layout === 'baseline' && node.contents && node.contents[1] && isPillGroupBox(node.contents[1])) {
+        const label = node.contents[0] && node.contents[0].text;
+        const pills = node.contents[1].contents.map((pillBox) => ({
+          text: pillBox.contents[0].text,
+          color: pillBox.contents[0].color,
+          bg: pillBox.backgroundColor,
+        }));
+        lines.push(PILL_ROW_PREFIX + JSON.stringify({ label, pills }));
+        return;
+      }
       if (node.layout === 'horizontal' || node.layout === 'baseline') {
         const line = collectText(node);
         if (!line) return;
@@ -69,6 +85,11 @@ const AppShare = (() => {
       }
       if (l.startsWith(TITLE_LINE_PREFIX)) {
         return `<p class="flex-preview-line flex-preview-title">${AppUtil.escapeHtml(l.slice(TITLE_LINE_PREFIX.length))}</p>`;
+      }
+      if (l.startsWith(PILL_ROW_PREFIX)) {
+        const { label, pills } = JSON.parse(l.slice(PILL_ROW_PREFIX.length));
+        const pillsHtml = pills.map((p) => `<span class="flex-preview-pill" style="background:${p.bg};color:${p.color}">${AppUtil.escapeHtml(p.text)}</span>`).join('');
+        return `<div class="flex-preview-line flex-preview-pill-row"><span class="flex-preview-pill-row-label">${AppUtil.escapeHtml(label)}</span>${pillsHtml}</div>`;
       }
       const ansPrefix = Object.keys(ANSWER_LINE_CLASS).find((p) => l.startsWith(p));
       if (ansPrefix) {
@@ -154,13 +175,18 @@ const AppShare = (() => {
       if (ans && hiddenAnswers.includes(ans)) idxs.push(i);
     });
     if (idxs.length) {
-      const spans = [];
-      idxs.forEach((i, pos) => {
+      const pills = idxs.map((i) => {
         const row = node.contents[i];
         const label = row.contents[0].text;
         const color = row.contents[0].color;
-        spans.push({ type: 'span', text: label, color });
-        if (pos < idxs.length - 1) spans.push({ type: 'span', text: '　' });
+        return {
+          type: 'box',
+          layout: 'vertical',
+          backgroundColor: row.backgroundColor,
+          cornerRadius: 'md',
+          paddingAll: 'xs',
+          contents: [{ type: 'text', text: label, size: 'xs', weight: 'bold', color, align: 'center' }],
+        };
       });
       const combinedRow = {
         type: 'box',
@@ -168,7 +194,7 @@ const AppShare = (() => {
         spacing: 'sm',
         contents: [
           { type: 'text', text: '対象', size: 'sm', color: '#8C8C8C', flex: 2 },
-          { type: 'text', size: 'sm', flex: 5, wrap: true, contents: spans },
+          { type: 'box', layout: 'horizontal', flex: 5, spacing: 'xs', contents: pills },
         ],
       };
       node.contents[idxs[0]] = combinedRow;
