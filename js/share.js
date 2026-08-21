@@ -65,7 +65,10 @@ const AppShare = (() => {
 
   async function notifyChange(params) {
     const flex = await AppApi.buildChangeNotificationFlex(params);
-    return sendFlexMessage(flex, { closeAfter: false });
+    return sendFlexMessage(flex, {
+      closeAfter: false,
+      target: { note: '次の画面で、変更を伝えたい相手（トークやグループ）を選んでください' },
+    });
   }
 
   async function shareApp() {
