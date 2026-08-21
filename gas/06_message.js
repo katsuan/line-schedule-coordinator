@@ -74,7 +74,7 @@ function buildEventShareFlex_(eventId) {
   };
 }
 
-function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionEndAt, optionLocation) {
+function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionEndAt, optionLocation, optionId) {
   const event = findEventById_(eventId);
   if (!event) {
     throw new Error('イベントが見つかりません: ' + eventId);
@@ -96,6 +96,11 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
       rows.push(_createAnswerGroupRow_(ans, names.length, names.join('、')));
     }
   });
+  if (optionId) {
+    const { rows: comments } = sheetRowsAsObjects_(SHEET.COMMENTS);
+    const commentCount = comments.filter((c) => c.eventId === eventId && c.optionId === optionId).length;
+    if (commentCount) rows.push(_createInfoRow_('コメント', `💬${commentCount}件`));
+  }
   rows.push(_createSnapshotNoteRow_());
 
   const allNames = [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].reduce((acc, ans) => acc.concat(groups[ans] || []), []);
