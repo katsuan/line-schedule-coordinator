@@ -73,7 +73,7 @@ const DetailView = (() => {
         userId: ctx.identity.userId,
         displayName: ctx.identity.displayName,
         pictureUrl: ctx.identity.pictureUrl,
-      }), {
+      }, data.creator.displayName), {
         confirmMessage: `作成者（${data.creator.displayName}）に編集権限を依頼します。送信先は次の画面でLINEのトークから選んでください。よろしいですか？`,
         errorPrefix: '依頼の送信に失敗しました',
       });
@@ -95,7 +95,7 @@ const DetailView = (() => {
           replyBtn.type = 'button';
           replyBtn.id = 'reply-approved-btn';
           replyBtn.className = 'editors-count-btn';
-          replyBtn.textContent = '✅ 返信する';
+          replyBtn.textContent = '✅ 権限許可を連絡する';
           approveBtn.replaceWith(replyBtn);
           AppUtil.wireAsyncButton(replyBtn, () => AppShare.replyInChat(
             `✅ ${data.event.title} の編集権限を承認しました`

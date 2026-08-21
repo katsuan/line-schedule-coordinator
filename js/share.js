@@ -298,7 +298,7 @@ const AppShare = (() => {
 
   // 編集権限の依頼Flexを生成して送る（送信先は依頼者自身がピッカーで選ぶ＝作成者のトークへ）。
   // 「許可する」は作成者側でLIFFを開いてapproveEditRequestを叩くuriリンク（postbackはBotなし構成では使えないため不採用）。
-  async function requestEditAccess(eventId, eventTitle, requester) {
+  async function requestEditAccess(eventId, eventTitle, requester, creatorName) {
     const config = await AppConfig.load();
     const liffUrl = config.liffId ? `https://liff.line.me/${config.liffId}` : '';
     const approveUrl = liffUrl
@@ -323,6 +323,13 @@ const AppShare = (() => {
               contents: [
                 { type: 'text', text: '依頼者', size: 'sm', color: '#8C8C8C', flex: 2 },
                 { type: 'text', text: requester.displayName || '(名前未取得)', size: 'sm', color: '#111111', flex: 5, wrap: true },
+              ],
+            },
+            {
+              type: 'box', layout: 'baseline', spacing: 'sm', margin: 'sm',
+              contents: [
+                { type: 'text', text: '依頼先', size: 'sm', color: '#8C8C8C', flex: 2 },
+                { type: 'text', text: creatorName || '(名前未取得)', size: 'sm', color: '#111111', flex: 5, wrap: true },
               ],
             },
           ],
