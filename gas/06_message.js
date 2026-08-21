@@ -24,7 +24,7 @@ function buildEventShareFlex_(eventId) {
     const optResponses = responses.filter((r) => r.optionId === opt.optionId);
     const count = (a) => optResponses.filter((r) => r.answer === a).length;
     const cardRows = [_createEventTimeRow_('日時', opt.startAt, opt.endAt)];
-    if (opt.location) cardRows.push(_createInfoRow_('場所', opt.location));
+    if (opt.location) cardRows.push(_createInfoRow_('メモ', opt.location));
     cardRows.push(_createInfoRow_('回答', `○${count(ANSWER.OK)} △${count(ANSWER.MAYBE)} ×${count(ANSWER.NG)}`));
     return {
       type: 'box',
@@ -81,11 +81,11 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
     _createInfoRow_('イベント名', targetTitle),
   ];
   if (optionStartAt) rows.push(_createEventTimeRow_('日時', optionStartAt, optionEndAt));
-  if (optionLocation) rows.push(_createInfoRow_('場所', optionLocation));
+  if (optionLocation) rows.push(_createInfoRow_('メモ', optionLocation));
   [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].forEach((ans) => {
     const names = groups[ans];
     if (names && names.length) {
-      rows.push(_createAnswerGroupRow_(ans, names.length, names.map((n) => n + 'さん').join('、')));
+      rows.push(_createAnswerGroupRow_(ans, names.length, names.join('、')));
     }
   });
   rows.push(_createSnapshotNoteRow_());
@@ -127,8 +127,8 @@ function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optio
   }
 
   const nameList = names.length > 3
-    ? names.slice(0, 3).join('さん、') + `さん他${names.length - 3}名`
-    : names.join('さん、') + 'さん';
+    ? names.slice(0, 3).join('、') + `他${names.length - 3}名`
+    : names.join('、');
   const liffUrl = getLiffUrl_();
   const answerUrl = liffUrl ? (liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId)) : '';
 
@@ -136,7 +136,7 @@ function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optio
     _createInfoRow_('イベント名', optionTitle || event.title),
   ];
   if (optionStartAt) rows.push(_createEventTimeRow_('新しい日時', optionStartAt, optionEndAt));
-  if (optionLocation) rows.push(_createInfoRow_('新しい場所', optionLocation));
+  if (optionLocation) rows.push(_createInfoRow_('新しいメモ', optionLocation));
   rows.push(_createInfoRow_('宛先', nameList + '一同'));
 
   const bubble = {
