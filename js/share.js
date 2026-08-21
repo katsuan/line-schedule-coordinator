@@ -246,7 +246,7 @@ const AppShare = (() => {
           </label>
           <label class="preview-checkbox-label-inline">
             <input type="checkbox" id="preview-comment-as-chat" checked>
-            コメントをチャット形式で送信する（OFFでFlexに埋め込む）
+            コメントをチャット形式で送信する（OFFでカードに埋め込む）
           </label>
           <div class="option-edit-actions" style="margin-top:12px">
             <button type="button" class="btn btn-primary" id="preview-confirm">送信先を選ぶ</button>
@@ -404,8 +404,8 @@ const AppShare = (() => {
       return true;
     }
 
-    console.warn('shareTargetPicker は利用できません（LIFF外またはローカルプレビュー）。生成されたFlexを表示します。', messages);
-    alert('この環境では共有できません（LINEアプリ内のLIFFでのみ動作します）。コンソールにFlex内容を出力しました。');
+    console.warn('shareTargetPicker は利用できません（LIFF外またはローカルプレビュー）。生成されたメッセージを表示します。', messages);
+    alert('この環境では共有できません（LINEアプリ内のLIFFでのみ動作します）。コンソールに送信内容を出力しました。');
     return false;
   }
 
