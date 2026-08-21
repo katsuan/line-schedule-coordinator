@@ -14,9 +14,12 @@ LINE LIFF + Google Apps Script (GAS) + Spreadsheet で作る、Botなし日程�
 
 - `js/util.js` (`AppUtil`): 日付フォーマット、バリデーション、`wireAsyncButton` などの汎用ヘルパー。
 - `js/config.js` (`AppConfig`) / `js/platform.js` (`AppPlatform`) / `js/api.js` (`AppApi`) / `js/router.js` (`AppRouter`) / `js/share.js` (`AppShare`): インフラ層。
-- `js/flexPreview.js` (`FlexPreview`): Flex MessageツリーのDOM非依存な変換ロジック（対象の絞り込み・名前を隠す・コメント埋め込み・送信プレビュー用テキスト生成）。DOM操作を伴うプレビューモーダルUI本体は `AppShare` 側。
+- `js/flexPreview.js` (`FlexPreview`): Flex MessageツリーのDOM非依存な変換ロジック（対象の絞り込み・名前を隠す・コメント埋め込み・送信プレビュー用テキスト生成）。
+- `js/views/previewModal.js` (`PreviewModal`): 送信内容プレビューのモーダルUI本体（DOM操作を伴う部分）。`AppShare.sendFlexMessage` から呼ばれる。
 - `js/views/*.js`: 画面単位（`ListView`/`CreateView`/`DetailView`/`CalendarView`）。
 - `js/views/optionCard.js` (`OptionCard`): 画面をまたいで再利用される「イベントカード」コンポーネント（表示・編集フォーム・インライン回答・カラーリング）。
+- `js/views/optionComments.js` (`OptionComments`): イベントカードのコメント（追加・一覧表示・削除）まわり。`OptionCard`/`DetailView`から呼ばれる。
+- `js/views/detailHeader.js` (`DetailHeader`): 詳細画面のページヘッダー（タイトル・チップ・予定編集フォーム・編集権限の依頼/承認導線）。
 
 ### 分割の原則（画面系・GAS系共通）
 
@@ -58,6 +61,6 @@ GASはファイル名に関係なく全ファイルが1つのグローバルス�
 ## デプロイ
 
 - `cd gas && clasp push -f` でGASへ反映。`.clasp.json` はgitignore対象。
-- フロントは `git push` するとGitHub Pagesへ自動反映。LINEアプリ内ブラウザ・GitHub Pages双方がJSを強くキャッシュするため、`index.html` の `<script src="js/....js?v=...">` のバージョン文字列（現在はコミットハッシュ）は **`js/`配下を変更するたびに新しいコミットハッシュへ更新する**こと。忘れると「直したのに実機で反映されない」問題が再発する。
+- フロントは `git push` するとGitHub Pagesへ自動反映。LINEアプリ内ブラウザ・GitHub Pages双方がJSを強くキャッシュするため、`index.html` の `<script src="js/....js?v=...">` のバージョン文字列（UTCタイムスタンプ、`date -u +%Y%m%d%H%M`）は **`js/`配下を変更するたびに `sed -i '' -E 's/\?v=[0-9]+/?v=<新しいタイムスタンプ>/g' index.html` で更新する**こと。忘れると「直したのに実機で反映されない」問題が再発する。
 - 動作確認は `python3 -m http.server <port>` + Browserツールで行う。ローカルではLIFF未初期化のままデバッグユーザーにフォールバックするが、`config.json` の `gasUrl` が設定されていれば実際のGASバックエンドと通信する。**テストで作成したイベントは `AppApi.deleteEvent` で必ず削除してから終える。**
 - `test/scenario.js`: パラメータ化された手動シナリオテスト（作成→回答を自動でクリックして流す）。DevToolsコンソールに貼り付けて実行する専用スクリプトで、`index.html` からは読み込まれない。予定作成でページ遷移が入るため `runCreatePhase` → （遷移後に再度貼り付けて）`runAnswerPhase` の2フェーズに分かれている。クリックした要素をハイライト表示する機能付き。
