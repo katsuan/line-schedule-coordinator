@@ -99,15 +99,21 @@ const AppShare = (() => {
     }).join('');
   }
 
+  // 参加状況の色（○緑/△黄/×赤）に寄せて、送信ヘッダーの色も同じ配色で揃える。
   const HEADER_COLORS = {
-    0: { bg: '#EAF0FE', text: '#4F46E5' }, // 青: 回答ありがとう
-    1: { bg: '#FDEDEB', text: '#D93025' }, // 赤: 要確認
-    2: { bg: '#FFF6E5', text: '#C9862B' }, // 黄: イベント近し
+    none: { bg: '#EAF0FE', text: '#4F46E5' }, // 青: 未選択
+    0: { bg: '#E9F7EF', text: '#2D8A4E' }, // 緑: 回答ありがとう
+    1: { bg: '#FDEDEB', text: '#D93025' }, // 赤: 回答の更新をお願いします
+    2: { bg: '#FFF6E5', text: '#C9862B' }, // 黄: イベントが近づいています
   };
+
+  function headerColorFor_(presetIndex) {
+    return HEADER_COLORS[presetIndex != null ? presetIndex : 'none'];
+  }
 
   function applyComment(flex, comment, presetIndex, presetLabel) {
     const bubble = JSON.parse(JSON.stringify(flex.contents));
-    const color = HEADER_COLORS[presetIndex];
+    const color = headerColorFor_(presetIndex);
 
     if (bubble.header) {
       if (color) {
@@ -317,9 +323,9 @@ const AppShare = (() => {
       const chatBubble = overlay.querySelector('#preview-chat-bubble');
       const updateBanner = () => {
         if (!banner) return;
-        const color = HEADER_COLORS[presetIndex];
-        banner.style.background = color ? color.bg : '';
-        banner.style.color = color ? color.text : '';
+        const color = headerColorFor_(presetIndex);
+        banner.style.background = color.bg;
+        banner.style.color = color.text;
         if (bannerLabel) bannerLabel.textContent = presetIndex != null ? presets[presetIndex] : '';
         if (bannerComment) bannerComment.textContent = sendAsChat ? '' : commentText;
       };
