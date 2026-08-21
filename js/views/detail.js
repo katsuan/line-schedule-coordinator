@@ -250,7 +250,6 @@ const DetailView = (() => {
 
     root.innerHTML = `
       ${headerHtml(data.event, data, canEdit)}
-      <p class="event-meta">タップすると自動的に保存されます。</p>
       <section>
         <p class="event-meta">イベント数：${data.options.length}件 / 回答者数：${data.totalRespondents}人</p>
         <div class="summary-list">${rows}</div>
