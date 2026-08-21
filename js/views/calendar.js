@@ -1,6 +1,7 @@
 const CalendarView = (() => {
   const STATUS_CLASS = { '○': 'dot-ok', '△': 'dot-maybe', '×': 'dot-ng' };
   const STATUS_LABEL = { '○': '○ 参加', '△': '△ 未定', '×': '× 不参加' };
+  const BADGE_CLASS = { '○': 'badge-ok', '△': 'badge-maybe', '×': 'badge-ng' };
 
   function dateKey(isoLike) {
     const d = new Date(isoLike);
@@ -60,15 +61,18 @@ const CalendarView = (() => {
       if (!items.length) return '<p class="empty">関連する予定はありません。</p>';
       return items.map((it) => {
         const statusText = it.myAnswer ? STATUS_LABEL[it.myAnswer] : '未回答';
-        const statusClass = it.myAnswer ? STATUS_CLASS[it.myAnswer] : 'dot-none';
+        const rowClass = OptionCard.statusClass(it.myAnswer);
+        const badgeClass = BADGE_CLASS[it.myAnswer] || 'badge-none';
         return `
-          <button type="button" class="cal-item" data-key="${dateKey(it.startAt)}">
-            <span class="cal-dot ${statusClass}"></span>
-            <span class="cal-item-body">
-              <span class="cal-item-title">${AppUtil.titleIconHtml(it.optionTitle || it.eventTitle)}</span>
-              <span class="cal-item-date">${AppUtil.formatDateRange(it.startAt, it.endAt)}${it.location ? ' ・ 📍' + AppUtil.escapeHtml(it.location) : ''}</span>
-            </span>
-            <span class="cal-item-status">${statusText}</span>
+          <button type="button" class="cal-item summary-row ${rowClass}" data-key="${dateKey(it.startAt)}">
+            <div class="option-meta-title-row">
+              <span class="option-meta-title">${AppUtil.titleIconHtml(it.optionTitle || it.eventTitle)}</span>
+              <span class="cal-status-badge ${badgeClass}">${statusText}</span>
+            </div>
+            <div class="option-meta-info-row">
+              <span class="option-meta-date">${AppUtil.formatDateRange(it.startAt, it.endAt)}</span>
+            </div>
+            ${it.location ? `<div class="option-meta-info-row"><span class="option-meta-location">📍 ${AppUtil.escapeHtml(it.location)}</span></div>` : ''}
           </button>`;
       }).join('');
     }
