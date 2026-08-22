@@ -152,8 +152,11 @@ const AppShare = (() => {
       return true;
     }
 
-    console.warn('shareTargetPicker は利用できません（LIFF外またはローカルプレビュー）。生成されたFlexを表示します。', message);
-    alert('この環境では共有できません（LINEアプリ内のLIFFでのみ動作します）。コンソールにFlex内容を出力しました。');
+    console.warn('shareTargetPicker は利用できません。生成されたFlexを表示します。', message);
+    const inClient = window.liff && typeof liff.isInClient === 'function' && liff.isInClient();
+    alert(inClient
+      ? 'この環境では共有できません。LINE Developers ConsoleのLIFFアプリ設定で「Share target picker」のScopeが有効になっているか確認してください。'
+      : 'この環境では共有できません（LINEアプリ内のLIFFでのみ動作します）。コンソールにFlex内容を出力しました。');
     return false;
   }
 

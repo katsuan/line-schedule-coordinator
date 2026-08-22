@@ -37,6 +37,7 @@ Apps Script エディタ（`npm run clasp:open`）で以下を設定:
 1. LINE Developers Console で Messaging API チャネル（or LINEログイン）配下にLIFFアプリを追加
 2. エンドポイントURLは、このリポジトリをGitHub Pages公開したURL
 3. 発行されたLIFF IDを控える
+4. LIFFアプリの設定画面で **Scopes に `Share target picker` を必ず有効化する**（デフォルトはOFF）。これが無効のままだと `liff.isApiAvailable('shareTargetPicker')` が `false` を返し、共有ボタンから「この環境では共有できません」というアラートになりFlex Messageが一切送れない。
 
 ### 3. フロントエンド設定
 
