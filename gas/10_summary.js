@@ -123,6 +123,14 @@ function listMyEvents_(payload) {
     return optionIds.every((id) => myAnsweredOptionIds.has(id));
   };
 
+  // 未回答判定の対象からは、候補日が全て過去になったイベントを除外する（回答者判定自体は変更しない）。
+  const isPastEvent = (eventId) => {
+    const eventOptions = allOptions.filter((o) => o.eventId === eventId);
+    if (!eventOptions.length) return false;
+    const now = new Date();
+    return eventOptions.every((o) => new Date(o.endAt || o.startAt) < now);
+  };
+
   const list = related.map((e) => ({
     eventId: e.eventId,
     title: e.title,
@@ -131,6 +139,7 @@ function listMyEvents_(payload) {
     status: e.status,
     isCreator: e.creatorUserId === userId,
     hasAnswered: hasFullyAnswered(e.eventId),
+    isPast: isPastEvent(e.eventId),
     createdAt: e.createdAt,
   }));
 
