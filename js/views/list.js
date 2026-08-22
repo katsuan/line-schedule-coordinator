@@ -4,7 +4,7 @@ const ListView = (() => {
     const { events } = await AppApi.listMyEvents({ userId: ctx.identity.userId });
 
     const groups = {
-      unanswered: events.filter((e) => !e.isCreator && !e.hasAnswered),
+      unanswered: events.filter((e) => !e.isCreator && !e.hasAnswered && !e.isPast),
       answered: events.filter((e) => !e.isCreator && e.hasAnswered),
       created: events.filter((e) => e.isCreator),
     };
