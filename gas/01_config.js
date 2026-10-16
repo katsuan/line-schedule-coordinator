@@ -34,7 +34,7 @@ const EVENT_STATUS = {
 
 /** ========= COLOR (Flex) ========= */
 const COLOR = {
-  PRIMARY: '#4F46E5',
+  PRIMARY: '#0284C7',
   TEXT: '#111111',
   SUB_TEXT: '#8C8C8C',
   BORDER: '#EEEEEE',

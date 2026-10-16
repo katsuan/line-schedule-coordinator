@@ -39,6 +39,11 @@ const ListView = (() => {
 
     root.innerHTML = `
       <div class="page-header">
+        <div class="brand-row">
+          <p class="brand-name"><img class="brand-icon" src="icon.svg" alt="" width="28" height="28">くるかな</p>
+          <img class="brand-logo" src="logo.svg" alt="QuruKana" width="103" height="28">
+        </div>
+        <p class="brand-copy">来れる日を、○△×でそろえよう</p>
         <h1>自分の予定</h1>
         <div class="header-actions">
           <a class="btn" href="?view=calendar">🗓️ カレンダー</a>

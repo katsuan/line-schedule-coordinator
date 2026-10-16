@@ -101,7 +101,7 @@ const AppShare = (() => {
           contents: [{
             type: 'box',
             layout: 'vertical',
-            backgroundColor: '#4F46E5',
+            backgroundColor: '#0284C7',
             cornerRadius: 'xxl',
             paddingAll: 'md',
             action: { type: 'uri', label: '使ってみる', uri: liffUrl },
@@ -160,7 +160,7 @@ const AppShare = (() => {
           contents: [{
             type: 'box',
             layout: 'vertical',
-            backgroundColor: '#4F46E5',
+            backgroundColor: '#0284C7',
             cornerRadius: 'xxl',
             paddingAll: 'md',
             action: { type: 'uri', label: '許可する', uri: approveUrl },

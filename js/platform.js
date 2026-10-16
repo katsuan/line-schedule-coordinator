@@ -53,7 +53,8 @@ const AppPlatform = (() => {
 
       if (!liff.isLoggedIn()) {
         if (typeof liff.login === 'function') {
-          liff.login();
+          // ログイン後は今のページ（?event= 付き）に戻す。指定しないと LIFF の入口に戻り、開いていた予定から外れる
+          liff.login({ redirectUri: loginReturnUrl() });
           return new Promise(() => {}); // ログインリダイレクトへ遷移するため解決しない
         }
         return debugIdentity();
@@ -73,6 +74,15 @@ const AppPlatform = (() => {
     })();
 
     return identityPromise;
+  }
+
+  // ログインの受け渡しで付く一時的なパラメータは外す（おくるんの shared/liff.js と同じ）
+  function loginReturnUrl() {
+    const url = new URL(window.location.href);
+    ['code', 'state', 'liffClientId', 'liffRedirectUri', 'error', 'error_description', 'friendship_status_changed'].forEach((key) => {
+      url.searchParams.delete(key);
+    });
+    return url.toString();
   }
 
   return { initIdentity, isLocalPreviewEnvironment };
