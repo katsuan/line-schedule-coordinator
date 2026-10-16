@@ -103,7 +103,7 @@ const FlexPreview = (() => {
 
   // 参加状況の色（○緑/△黄/×赤）に寄せて、送信ヘッダーの色も同じ配色で揃える。
   const HEADER_COLORS = {
-    none: { bg: '#EAF0FE', text: '#4F46E5' }, // 青: 未選択
+    none: { bg: '#E0F2FE', text: '#0284C7' }, // 青: 未選択
     0: { bg: '#E9F7EF', text: '#2D8A4E' }, // 緑: 回答ありがとう
     1: { bg: '#FDEDEB', text: '#D93025' }, // 赤: 回答の更新をお願いします
     2: { bg: '#FFF6E5', text: '#C9862B' }, // 黄: イベントが近づいています

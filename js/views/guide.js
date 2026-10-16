@@ -39,7 +39,9 @@ const GuideView = (() => {
     root.innerHTML = `
       ${notice}
       <div class="guide-hero">
-        <div class="guide-hero-icon">🗓️</div>
+        <img class="guide-hero-icon" src="icon.svg" alt="" width="64" height="64">
+        <img class="guide-hero-logo" src="logo.svg" alt="くるかな（QuruKana）" width="118" height="32">
+        <p class="brand-copy guide-hero-copy">来れる日を、○△×でそろえよう</p>
         <h1>アプリを追加せずに、<br>LINEで日程調整。</h1>
         <p class="event-meta">友だち追加もBotもいりません。このページで、予定づくり〜回答〜集計までの流れをおさらいできます。</p>
       </div>

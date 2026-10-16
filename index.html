@@ -3,11 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>日程調整</title>
+<title>くるかな｜LINE でできる日程調整</title>
+<meta name="description" content="来れる日を、○△×でそろえよう。候補の日を LINE で送って、○△× で答えてもらう日程調整。">
+<meta name="theme-color" content="#0284C7">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="くるかな 〜QuruKana〜">
+<meta property="og:description" content="来れる日を、○△×でそろえよう。候補の日を LINE で送って、○△× で答えてもらう日程調整。">
+<meta property="og:url" content="https://katsuan.github.io/line-schedule-coordinator/">
+<meta property="og:image" content="https://katsuan.github.io/line-schedule-coordinator/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
   :root {
-    --primary: #4F46E5;
+    --primary: #0284C7;
     --text: #111111;
     --sub-text: #8C8C8C;
     --border: #EEEEEE;
@@ -30,6 +43,15 @@
   h1 { font-size: 1.25rem; margin: 8px 0; }
   h2 { font-size: 1rem; color: var(--sub-text); margin: 20px 0 8px; }
   .page-header { margin-bottom: 16px; }
+  .tool-share-slot { max-width: 480px; margin: 0 auto; padding: 8px 16px 24px; text-align: center; }
+  /* 見出しの行：アイコン＋名前（左）と、横長のロゴ（右）。ほかの Q のツール（さくせん盤・キロっくなど）と同じ形 */
+  .brand-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .brand-name { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.25rem; font-weight: 800; white-space: nowrap; }
+  .brand-icon { display: block; flex: 0 0 auto; width: 28px; height: 28px; }
+  .brand-logo { display: block; flex: 0 0 auto; width: auto; height: 28px; }
+  /* キャッチコピー（おくるんの「つくって、おくるん」と同じ役目） */
+  .brand-copy { margin: 4px 2px 0; color: var(--primary); font-size: 13px; font-weight: 800; line-height: 1.4; }
+  .page-header .brand-row + .brand-copy + h1 { margin-top: 14px; font-size: 1rem; color: var(--sub-text); }
   .header-actions { display: flex; gap: 8px; margin-top: 10px; }
   .header-actions .btn { flex: 1; margin-top: 0; width: auto; text-align: center; }
   .btn-back { color: var(--sub-text); text-decoration: none; font-size: 0.85rem; }
@@ -172,7 +194,7 @@
   }
   .status-badge.status-answered { background: #E9F7EF; color: #2D8A4E; }
   .status-badge.status-pending { background: #FDEDEB; color: #D93025; }
-  .status-badge.status-creator { background: #EEF0FF; color: #4F46E5; }
+  .status-badge.status-creator { background: #E0F2FE; color: #0284C7; }
   .status-badge.status-common { background: #F0F0F0; color: var(--sub-text); }
   .event-meta { color: var(--sub-text); font-size: 0.8rem; }
   .tab-bar {
@@ -337,20 +359,20 @@
     padding: 2px 4px;
   }
   .event-title-banner {
-    background: #EAF0FE;
+    background: #E0F2FE;
     border-radius: 12px;
     padding: 12px 14px;
     margin-top: 4px;
   }
-  .event-title-banner h1 { color: #4F46E5; }
-  .event-title-banner .event-description { color: #4F46E5; opacity: 0.85; }
+  .event-title-banner h1 { color: #0284C7; }
+  .event-title-banner .event-description { color: #0284C7; opacity: 0.85; }
   .event-title-banner .status-pill,
   .event-title-banner .editors-count-btn,
   .event-title-banner .edit-option-btn { background: #fff; }
   .page-header-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   .page-header-title-row h1 { flex: 1; min-width: 0; }
   .status-pill { flex-shrink: 0; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: bold; }
-  .status-pill-creator { background: #EAF0FE; color: #4F46E5; }
+  .status-pill-creator { background: #E0F2FE; color: #0284C7; }
   .status-pill-editor { background: #F0F0F0; color: var(--sub-text); }
   .editors-count-btn {
     flex-shrink: 0;
@@ -363,7 +385,7 @@
     font-weight: bold;
     cursor: pointer;
   }
-  .editors-count-btn.edit-request-chip-pending { background: #EAF0FE; color: #4F46E5; }
+  .editors-count-btn.edit-request-chip-pending { background: #E0F2FE; color: #0284C7; }
   .cal-link {
     display: inline-flex;
     align-items: center;
@@ -718,17 +740,10 @@
     margin-bottom: 16px;
   }
   .guide-hero { text-align: center; margin: 8px 0 20px; }
-  .guide-hero-icon {
-    width: 52px;
-    height: 52px;
-    margin: 0 auto 14px;
-    border-radius: 14px;
-    background: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-  }
+  /* はじめの案内の見出し：アイコン・横長のロゴ・キャッチコピー */
+  .guide-hero-icon { display: block; width: 64px; height: 64px; margin: 0 auto 10px; }
+  .guide-hero-logo { display: block; width: auto; height: 32px; margin: 0 auto; }
+  .guide-hero-copy { margin: 8px 0 14px; }
   .guide-hero h1 { font-size: 1.35rem; line-height: 1.5; margin: 0 0 8px; }
   .guide-hero .event-meta { max-width: 32ch; margin: 0 auto; }
   .guide-section { margin-top: 32px; }
@@ -753,7 +768,7 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: #EEF0FF;
+    background: #E0F2FE;
     color: var(--primary);
     font-weight: bold;
     font-size: 0.75rem;
@@ -798,25 +813,28 @@
     <span>読み込み中...</span>
   </div>
 </div>
-<script src="js/util.js?v=202608211057"></script>
+<!-- 「📤 くるかなを紹介する」：おくるんで紹介カードを送る窓口（line-share/shared/tool-share.js。中身は line-share/data/hub-links.json） -->
+<div class="tool-share-slot" data-tool-share></div>
+<script src="js/util.js?v=202610160538"></script>
 <script>
   document.getElementById('app').innerHTML = AppUtil.loadingHtml();
 </script>
-<script src="js/config.js?v=202608211057"></script>
-<script src="js/platform.js?v=202608211057"></script>
-<script src="js/api.js?v=202608211057"></script>
-<script src="js/router.js?v=202608211057"></script>
-<script src="js/flexPreview.js?v=202608211057"></script>
-<script src="js/views/previewModal.js?v=202608211057"></script>
-<script src="js/share.js?v=202608211057"></script>
-<script src="js/views/optionComments.js?v=202608211057"></script>
-<script src="js/views/optionCard.js?v=202608211057"></script>
-<script src="js/views/list.js?v=202608211057"></script>
-<script src="js/views/create.js?v=202608211057"></script>
-<script src="js/views/detailHeader.js?v=202608211057"></script>
-<script src="js/views/detail.js?v=202608211057"></script>
-<script src="js/views/calendar.js?v=202608211057"></script>
-<script src="js/views/guide.js?v=202608211057"></script>
-<script src="js/app.js?v=202608211057"></script>
+<script src="js/config.js?v=202610160538"></script>
+<script src="js/platform.js?v=202610160538"></script>
+<script src="js/api.js?v=202610160538"></script>
+<script src="js/router.js?v=202610160538"></script>
+<script src="js/flexPreview.js?v=202610160538"></script>
+<script src="js/views/previewModal.js?v=202610160538"></script>
+<script src="js/share.js?v=202610160538"></script>
+<script src="js/views/optionComments.js?v=202610160538"></script>
+<script src="js/views/optionCard.js?v=202610160538"></script>
+<script src="js/views/list.js?v=202610160538"></script>
+<script src="js/views/create.js?v=202610160538"></script>
+<script src="js/views/detailHeader.js?v=202610160538"></script>
+<script src="js/views/detail.js?v=202610160538"></script>
+<script src="js/views/calendar.js?v=202610160538"></script>
+<script src="js/views/guide.js?v=202610160538"></script>
+<script src="js/app.js?v=202610160538"></script>
+<script src="https://katsuan.github.io/line-share/shared/tool-share.js" data-tool="qurukana" defer></script>
 </body>
 </html>

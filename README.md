@@ -1,6 +1,16 @@
-# line-schedule-coordinator
+# くるかな 〜QuruKana〜
 
-LINE LIFF + Google Apps Script (GAS) + Spreadsheet で作る、Botなし日程調整MVP。
+来れる日を、○△×でそろえよう。LINE LIFF + Google Apps Script (GAS) + Spreadsheet で作る、Botなし日程調整。
+
+公開URL: https://katsuan.github.io/line-schedule-coordinator/ （LINE では https://liff.line.me/2009927582-qytzPvoy ）
+
+おくるん（OQRN）と同じ Q のツールのなかま（「く」を Q にした名前。GitHub のリポジトリ名は line-schedule-coordinator のまま、ローカルのフォルダは `~/GitHub/q-qurukana`）。
+おくるんの「ほかのツール」に並び、画面の下の「📤 くるかなを紹介する」から紹介カードを送れる。
+
+## アイコン・ロゴ・OGP
+
+`python3 tools/icon.py` で書き出す（となりのおくるん `~/GitHub/q-oqrn` の `tools/brandkit.py` を使う）。
+Q はカレンダー（綴じ具と日付の点、真ん中の1日だけ ○）に、✓ のしっぽ。色は空色（`--primary` #0284C7）。
 
 幹事がLIFFで予定を作成 → Flex Messageを生成してLINEへ共有 → 参加者がLIFFで○/△/×回答 → 幹事が回答集計を確認、という一連の流れを実現する。
 
