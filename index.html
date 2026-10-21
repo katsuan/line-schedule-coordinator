@@ -27,6 +27,8 @@
     --bg: #FAFAFA;
   }
   * { box-sizing: border-box; }
+  /* iPhone・LINE の中のブラウザで、キーボードが出て画面がずれたとき、ページの外（黒）が見えないよう、ページそのものにも背景の色 */
+  html { background-color: var(--bg); }
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
