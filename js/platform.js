@@ -85,5 +85,14 @@ const AppPlatform = (() => {
     return url.toString();
   }
 
-  return { initIdentity, isLocalPreviewEnvironment };
+  // GAS に本人を確かめてもらうための LINE のログイン証明（ローカルで試すときはない）
+  function getAccessToken() {
+    try {
+      return window.liff && typeof liff.getAccessToken === 'function' ? (liff.getAccessToken() || '') : '';
+    } catch (err) {
+      return '';
+    }
+  }
+
+  return { initIdentity, isLocalPreviewEnvironment, getAccessToken };
 })();
