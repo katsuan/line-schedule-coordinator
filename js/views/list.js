@@ -23,14 +23,12 @@ const ListView = (() => {
     };
 
     const itemsHtml = (list) => {
-      if (!list.length) return '<p class="empty">該当する予定はありません。</p>';
-      return `<ul>${list.map((e) => `
+      if (!list.length) return '<p class="ls-empty">該当する予定はありません。</p>';
+      return `<ul class="event-list ls-panel">${list.map((e) => `
         <li class="event-row">
           <a href="?event=${encodeURIComponent(e.eventId)}">
             <span class="event-title">${AppUtil.titleIconHtml(e.title)}</span>
-            <span class="event-row-right">
-              ${statusBadge(e)}
-            </span>
+            ${statusBadge(e)}
           </a>
         </li>`).join('')}</ul>`;
     };
@@ -38,41 +36,41 @@ const ListView = (() => {
     const defaultTab = tabs.find((t) => t.list.length)?.key || 'unanswered';
 
     root.innerHTML = `
-      <div class="page-header">
-        <div class="brand-row">
-          <p class="brand-name"><img class="brand-icon" src="icon.svg" alt="" width="28" height="28">くるかな</p>
-          <img class="brand-logo" src="logo.svg" alt="QuruKana" width="103" height="28">
+      <header class="page-header">
+        <div class="ls-brand">
+          <p class="ls-brand-name"><img class="ls-brand-icon" src="icon.svg" alt="" width="30" height="30">くるかな</p>
+          <img class="ls-brand-logo" src="logo.svg" alt="QuruKana" width="103" height="28">
         </div>
-        <p class="brand-copy">来れる日を、○△×でそろえよう</p>
-        <h1>自分の予定</h1>
+        <p class="ls-brand-copy">来れる日を、○△×でそろえよう</p>
+        <h1 class="page-subtitle">自分の予定</h1>
         <div class="header-actions">
-          <a class="btn" href="?view=calendar">🗓️ カレンダー</a>
-          <a class="btn btn-primary" href="?view=create">＋ 新規作成</a>
+          <a class="ls-button" href="?view=calendar">🗓️ カレンダー</a>
+          <a class="ls-button is-primary" href="?view=create">＋ 新規作成</a>
         </div>
-      </div>
+      </header>
       ${events.length ? `
-        <div class="tab-bar" role="tablist">
+        <div class="ls-tabs" role="tablist">
           ${tabs.map((t) => `
-            <button type="button" class="tab-btn" data-tab="${t.key}" role="tab">
+            <button type="button" class="ls-tab" data-tab="${t.key}" role="tab" aria-selected="false">
               ${t.label}${t.list.length ? `<span class="tab-count">${t.list.length}</span>` : ''}
             </button>`).join('')}
         </div>
-        ${tabs.map((t) => `<div class="tab-panel" data-panel="${t.key}">${itemsHtml(t.list)}</div>`).join('')}
-      ` : '<p class="empty">予定はまだありません。</p>'}
+        ${tabs.map((t) => `<div class="tab-panel" data-panel="${t.key}" role="tabpanel" hidden>${itemsHtml(t.list)}</div>`).join('')}
+      ` : '<p class="ls-empty">予定はまだありません。</p>'}
     `;
 
     if (!events.length) return;
 
     const activate = (key) => {
-      root.querySelectorAll('.tab-btn').forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.tab === key);
+      root.querySelectorAll('.ls-tab').forEach((btn) => {
+        btn.setAttribute('aria-selected', String(btn.dataset.tab === key));
       });
       root.querySelectorAll('.tab-panel').forEach((panel) => {
-        panel.style.display = panel.dataset.panel === key ? '' : 'none';
+        panel.hidden = panel.dataset.panel !== key;
       });
     };
 
-    root.querySelectorAll('.tab-btn').forEach((btn) => {
+    root.querySelectorAll('.ls-tab').forEach((btn) => {
       btn.addEventListener('click', () => activate(btn.dataset.tab));
     });
 

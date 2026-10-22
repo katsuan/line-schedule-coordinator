@@ -96,8 +96,8 @@ async function runCreatePhase(params) {
 }
 
 /**
- * フェーズ2: 遷移後の回答フォームで、各イベントに回答する。
- * 全問回答するとアプリが自動で集計画面へ遷移する。
+ * フェーズ2: 遷移後の予定のページで、各イベントのカードの ○△× を押して回答する。
+ * 押すたびに保存して、ページを描き直す。
  *
  * @param {object} [params]
  * @param {string[]} [params.answers] 各イベントへの回答（'○'|'△'|'×'）。省略時はランダム。
@@ -107,14 +107,16 @@ async function runAnswerPhase(params = {}) {
   installClickHighlight();
   const { answers, cleanup = true } = params;
 
-  const answerRows = await waitFor('#answer-rows');
-  const rows = Array.from(answerRows.querySelectorAll('.answer-row'));
-  for (let i = 0; i < rows.length; i++) {
+  await waitFor('.summary-list');
+  const count = document.querySelectorAll('.summary-row .answer-buttons').length;
+  for (let i = 0; i < count; i++) {
     const answer = (answers && answers[i]) || ['○', '△', '×'][Math.floor(Math.random() * 3)];
-    const btn = rows[i].querySelector(`.choice-btn[data-value="${answer}"]`);
+    // 回答のたびにページを描き直すので、毎回探し直す
+    const row = document.querySelectorAll('.summary-row .answer-buttons')[i];
+    const btn = row && row.querySelector(`.choice-btn[data-value="${answer}"]`);
     if (!btn) throw new Error('回答ボタンが見つかりません: ' + answer);
     btn.click();
-    await wait(900); // 保存の通信＋最後の1問なら遷移を待つ
+    await wait(2500); // 保存の通信と描き直しを待つ
   }
 
   const eventId = new URLSearchParams(location.search).get('event');

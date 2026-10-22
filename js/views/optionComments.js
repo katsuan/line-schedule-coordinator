@@ -39,8 +39,8 @@ const OptionComments = (() => {
   function commentAddFormHtml(optionId) {
     return `
       <div class="comment-add-form" data-option-id="${optionId}" hidden>
-        <input type="text" class="comment-input" placeholder="例: 友達が1名参加します" maxlength="200">
-        <button type="button" class="btn comment-save-btn">保存</button>
+        <input type="text" class="ls-input comment-input" placeholder="例: 友達が1名参加します" maxlength="200">
+        <button type="button" class="ls-button comment-save-btn">保存</button>
       </div>`;
   }
 
@@ -60,41 +60,37 @@ const OptionComments = (() => {
       form.querySelector('.comment-save-btn').addEventListener('click', async (e) => {
         const text = input.value.trim();
         if (!text) return;
-        const stopLoading = AppUtil.beginButtonLoading(e.target);
         input.disabled = true;
-        try {
-          await AppApi.addComment({
-            eventId: ctx.eventId,
-            optionId: form.dataset.optionId,
-            userId: ctx.identity.userId,
-            displayName: ctx.identity.displayName,
-            pictureUrl: ctx.identity.pictureUrl,
-            text,
-          });
-          await refresh();
-        } catch (err) {
-          alert('コメントの保存に失敗しました: ' + err.message);
-          input.disabled = false;
-          stopLoading();
-        }
+        await AppUtil.saveWithButton(e.currentTarget, async () => {
+          try {
+            await AppApi.addComment({
+              eventId: ctx.eventId,
+              optionId: form.dataset.optionId,
+              userId: ctx.identity.userId,
+              displayName: ctx.identity.displayName,
+              pictureUrl: ctx.identity.pictureUrl,
+              text,
+            });
+            await refresh();
+          } catch (err) {
+            input.disabled = false;
+            throw err;
+          }
+        }, 'コメントの保存に失敗しました');
       });
     });
 
     root.querySelectorAll('.comment-delete-btn').forEach((btn) => {
-      btn.addEventListener('click', async (e) => {
+      btn.addEventListener('click', async () => {
         if (!confirm('コメントを削除しますか？')) return;
-        const stopLoading = AppUtil.beginButtonLoading(e.target);
-        try {
+        await AppUtil.saveWithButton(btn, async () => {
           await AppApi.deleteComment({
             eventId: ctx.eventId,
             userId: ctx.identity.userId,
             commentId: btn.dataset.commentId,
           });
           await refresh();
-        } catch (err) {
-          alert('コメントの削除に失敗しました: ' + err.message);
-          stopLoading();
-        }
+        }, 'コメントの削除に失敗しました');
       });
     });
   }

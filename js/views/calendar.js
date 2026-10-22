@@ -1,7 +1,7 @@
 const CalendarView = (() => {
+  // 自分の答えの色（日付の小さな印と、一覧の札で同じ）
   const STATUS_CLASS = { '○': 'dot-ok', '△': 'dot-maybe', '×': 'dot-ng' };
   const STATUS_LABEL = { '○': '○ 参加', '△': '△ 未定', '×': '× 不参加' };
-  const BADGE_CLASS = { '○': 'badge-ok', '△': 'badge-maybe', '×': 'badge-ng' };
 
   function dateKey(isoLike) {
     const d = new Date(isoLike);
@@ -64,13 +64,13 @@ const CalendarView = (() => {
 
     function listHtml() {
       const upcoming = items.filter((it) => !isPast(it));
-      if (!upcoming.length) return '<p class="empty">今後の予定はありません。</p>';
+      if (!upcoming.length) return '<p class="ls-empty">今後の予定はありません。</p>';
       return upcoming.map((it) => {
         const statusText = it.myAnswer ? STATUS_LABEL[it.myAnswer] : '未回答';
         const rowClass = OptionCard.statusClass(it.myAnswer);
-        const badgeClass = BADGE_CLASS[it.myAnswer] || 'badge-none';
+        const badgeClass = STATUS_CLASS[it.myAnswer] || 'dot-none';
         return `
-          <button type="button" class="cal-item summary-row ${rowClass}" data-key="${dateKey(it.startAt)}">
+          <button type="button" class="ls-panel summary-row cal-item ${rowClass}" data-key="${dateKey(it.startAt)}">
             <div class="option-meta-title-row">
               <span class="option-meta-title">${AppUtil.titleIconHtml(it.optionTitle || it.eventTitle)}</span>
               <span class="cal-status-badge ${badgeClass}">${statusText}</span>
@@ -83,7 +83,7 @@ const CalendarView = (() => {
       }).join('');
     }
 
-    function modalItemHtml(it) {
+    function daySheetItemHtml(it) {
       return `
         <div class="answer-row" data-option-id="${it.optionId}" data-event-id="${it.eventId}">
           <div class="option-meta">
@@ -97,32 +97,19 @@ const CalendarView = (() => {
           <span class="answer-choices" data-option-id="${it.optionId}">
             ${OptionCard.choiceButtonsHtml(it.optionId, { [it.optionId]: it.myAnswer })}
           </span>
-          <a class="cal-item-status" style="text-decoration:none;display:block;margin-top:6px" href="?event=${encodeURIComponent(it.eventId)}">この予定を開く →</a>
+          <a class="cal-open-link" href="?event=${encodeURIComponent(it.eventId)}">この予定を開く →</a>
         </div>`;
     }
 
-    function openModal(key) {
+    function openDaySheet(key) {
       const dayItems = items.filter((it) => dateKey(it.startAt) === key);
       if (!dayItems.length) return;
 
-      const overlay = document.createElement('div');
-      overlay.className = 'modal-overlay';
-      overlay.innerHTML = `
-        <div class="modal-box">
-          <div class="modal-header">
-            <h2 style="margin:0">${dayItems[0] ? new Date(dayItems[0].startAt).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' }) : ''}の予定</h2>
-            <button type="button" class="modal-close" aria-label="閉じる">×</button>
-          </div>
-          ${dayItems.map(modalItemHtml).join('')}
-        </div>`;
-      document.body.appendChild(overlay);
-
-      const close = () => overlay.remove();
-      overlay.querySelector('.modal-close').addEventListener('click', close);
-      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+      const dayLabel = new Date(dayItems[0].startAt).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
+      const sheet = Sheet.open({ title: `${dayLabel}の予定`, bodyHtml: dayItems.map(daySheetItemHtml).join('') });
 
       let saving = false;
-      overlay.querySelectorAll('.answer-choices').forEach((container) => {
+      sheet.el.querySelectorAll('.answer-choices').forEach((container) => {
         container.addEventListener('click', async (e) => {
           const btn = e.target.closest('.choice-btn');
           if (!btn || saving) return;
@@ -145,7 +132,7 @@ const CalendarView = (() => {
             if (item) item.myAnswer = value;
             paint();
           } catch (err) {
-            alert('回答の保存に失敗しました: ' + err.message);
+            AppUtil.notifyError('回答の保存に失敗しました', err);
           } finally {
             saving = false;
           }
@@ -155,14 +142,14 @@ const CalendarView = (() => {
 
     function paint() {
       root.innerHTML = `
-        <div class="page-header">
+        <header class="page-header">
+          <a class="ls-back" href="?view=list">一覧へ</a>
           <h1>カレンダー</h1>
-          <a class="btn" href="?view=list">一覧へ</a>
-        </div>
+        </header>
         <div class="cal-nav">
-          <button type="button" id="cal-prev" class="btn">←</button>
+          <button type="button" id="cal-prev" class="ls-icon-button" aria-label="前の月">←</button>
           <span id="cal-month-label" class="cal-month-label"></span>
-          <button type="button" id="cal-next" class="btn">→</button>
+          <button type="button" id="cal-next" class="ls-icon-button" aria-label="次の月">→</button>
         </div>
         <div id="cal-grid-container"></div>
         <h2>今後の予定一覧</h2>
@@ -171,7 +158,7 @@ const CalendarView = (() => {
       paintGrid();
 
       root.querySelectorAll('.cal-item').forEach((btn) => {
-        btn.addEventListener('click', () => openModal(btn.dataset.key));
+        btn.addEventListener('click', () => openDaySheet(btn.dataset.key));
       });
 
       root.querySelector('#cal-prev').addEventListener('click', () => {
@@ -191,7 +178,7 @@ const CalendarView = (() => {
       root.querySelector('#cal-month-label').textContent = `${viewYear}年${viewMonth + 1}月`;
       root.querySelector('#cal-grid-container').innerHTML = monthGridHtml(viewYear, viewMonth, byDay);
       root.querySelectorAll('.cal-cell.has-items').forEach((cell) => {
-        cell.addEventListener('click', () => openModal(cell.dataset.key));
+        cell.addEventListener('click', () => openDaySheet(cell.dataset.key));
       });
     }
 

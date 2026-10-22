@@ -1,5 +1,5 @@
 /**
- * LINE送信前の「送信内容プレビュー」モーダル。js/share.js から切り出した独立UIコンポーネント。
+ * LINE送信前の「送信内容プレビュー」（下から出るシート。js/views/sheet.js）。js/share.js から切り出した独立UIコンポーネント。
  * Flexツリーの変換自体は js/flexPreview.js (FlexPreview) を参照。
  */
 const PreviewModal = (() => {
@@ -23,14 +23,10 @@ const PreviewModal = (() => {
         sendAsChat ? '' : commentText, presetIndex, presetIndex != null ? presets[presetIndex] : null
       ));
       const lines = linesFor([]);
-      const overlay = document.createElement('div');
-      overlay.className = 'modal-overlay';
-      overlay.innerHTML = `
-        <div class="modal-box">
-          <div class="modal-header">
-            <h2 style="margin:0">送信内容プレビュー</h2>
-            <button type="button" class="modal-close" aria-label="閉じる">×</button>
-          </div>
+      const sheet = Sheet.open({
+        title: '送信内容プレビュー',
+        onDismiss: () => resolve(null),
+        bodyHtml: `
           <p class="event-meta">※実際の見え方は端末によって異なります</p>
           <p class="preview-scope-label">👇 プレビュー範囲（実際に送信される内容）</p>
           <div class="preview-scope">
@@ -48,51 +44,57 @@ const PreviewModal = (() => {
             <div class="preview-chat-bubble" id="preview-chat-bubble" hidden></div>
           </div>
           ${presets.length ? `
-            <p class="event-meta">送信ヘッダー（任意）</p>
-            <div class="preset-chip-row">
-              ${presets.map((p, i) => `<button type="button" class="preset-chip${i === defaultIndex ? ' selected' : ''}" data-index="${i}">${AppUtil.escapeHtml(p)}</button>`).join('')}
+            <div class="ls-field">
+              <span class="ls-label">送信ヘッダー（任意）</span>
+              <div class="ls-chips">
+                ${presets.map((p, i) => `<button type="button" class="ls-chip is-small preset-chip" data-index="${i}" aria-pressed="false">${AppUtil.escapeHtml(p)}</button>`).join('')}
+              </div>
             </div>` : ''}
           ${groupAnswers.length ? `
-            <div class="preview-section-header">
-              <p class="event-meta">回答者</p>
-              <label class="preview-checkbox-label-inline">
-                <input type="checkbox" id="preview-hide-names">
-                名前を隠す（人数のみ表示）
-              </label>
-            </div>
-            <div class="preview-group-select">
-              ${groupAnswers.map((a) => `
-                <button type="button" class="answer-toggle-chip ${ANSWER_CLASS[a]} selected" data-answer="${a}">${a} ${groups[a].length}人</button>`).join('')}
+            <div class="ls-field">
+              <div class="preview-section-header">
+                <span class="ls-label">回答者</span>
+                <label class="preview-checkbox-label-inline">
+                  <input type="checkbox" id="preview-hide-names">
+                  名前を隠す（人数のみ表示）
+                </label>
+              </div>
+              <div class="preview-group-select">
+                ${groupAnswers.map((a) => `
+                  <button type="button" class="answer-toggle-chip ${ANSWER_CLASS[a]} selected" data-answer="${a}">${a} ${groups[a].length}人</button>`).join('')}
+              </div>
             </div>` : ''}
-          <label class="preview-comment-label">
-            コメントを追加（任意）
-            <textarea id="preview-comment" rows="2" class="preview-comment-input" placeholder="自由にコメントを入力できます"></textarea>
+          <label class="ls-field">
+            <span class="ls-label">コメントを追加（任意）</span>
+            <textarea id="preview-comment" rows="2" class="ls-input is-short" placeholder="自由にコメントを入力できます"></textarea>
           </label>
           <label class="preview-checkbox-label-inline">
             <input type="checkbox" id="preview-comment-as-chat" checked>
             コメントをチャット形式で送信する（OFFでカードに埋め込む）
           </label>
           ${target && target.note ? `<p class="event-meta">${AppUtil.escapeHtml(target.note)}</p>` : ''}
-          <div class="option-edit-actions" style="margin-top:12px">
-            <button type="button" class="btn btn-primary${target && target.displayName ? ' preview-confirm-target' : ''}" id="preview-confirm">
+          <div class="ls-sheet-actions">
+            <button type="button" class="ls-button is-primary" id="preview-confirm">
               ${target && target.displayName ? `${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}を選ぶ` : '送信先を選ぶ'}
             </button>
-            <button type="button" class="btn" id="preview-cancel">キャンセル</button>
-          </div>
-        </div>`;
-      document.body.appendChild(overlay);
+            <button type="button" class="ls-sheet-cancel" id="preview-cancel">キャンセル</button>
+          </div>`,
+      });
+      const overlay = sheet.el; // シートの外側（中身をここから探す）
 
       const previewBox = overlay.querySelector('.flex-preview');
       const hideNamesCheckbox = overlay.querySelector('#preview-hide-names');
-      const renderPreview = () => {
-        const allChips = overlay.querySelectorAll('.answer-toggle-chip');
-        const selectedChips = Array.from(overlay.querySelectorAll('.answer-toggle-chip.selected'));
-        const unselectedAnswers = allChips.length
-          ? Array.from(allChips).filter((c) => !c.classList.contains('selected')).map((c) => c.dataset.answer)
-          : [];
+      // ○△× のチップで外した答え（送らない）と、名前を隠す答え
+      const answerFilter = () => {
+        const chips = Array.from(overlay.querySelectorAll('.answer-toggle-chip'));
+        const unselectedAnswers = chips.filter((c) => !c.classList.contains('selected')).map((c) => c.dataset.answer);
         const hiddenAnswers = hideNamesCheckbox && hideNamesCheckbox.checked
-          ? selectedChips.map((c) => c.dataset.answer)
+          ? chips.filter((c) => c.classList.contains('selected')).map((c) => c.dataset.answer)
           : [];
+        return { unselectedAnswers, hiddenAnswers };
+      };
+      const renderPreview = () => {
+        const { unselectedAnswers, hiddenAnswers } = answerFilter();
         previewBox.innerHTML = FlexPreview.renderPreviewLinesHtml(linesFor(unselectedAnswers, hiddenAnswers));
       };
       overlay.querySelectorAll('.answer-toggle-chip').forEach((chip) => {
@@ -135,12 +137,13 @@ const PreviewModal = (() => {
         updateChatBubble();
         renderPreview();
       });
+      // 選んだ送信ヘッダーのチップは、そのヘッダーの色で塗る
       const paintChips = () => {
         overlay.querySelectorAll('.preset-chip').forEach((chip) => {
           const idx = Number(chip.dataset.index);
           const isSelected = idx === presetIndex;
           const color = FlexPreview.headerColorFor(idx);
-          chip.classList.toggle('selected', isSelected);
+          chip.setAttribute('aria-pressed', String(isSelected));
           if (isSelected && color) {
             chip.style.background = color.text;
             chip.style.borderColor = color.text;
@@ -165,22 +168,13 @@ const PreviewModal = (() => {
         });
       });
 
-      const close = (result) => { overlay.remove(); resolve(result); };
-      overlay.querySelector('.modal-close').addEventListener('click', () => close(null));
-      overlay.querySelector('#preview-cancel').addEventListener('click', () => close(null));
-      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(null); });
+      const close = (result) => { sheet.close(); resolve(result); };
+      overlay.querySelector('#preview-cancel').addEventListener('click', sheet.dismiss);
       overlay.querySelector('#preview-confirm').addEventListener('click', () => {
-        const allChips = overlay.querySelectorAll('.answer-toggle-chip');
-        const selectedChips = Array.from(allChips).filter((c) => c.classList.contains('selected'));
-        const unselectedAnswers = Array.from(allChips).filter((c) => !c.classList.contains('selected')).map((c) => c.dataset.answer);
-        const hiddenAnswers = hideNamesCheckbox && hideNamesCheckbox.checked
-          ? selectedChips.map((c) => c.dataset.answer)
-          : [];
         close({
           comment: textarea.value.trim(),
           sendAsChat,
-          unselectedAnswers,
-          hiddenAnswers,
+          ...answerFilter(),
           presetIndex,
           presetLabel: presetIndex != null ? presets[presetIndex] : null,
         });
