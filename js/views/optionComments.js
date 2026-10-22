@@ -82,7 +82,7 @@ const OptionComments = (() => {
 
     root.querySelectorAll('.comment-delete-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        if (!confirm('コメントを削除しますか？')) return;
+        if (!(await AppUtil.ask({ title: 'コメントを削除しますか？', ok: '削除', danger: true }))) return;
         await AppUtil.saveWithButton(btn, async () => {
           await AppApi.deleteComment({
             eventId: ctx.eventId,

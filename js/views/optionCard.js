@@ -114,7 +114,7 @@ const OptionCard = (() => {
 
           await AppApi.updateOption({ eventId: ctx.eventId, userId: ctx.identity.userId, optionId, ...fields });
 
-          if (respondentNames.length && confirm(`この予定には既に${respondentNames.length}件の回答があります。変更を回答者に知らせますか？`)) {
+          if (respondentNames.length && (await AppUtil.ask({ title: '変更を回答者に知らせますか？', text: `この予定には、もう${respondentNames.length}件の回答があります。`, ok: '知らせる', cancel: '知らせない' }))) {
             try {
               await AppShare.notifyChange({
                 eventId: ctx.eventId, optionTitle: fields.title, optionStartAt: fields.startAt,

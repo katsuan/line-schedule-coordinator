@@ -173,6 +173,18 @@ const AppUtil = (() => {
     }
   }
 
+  // 確かめる窓（Q キットの LineShareUI.ask。下から出るシート）。OK なら true。Q キットが読めなかったときは confirm
+  // 知らせるだけのとき（alert の代わり）は ask({ title, ok: 'OK', cancel: null })
+  function ask(options) {
+    if (window.LineShareUI && typeof LineShareUI.ask === 'function') return LineShareUI.ask(options);
+    const text = [options.title, options.text].filter(Boolean).join('\n');
+    if (options.cancel === null) {
+      alert(text);
+      return Promise.resolve(true);
+    }
+    return Promise.resolve(confirm(text));
+  }
+
   function notifyError(errorPrefix, err) {
     notify((errorPrefix || '処理に失敗しました') + ': ' + err.message);
   }
@@ -180,8 +192,9 @@ const AppUtil = (() => {
   function wireAsyncButton(btn, action, { confirmMessage, errorPrefix } = {}) {
     if (!btn) return;
     btn.addEventListener('click', async (e) => {
-      if (confirmMessage && !confirm(confirmMessage)) return;
-      const stopLoading = beginButtonLoading(e.target);
+      const target = e.currentTarget;
+      if (confirmMessage && !(await ask({ title: confirmMessage, ok: 'OK' }))) return;
+      const stopLoading = beginButtonLoading(target || e.target);
       try {
         await action(e);
       } catch (err) {
@@ -207,6 +220,6 @@ const AppUtil = (() => {
   return {
     escapeHtml, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, loadingHtml, titleIconHtml,
     extractIcon, shortTime, validateEventFields, wireAsyncButton, saveWithButton, relativeDayPillHtml,
-    beginButtonLoading, avatarHtml, notify, notifyError,
+    beginButtonLoading, avatarHtml, notify, notifyError, ask,
   };
 })();
