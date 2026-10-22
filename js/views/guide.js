@@ -18,7 +18,7 @@ const GuideView = (() => {
 
   function faqItem(audience, audienceLabel, q, a) {
     return `
-      <div class="guide-faq-item">
+      <div class="ls-panel guide-faq-item">
         <p class="guide-faq-q">
           <span class="status-badge ${AUDIENCE_BADGE[audience]}">${audienceLabel}</span>
           Q. ${q}
@@ -28,7 +28,7 @@ const GuideView = (() => {
   }
 
   function ctaHtml() {
-    return `<a class="btn btn-primary" href="?view=list">＋ 予定をはじめる</a>`;
+    return `<a class="ls-button is-primary is-block" href="?view=list">＋ 予定をはじめる</a>`;
   }
 
   function render(root, ctx, opts) {
@@ -41,7 +41,7 @@ const GuideView = (() => {
       <div class="guide-hero">
         <img class="guide-hero-icon" src="icon.svg" alt="" width="64" height="64">
         <img class="guide-hero-logo" src="logo.svg" alt="くるかな（QuruKana）" width="118" height="32">
-        <p class="brand-copy guide-hero-copy">来れる日を、○△×でそろえよう</p>
+        <p class="ls-brand-copy guide-hero-copy">来れる日を、○△×でそろえよう</p>
         <h1>アプリを追加せずに、<br>LINEで日程調整。</h1>
         <p class="event-meta">友だち追加もBotもいりません。このページで、予定づくり〜回答〜集計までの流れをおさらいできます。</p>
       </div>
@@ -50,7 +50,7 @@ const GuideView = (() => {
       <section class="guide-section">
         <p class="guide-label">👤 参加者のとき</p>
         <h2 class="guide-section-title">予定に回答する</h2>
-        <div class="guide-step-card">
+        <div class="ls-panel guide-step-card">
           <div class="guide-step-list">
             ${stepItem(1, '届いたメッセージの「回答する」を開く', '幹事から届いたカード形式のメッセージから、そのまま開けます。')}
             ${stepItem(2, '候補ごとに○△×をタップ', '複数の候補日があれば、それぞれに回答します。あとから何度でも変更できます。')}
@@ -78,7 +78,7 @@ const GuideView = (() => {
       <section class="guide-section">
         <p class="guide-label">🎌 幹事のとき</p>
         <h2 class="guide-section-title">予定をつくって共有する</h2>
-        <div class="guide-step-card">
+        <div class="ls-panel guide-step-card">
           <div class="guide-step-list">
             ${stepItem(1, '一覧の「＋ 新規作成」', 'タイトルと、候補日時を1つ以上入力します（複数候補もOK）。')}
             ${stepItem(2, '「LINEで共有する」で参加者に送る', '送る前に内容のプレビューを確認できます。')}
@@ -90,7 +90,7 @@ const GuideView = (() => {
       <section class="guide-section">
         <p class="guide-label">🎌 幹事のとき</p>
         <h2 class="guide-section-title">幹事だけができること</h2>
-        <div class="guide-role-card">
+        <div class="ls-panel guide-role-card">
           <span class="status-badge status-creator">作成者・編集者</span>
           <ul class="guide-role-can">
             <li>候補や予定内容を編集する</li>
@@ -99,7 +99,7 @@ const GuideView = (() => {
             <li>このアプリ自体を友だちに紹介する</li>
           </ul>
         </div>
-        <div class="guide-role-card">
+        <div class="ls-panel guide-role-card">
           <span class="status-badge status-pending">作成者のみ</span>
           <ul class="guide-role-can">
             <li>予定をまるごと削除する</li>

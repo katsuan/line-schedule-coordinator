@@ -29,17 +29,17 @@ const OptionCard = (() => {
 
   function titleFieldHtml(prefix, values, placeholder) {
     values = values || {};
-    return `<input type="text" class="${prefix}-title" value="${AppUtil.escapeHtml(values.title || '')}" placeholder="${AppUtil.escapeHtml(placeholder || 'イベント名')}">`;
+    return `<input type="text" class="ls-input option-title-input ${prefix}-title" value="${AppUtil.escapeHtml(values.title || '')}" placeholder="${AppUtil.escapeHtml(placeholder || 'イベント名')}">`;
   }
 
   function rangeLocationFieldsHtml(prefix, values) {
     values = values || {};
     return `
-      <div class="option-range">
-        <label class="option-sublabel">開始<input type="datetime-local" class="${prefix}-start" value="${AppUtil.toDatetimeLocalValue(values.startAt)}"></label>
-        <label class="option-sublabel">完了<input type="datetime-local" class="${prefix}-end" value="${AppUtil.toDatetimeLocalValue(values.endAt)}"></label>
+      <div class="ls-grid-2 option-range">
+        <label class="ls-field"><span class="ls-label">開始</span><input type="datetime-local" class="ls-input ${prefix}-start" value="${AppUtil.toDatetimeLocalValue(values.startAt)}"></label>
+        <label class="ls-field"><span class="ls-label">完了</span><input type="datetime-local" class="ls-input ${prefix}-end" value="${AppUtil.toDatetimeLocalValue(values.endAt)}"></label>
       </div>
-      <input type="text" class="${prefix}-location option-location" value="${AppUtil.escapeHtml(values.location || '')}" placeholder="📍 場所・持ち物など（任意）">`;
+      <input type="text" class="ls-input ${prefix}-location" value="${AppUtil.escapeHtml(values.location || '')}" placeholder="📍 場所・持ち物など（任意）">`;
   }
 
   function fieldsHtml(prefix, values) {
@@ -75,8 +75,8 @@ const OptionCard = (() => {
         <div class="option-edit-form" hidden>
           ${fieldsHtml('edit', opt)}
           <div class="option-edit-actions">
-            <button type="button" class="btn save-option-btn">保存</button>
-            <button type="button" class="btn cancel-option-btn">キャンセル</button>
+            <button type="button" class="ls-button is-primary save-option-btn">保存</button>
+            <button type="button" class="ls-button cancel-option-btn">キャンセル</button>
           </div>
         </div>` : ''}
       </div>`;
@@ -102,11 +102,10 @@ const OptionCard = (() => {
       meta.querySelector('.save-option-btn').addEventListener('click', async (e) => {
         const fields = readFields(form, 'edit');
         const error = AppUtil.validateEventFields(fields);
-        if (error) { alert(error); return; }
+        if (error) { AppUtil.notify(error); return; }
 
-        const stopLoading = AppUtil.beginButtonLoading(e.target);
         const optionId = meta.dataset.optionId;
-        try {
+        await AppUtil.saveWithButton(e.currentTarget, async () => {
           const summaryBefore = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
           const rowBefore = summaryBefore.summary.find((r) => r.option.optionId === optionId);
           const respondentNames = rowBefore
@@ -122,15 +121,12 @@ const OptionCard = (() => {
                 optionEndAt: fields.endAt, optionLocation: fields.location, names: respondentNames,
               });
             } catch (notifyErr) {
-              alert('通知の送信に失敗しました: ' + notifyErr.message);
+              AppUtil.notifyError('通知の送信に失敗しました', notifyErr);
             }
           }
 
           await refresh();
-        } catch (err) {
-          alert('更新に失敗しました: ' + err.message);
-          stopLoading();
-        }
+        }, '更新に失敗しました');
       });
     });
   }
@@ -157,7 +153,7 @@ const OptionCard = (() => {
           });
           await refresh();
         } catch (err) {
-          alert('回答の保存に失敗しました: ' + err.message);
+          AppUtil.notifyError('回答の保存に失敗しました', err);
           stopLoading();
           wrap.querySelectorAll('.choice-btn').forEach((b) => { b.disabled = false; });
         }
@@ -166,7 +162,7 @@ const OptionCard = (() => {
   }
 
   return {
-    metaHtml, fieldsHtml, titleFieldHtml, rangeLocationFieldsHtml, readFields,
+    metaHtml, titleFieldHtml, rangeLocationFieldsHtml, readFields,
     choiceButtonsHtml, answerButtonsHtml, statusClass, wireEditForms, wireAnswerButtons,
   };
 })();

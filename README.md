@@ -10,14 +10,20 @@
 ## アイコン・ロゴ・OGP
 
 `python3 tools/icon.py` で書き出す（となりのおくるん `~/GitHub/q-oqrn` の `tools/brandkit.py` を使う）。
-Q はカレンダー（綴じ具と日付の点、真ん中の1日だけ ○）に、✓ のしっぽ。色は空色（`--primary` #0284C7）。
+Q はカレンダー（綴じ具と日付の点、真ん中の1日だけ ○）に、✓ のしっぽ。色は空色（`--ls-accent` #0284C7）。
+
+## 見た目（Q キット）
+
+部品（見出しの行・カード・タブ・入力欄・ボタン・開閉・下から出るシート・下の送る帯・トースト）はおくるんの Q キット（`https://katsuan.github.io/line-share/shared/ui.css`・`ui.js`。使い方はおくるんの README）。`css/style.css` には、くるかなの色と字（`:root` の `--ls-accent` など）と、くるかなにしかない見た目（○△× のボタン・回答者の顔・コメント・カレンダー・送信内容プレビュー・使い方の画面）だけを置く。
+
+公開する前に `python3 ../q-oqrn/tools/qstamp.py index.html` で、読みこむ JS・CSS の版（`?v=`）をつけ直す。
 
 幹事がLIFFで予定を作成 → Flex Messageを生成してLINEへ共有 → 参加者がLIFFで○/△/×回答 → 幹事が回答集計を確認、という一連の流れを実現する。
 
 ## 構成
 
 ```
-GitHub Pages (このリポジトリのルート: index.html + js/)
+GitHub Pages (このリポジトリのルート: index.html + css/ + js/)
         ↓ fetch POST (text/plain, action-based)
 GAS Web App (gas/ 配下、clasp管理)
         ↓

@@ -13,12 +13,12 @@ const DetailHeader = (() => {
     const showRequestChip = !canEdit && !data.isCreator && data.creator;
     const showApproveChip = ctx.approveEditor && data.isCreator;
     return `
-      <div class="page-header">
+      <header class="page-header">
         <div class="page-header-top-row">
-          <a class="btn-back" href="?view=list">← 一覧へ</a>
+          <a class="ls-back" href="?view=list">一覧へ</a>
           <div class="page-header-top-actions">
-            <button type="button" id="share-app-btn" class="btn-refresh" aria-label="このアプリを紹介する">📣</button>
-            <button type="button" id="refresh-event" class="btn-refresh" aria-label="最新の状態に更新">🔄</button>
+            <button type="button" id="share-app-btn" class="ls-icon-button" aria-label="このアプリを紹介する">📣</button>
+            <button type="button" id="refresh-event" class="ls-icon-button" aria-label="最新の状態に更新">🔄</button>
           </div>
         </div>
         <div id="event-header-view" class="event-title-banner">
@@ -36,42 +36,34 @@ const DetailHeader = (() => {
         </div>
         ${canEdit ? `
         <div id="event-header-edit" class="option-edit-form" hidden>
-          <input type="text" id="edit-event-title" value="${AppUtil.escapeHtml(event.title)}" placeholder="予定のタイトル">
-          <textarea id="edit-event-description" placeholder="説明（任意）">${AppUtil.escapeHtml(event.description || '')}</textarea>
+          <input type="text" id="edit-event-title" class="ls-input" value="${AppUtil.escapeHtml(event.title)}" placeholder="予定のタイトル">
+          <textarea id="edit-event-description" class="ls-input is-short" placeholder="説明（任意）">${AppUtil.escapeHtml(event.description || '')}</textarea>
           <div class="option-edit-actions">
-            <button type="button" class="btn" id="save-event-btn">保存</button>
-            <button type="button" class="btn" id="cancel-event-btn">キャンセル</button>
+            <button type="button" class="ls-button is-primary" id="save-event-btn">保存</button>
+            <button type="button" class="ls-button" id="cancel-event-btn">キャンセル</button>
           </div>
         </div>` : ''}
-      </div>`;
+      </header>`;
   }
 
-  function showApproveConfirmModal(eventTitle, requesterName, requesterPic) {
+  function showApproveConfirmSheet(eventTitle, requesterName, requesterPic) {
     return new Promise((resolve) => {
-      const overlay = document.createElement('div');
-      overlay.className = 'modal-overlay';
-      overlay.innerHTML = `
-        <div class="modal-box">
-          <div class="modal-header">
-            <h2 style="margin:0">編集権限の承認</h2>
-            <button type="button" class="modal-close" aria-label="閉じる">×</button>
-          </div>
+      const sheet = Sheet.open({
+        title: '編集権限の承認',
+        bodyHtml: `
           <p class="event-meta">${AppUtil.escapeHtml(eventTitle)}</p>
-          <div class="preview-confirm-target" style="justify-content:flex-start;margin:12px 0">
+          <div class="approve-target">
             ${AppUtil.avatarHtml(requesterName, requesterPic)}
             <span>${AppUtil.escapeHtml(requesterName || '依頼者')}さんに編集権限を許可します</span>
           </div>
-          <div class="option-edit-actions">
-            <button type="button" class="btn btn-primary" id="approve-confirm">承認する</button>
-            <button type="button" class="btn" id="approve-cancel">キャンセル</button>
-          </div>
-        </div>`;
-      document.body.appendChild(overlay);
-      const close = (result) => { overlay.remove(); resolve(result); };
-      overlay.querySelector('.modal-close').addEventListener('click', () => close(false));
-      overlay.querySelector('#approve-cancel').addEventListener('click', () => close(false));
-      overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
-      overlay.querySelector('#approve-confirm').addEventListener('click', () => close(true));
+          <div class="ls-sheet-actions">
+            <button type="button" class="ls-button is-primary" id="approve-confirm">承認する</button>
+            <button type="button" class="ls-sheet-cancel" id="approve-cancel">キャンセル</button>
+          </div>`,
+        onDismiss: () => resolve(false),
+      });
+      sheet.el.querySelector('#approve-cancel').addEventListener('click', sheet.dismiss);
+      sheet.el.querySelector('#approve-confirm').addEventListener('click', () => { sheet.close(); resolve(true); });
     });
   }
 
@@ -90,10 +82,9 @@ const DetailHeader = (() => {
     const approveBtn = root.querySelector('#approve-edit-btn');
     if (approveBtn) {
       approveBtn.addEventListener('click', async () => {
-        const confirmed = await showApproveConfirmModal(data.event.title, ctx.requesterName, ctx.requesterPic);
+        const confirmed = await showApproveConfirmSheet(data.event.title, ctx.requesterName, ctx.requesterPic);
         if (!confirmed) return;
-        const stopLoading = AppUtil.beginButtonLoading(approveBtn);
-        try {
+        await AppUtil.saveWithButton(approveBtn, async () => {
           await AppApi.approveEditRequest({
             eventId: ctx.eventId,
             userId: ctx.identity.userId,
@@ -110,10 +101,7 @@ const DetailHeader = (() => {
           AppUtil.wireAsyncButton(replyBtn, () => AppShare.replyInChat(
             `✅ ${data.event.title} の編集権限を承認しました`
           ), { errorPrefix: '返信に失敗しました' });
-        } catch (err) {
-          alert('許可に失敗しました: ' + err.message);
-          stopLoading();
-        }
+        }, '許可に失敗しました');
       });
     }
   }
@@ -133,16 +121,12 @@ const DetailHeader = (() => {
       });
       root.querySelector('#save-event-btn').addEventListener('click', async (e) => {
         const title = root.querySelector('#edit-event-title').value.trim();
-        if (!title) { alert('タイトルを入力してください'); return; }
+        if (!title) { AppUtil.notify('タイトルを入力してください'); return; }
         const description = root.querySelector('#edit-event-description').value.trim();
-        const stopLoading = AppUtil.beginButtonLoading(e.target);
-        try {
+        await AppUtil.saveWithButton(e.currentTarget, async () => {
           await AppApi.updateEvent({ eventId: ctx.eventId, userId: ctx.identity.userId, title, description });
           await refresh();
-        } catch (err) {
-          alert('更新に失敗しました: ' + err.message);
-          stopLoading();
-        }
+        }, '更新に失敗しました');
       });
     }
 

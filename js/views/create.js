@@ -5,7 +5,7 @@ const CreateView = (() => {
         <div class="option-card-head">
           <span class="option-card-icon">🗓️</span>
           ${OptionCard.titleFieldHtml('option', null, 'イベント名（例: BBQ）')}
-          <button type="button" class="btn-remove-option" aria-label="このイベントを削除">×</button>
+          <button type="button" class="ls-icon-button btn-remove-option" aria-label="このイベントを削除">×</button>
         </div>
         ${OptionCard.rangeLocationFieldsHtml('option')}
       </div>`;
@@ -13,19 +13,19 @@ const CreateView = (() => {
 
   function render(root, ctx) {
     root.innerHTML = `
-      <div class="page-header">
-        <a class="btn-back" href="?view=list">← 戻る</a>
+      <header class="page-header">
+        <a class="ls-back" href="?view=list">戻る</a>
         <h1>予定を作成</h1>
-      </div>
-      <form id="create-form">
-        <label>予定のタイトル（例: 8月）<input type="text" id="f-title" required></label>
-        <label>説明（任意）<textarea id="f-description"></textarea></label>
-        <div class="options-block">
-          <label>イベント</label>
-          <div id="option-list">${optionCardHtml(0)}</div>
-          <button type="button" id="add-option" class="btn">＋ イベントを追加</button>
+      </header>
+      <form id="create-form" class="ls-panel">
+        <label class="ls-field"><span class="ls-label">予定のタイトル（例: 8月）</span><input type="text" id="f-title" class="ls-input" required></label>
+        <label class="ls-field"><span class="ls-label">説明（任意）</span><textarea id="f-description" class="ls-input is-short"></textarea></label>
+        <div class="ls-field">
+          <span class="ls-label">イベント</span>
+          <div id="option-list" class="option-list">${optionCardHtml(0)}</div>
+          <button type="button" id="add-option" class="ls-button">＋ イベントを追加</button>
         </div>
-        <button type="submit" class="btn btn-primary">作成する</button>
+        <button type="submit" class="ls-button is-primary is-block">作成する</button>
       </form>
     `;
 
@@ -49,12 +49,10 @@ const CreateView = (() => {
     });
 
     optionList.addEventListener('click', (e) => {
-      if (e.target.classList.contains('btn-remove-option')) {
-        const cards = optionList.querySelectorAll('.option-card');
-        if (cards.length > 1) {
-          e.target.closest('.option-card').remove();
-          updateRemoveButtons();
-        }
+      const removeBtn = e.target.closest('.btn-remove-option');
+      if (removeBtn && optionList.querySelectorAll('.option-card').length > 1) {
+        removeBtn.closest('.option-card').remove();
+        updateRemoveButtons();
       }
     });
 
@@ -71,29 +69,27 @@ const CreateView = (() => {
       const options = allFields.filter((opt) => !isBlank(opt));
 
       if (!title || !options.length) {
-        alert('予定のタイトルと、イベント（タイトル・開始・完了とも）を1件以上入力してください');
+        AppUtil.notify('予定のタイトルと、イベント（タイトル・開始・完了とも）を1件以上入力してください');
         return;
       }
       const fieldError = options.map(AppUtil.validateEventFields).find(Boolean);
       if (fieldError) {
-        alert(fieldError);
+        AppUtil.notify(fieldError);
         return;
       }
 
       const submitBtn = root.querySelector('button[type="submit"]');
-      const stopLoading = AppUtil.beginButtonLoading(submitBtn);
-      try {
+      await AppUtil.saveWithButton(submitBtn, async () => {
         const { eventId } = await AppApi.createEvent({
           title, description, options,
+          // userId：LINE の中では GAS がログインから本人を決めて上書きする。ローカルの仮ユーザーはこれで通る
+          userId: ctx.identity.userId,
           creatorUserId: ctx.identity.userId,
           creatorDisplayName: ctx.identity.displayName,
           creatorPictureUrl: ctx.identity.pictureUrl,
         });
         AppRouter.navigate({ event: eventId });
-      } catch (err) {
-        alert('作成に失敗しました: ' + err.message);
-        stopLoading();
-      }
+      }, '作成に失敗しました');
     });
   }
 

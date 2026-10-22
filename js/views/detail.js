@@ -23,14 +23,6 @@ const DetailView = (() => {
     renderSummary(root, ctx, data, refresh);
   }
 
-  function shareButtonHtml(label) {
-    return `<button id="share-event" class="btn btn-primary" type="button">${label}</button>`;
-  }
-
-  function deleteButtonHtml() {
-    return `<button id="delete-event" class="btn btn-danger" type="button">予定を削除する</button>`;
-  }
-
   function wireCommonActions(root, ctx, { canShare, isCreator }) {
     AppUtil.wireAsyncButton(root.querySelector('#share-app-btn'), () => AppShare.shareApp(), {
       errorPrefix: '共有に失敗しました',
@@ -54,76 +46,79 @@ const DetailView = (() => {
     }
   }
 
+  const ANSWERS = ['○', '△', '×'];
+
+  // ○△× ごとの回答者の顔。自分 → コメントした人 → ほかの人 の順。コメントした人の顔を押すとコメントが出る
+  function respondentGroupsHtml(row, myUserId) {
+    const commentTextByUser = {};
+    (row.comments || []).forEach((c) => {
+      (commentTextByUser[c.userId] = commentTextByUser[c.userId] || []).push(c.text);
+    });
+    const rank = (r) => (r.userId === myUserId ? 2 : commentTextByUser[r.userId] ? 1 : 0);
+    const respondentHtml = (r, answer) => {
+      const comments = commentTextByUser[r.userId];
+      const isMe = r.userId === myUserId;
+      return `<span class="respondent${isMe ? ' me' : ''}">
+        <span class="avatar-wrap"${comments ? ' role="button" tabindex="0" data-comment-toggle="1"' : ''}>
+          ${AppUtil.avatarHtml(r.displayName, r.pictureUrl, answer)}
+          ${comments ? '<span class="avatar-comment-badge">💬</span>' : ''}
+        </span>
+        <span>${AppUtil.escapeHtml(r.displayName)}${isMe ? '（自分）' : ''}</span>
+        ${comments ? `<span class="respondent-comment-popup" hidden>${comments.map((t) => AppUtil.escapeHtml(t)).join('<br>')}</span>` : ''}
+      </span>`;
+    };
+    return ANSWERS.map((answer) => {
+      const list = row.respondents[answer] || [];
+      const sorted = [...list].sort((a, b) => rank(b) - rank(a));
+      return `
+        <div class="respondent-group ${OptionCard.statusClass(answer)}">
+          <p class="respondent-label">${answer}</p>
+          ${list.length
+            ? `<div class="respondent-list">${sorted.map((r) => respondentHtml(r, answer)).join('')}</div>`
+            : '<p class="empty-respondents">なし</p>'}
+        </div>`;
+    }).join('');
+  }
+
   function summaryRowsHtml(event, summary, canEdit, myUserId, myAnswers) {
     myAnswers = myAnswers || {};
     return summary.map((row, rowIndex) => {
+      const opt = row.option;
       const answerByUser = {};
-      ['○', '△', '×'].forEach((a) => (row.respondents[a] || []).forEach((r) => { answerByUser[r.userId] = a; }));
+      ANSWERS.forEach((a) => (row.respondents[a] || []).forEach((r) => { answerByUser[r.userId] = a; }));
       const enrichedComments = (row.comments || []).map((c) => ({ ...c, answer: answerByUser[c.userId] }));
-      const commentTextByUser = {};
-      (row.comments || []).forEach((c) => {
-        (commentTextByUser[c.userId] = commentTextByUser[c.userId] || []).push(c.text);
-      });
-      const respondentsHtml = (answer) => {
-        const list = row.respondents[answer] || [];
-        if (!list.length) return '<p class="empty-respondents">なし</p>';
-        const rank = (r) => (r.userId === myUserId ? 2 : commentTextByUser[r.userId] ? 1 : 0);
-        const sorted = [...list].sort((a, b) => rank(b) - rank(a));
-        return `<div class="respondent-list">
-          ${sorted.map((r) => {
-            const comments = commentTextByUser[r.userId];
-            return `<span class="respondent${r.userId === myUserId ? ' me' : ''}">
-              <span class="avatar-wrap"${comments ? ' role="button" tabindex="0" data-comment-toggle="1"' : ''}>
-                ${AppUtil.avatarHtml(r.displayName, r.pictureUrl, answer)}
-                ${comments ? '<span class="avatar-comment-badge">💬</span>' : ''}
-              </span>
-              <span>${AppUtil.escapeHtml(r.displayName)}${r.userId === myUserId ? '（自分）' : ''}</span>
-              ${comments ? `<span class="respondent-comment-popup" hidden>${comments.map((t) => AppUtil.escapeHtml(t)).join('<br>')}</span>` : ''}
-            </span>`;
-          }).join('')}
-        </div>`;
-      };
-      const groupBlock = (answer) => `
-        <div class="respondent-group ${OptionCard.statusClass(answer)}">
-          <p class="respondent-label">${answer}</p>
-          ${respondentsHtml(answer)}
-        </div>`;
+      // 「LINE送信」で使う、○△× ごとの名前
       const groups = {};
-      ['○', '△', '×'].forEach((a) => {
+      ANSWERS.forEach((a) => {
         const names = (row.respondents[a] || []).map((r) => r.displayName);
         if (names.length) groups[a] = names;
       });
       const totalCount = row.counts['○'] + row.counts['△'] + row.counts['×'];
-      const cardBody = `
-          ${OptionCard.metaHtml(row.option, canEdit, enrichedComments, myUserId)}
+      const card = `
+        <div class="ls-panel summary-row ${OptionCard.statusClass(myAnswers[opt.optionId])}" data-row="${rowIndex}" data-option-id="${AppUtil.escapeHtml(opt.optionId)}" data-option-title="${AppUtil.escapeHtml(opt.title || event.title)}" data-option-start="${AppUtil.escapeHtml(opt.startAt || '')}" data-option-end="${AppUtil.escapeHtml(opt.endAt || '')}" data-option-location="${AppUtil.escapeHtml(opt.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
+          ${OptionCard.metaHtml(opt, canEdit, enrichedComments, myUserId)}
           <div class="summary-answer-row">
-            ${OptionCard.answerButtonsHtml(row.option.optionId, myAnswers[row.option.optionId], row.counts)}
+            ${OptionCard.answerButtonsHtml(opt.optionId, myAnswers[opt.optionId], row.counts)}
             <div class="summary-answer-side">
               <span class="summary-comment-row">
                 ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
-                ${OptionComments.commentAddToggleHtml(row.option.optionId)}
+                ${OptionComments.commentAddToggleHtml(opt.optionId)}
               </span>
-              ${canEdit && totalCount ? `<button type="button" class="btn remind-btn" data-row="${rowIndex}">LINE送信</button>` : ''}
+              ${canEdit && totalCount ? `<button type="button" class="ls-button remind-btn" data-row="${rowIndex}">LINE送信</button>` : ''}
             </div>
           </div>
-          <details>
+          <details class="respondents-fold">
             <summary>回答者を見る（${totalCount}人）</summary>
-            ${groupBlock('○')}${groupBlock('△')}${groupBlock('×')}
-          </details>`;
-      const isPast = isOptionPast(row.option);
-      if (isPast) {
-        return `
-        <details class="summary-row-collapsed">
-          <summary>${AppUtil.titleIconHtml(row.option.title || '(タイトルなし)')}（終了）</summary>
-          <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-id="${AppUtil.escapeHtml(row.option.optionId)}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
-            ${cardBody}
-          </div>
-        </details>`;
-      }
-      return `
-        <div class="summary-row ${OptionCard.statusClass(myAnswers[row.option.optionId])}" data-row="${rowIndex}" data-option-id="${AppUtil.escapeHtml(row.option.optionId)}" data-option-title="${AppUtil.escapeHtml(row.option.title || event.title)}" data-option-start="${AppUtil.escapeHtml(row.option.startAt || '')}" data-option-end="${AppUtil.escapeHtml(row.option.endAt || '')}" data-option-location="${AppUtil.escapeHtml(row.option.location || '')}" data-groups="${AppUtil.escapeHtml(JSON.stringify(groups))}">
-          ${cardBody}
+            ${respondentGroupsHtml(row, myUserId)}
+          </details>
         </div>`;
+      if (!isOptionPast(opt)) return card;
+      // 終わったイベントは、たたんでおく
+      return `
+        <details class="summary-row-collapsed">
+          <summary>${AppUtil.titleIconHtml(opt.title || '(タイトルなし)')}（終了）</summary>
+          ${card}
+        </details>`;
     }).join('');
   }
 
@@ -162,7 +157,7 @@ const DetailView = (() => {
           btn.textContent = '送信しました';
           setTimeout(() => { btn.textContent = 'LINE送信'; btn.disabled = false; }, 2000);
         } catch (err) {
-          alert('連絡の送信に失敗しました: ' + err.message);
+          AppUtil.notifyError('連絡の送信に失敗しました', err);
           btn.textContent = 'LINE送信';
           btn.disabled = false;
         }
@@ -177,29 +172,31 @@ const DetailView = (() => {
 
     root.innerHTML = `
       ${DetailHeader.headerHtml(data.event, data, canEdit, ctx)}
-      <section>
+      <section class="summary-section">
         <p class="event-meta">イベント数：${data.options.length}件 / 回答者数：${data.totalRespondents}人</p>
         <div class="summary-list">${rows}</div>
       </section>
       ${canEdit ? `
-        <section>
-          <details>
-            <summary>＋ イベントを追加</summary>
-            <p class="event-meta">追加すると、既に回答した人も新しいイベントへの回答が必要になります。</p>
+        <details class="ls-fold">
+          <summary><span class="ls-fold-icon" aria-hidden="true">＋</span>イベントを追加</summary>
+          <div class="ls-fold-body">
+            <p class="ls-hint">追加すると、既に回答した人も新しいイベントへの回答が必要になります。</p>
             <div class="option-card">
               <div class="option-card-head">
                 <span class="option-card-icon">🗓️</span>
                 ${OptionCard.titleFieldHtml('new-option')}
               </div>
               ${OptionCard.rangeLocationFieldsHtml('new-option')}
-              <button id="add-option-btn" class="btn btn-primary" type="button">＋ このカードの内容でイベントを追加する</button>
+              <button id="add-option-btn" class="ls-button is-primary is-block" type="button">＋ このカードの内容でイベントを追加する</button>
             </div>
-          </details>
-        </section>
-        ${data.isCreator ? `<section>${deleteButtonHtml()}</section>` : ''}
-        <div class="fixed-share-bar-spacer"></div>
-        <div class="fixed-share-bar">
-          ${shareButtonHtml('イベント一覧をLINEで送信')}
+          </div>
+        </details>
+        ${data.isCreator ? '<button id="delete-event" class="ls-button is-danger is-block" type="button">予定を削除する</button>' : ''}
+        <div class="sendbar-spacer"></div>
+        <div class="ls-sendbar">
+          <div class="ls-sendbar-inner">
+            <button id="share-event" class="ls-send" type="button">イベント一覧をLINEで送信</button>
+          </div>
         </div>` : ''}
     `;
 
@@ -226,16 +223,12 @@ const DetailView = (() => {
       root.querySelector('#add-option-btn').addEventListener('click', async (e) => {
         const fields = OptionCard.readFields(root, 'new-option');
         const error = AppUtil.validateEventFields(fields);
-        if (error) { alert(error); return; }
+        if (error) { AppUtil.notify(error); return; }
 
-        const stopLoading = AppUtil.beginButtonLoading(e.target);
-        try {
+        await AppUtil.saveWithButton(e.currentTarget, async () => {
           await AppApi.addOptions({ eventId: ctx.eventId, userId: ctx.identity.userId, options: [fields] });
           await refresh();
-        } catch (err) {
-          alert('イベントの追加に失敗しました: ' + err.message);
-          stopLoading();
-        }
+        }, 'イベントの追加に失敗しました');
       });
     }
   }

@@ -164,6 +164,19 @@ const AppUtil = (() => {
     };
   }
 
+  // 下に数秒出る知らせ（Q キットのトースト）。Q キットが読めなかったときは alert
+  function notify(message) {
+    if (window.LineShareUI && typeof LineShareUI.toast === 'function') {
+      LineShareUI.toast(message);
+    } else {
+      alert(message);
+    }
+  }
+
+  function notifyError(errorPrefix, err) {
+    notify((errorPrefix || '処理に失敗しました') + ': ' + err.message);
+  }
+
   function wireAsyncButton(btn, action, { confirmMessage, errorPrefix } = {}) {
     if (!btn) return;
     btn.addEventListener('click', async (e) => {
@@ -172,17 +185,28 @@ const AppUtil = (() => {
       try {
         await action(e);
       } catch (err) {
-        alert((errorPrefix || '処理に失敗しました') + ': ' + err.message);
+        notifyError(errorPrefix, err);
       } finally {
         stopLoading();
       }
     });
   }
 
+  // 保存して画面を描き直す（または移る）ボタン。うまくいったときは描き直しでボタンごと消えるので、
+  // くるくるは止めない。失敗したときだけ知らせて、ボタンを元に戻す
+  async function saveWithButton(btn, action, errorPrefix) {
+    const stopLoading = beginButtonLoading(btn);
+    try {
+      await action();
+    } catch (err) {
+      notifyError(errorPrefix, err);
+      stopLoading();
+    }
+  }
+
   return {
-    escapeHtml, formatDateTimeLocal, formatDateRange, toDatetimeLocalValue,
-    buildGoogleCalendarUrl, calendarLinkHtml, loadingHtml, titleIconHtml,
-    extractIcon, shortTime, validateEventFields, wireAsyncButton, relativeDayPillHtml, beginButtonLoading,
-    avatarHtml,
+    escapeHtml, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, loadingHtml, titleIconHtml,
+    extractIcon, shortTime, validateEventFields, wireAsyncButton, saveWithButton, relativeDayPillHtml,
+    beginButtonLoading, avatarHtml, notify, notifyError,
   };
 })();
