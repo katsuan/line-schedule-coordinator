@@ -4,8 +4,32 @@
  * Flexツリーの変換・プレビュー用テキスト生成は js/flexPreview.js (FlexPreview) を参照。
  */
 const AppShare = (() => {
+  // LINE の送り先を選ぶ画面が使えるか（LIFF の準備前は例外を出すので、使えないあつかい）
+  function canPickTarget() {
+    try {
+      return !!(window.liff && typeof liff.isApiAvailable === 'function' && liff.isApiAvailable('shareTargetPicker'));
+    } catch (err) {
+      return false;
+    }
+  }
+
+  // 送れないときに出す「LINE アプリで開く」の行き先（今のページのまま）
+  async function lineAppUrl() {
+    const config = await AppConfig.load();
+    return config.liffId ? `https://liff.line.me/${config.liffId}${window.location.search}` : '';
+  }
+
+  // 送り先を選んで送る。送れたら true（やめたら false）
+  async function pickAndSend(messages) {
+    const pickerResult = await liff.shareTargetPicker(messages);
+    return !(pickerResult && pickerResult.status === 'cancel');
+  }
+
+  // 送る前にプレビューを見せ、送り先を選んで送る。送ったあとは「続けて別のトークにも送る」「閉じる」（Q キット）。
+  // opts.sentTitle：送ったあとのシートの見出し
   async function sendFlexMessage(flex, opts) {
-    const result = await PreviewModal.show(flex, opts);
+    const canSend = canPickTarget();
+    const result = await PreviewModal.show(flex, { ...opts, canSend, appUrl: canSend ? '' : await lineAppUrl() });
     if (result === null) return false;
 
     let finalFlex = FlexPreview.filterGroups(flex, result.unselectedAnswers);
@@ -20,41 +44,18 @@ const AppShare = (() => {
       messages.push({ type: 'text', text: result.comment });
     }
 
-    let available = false;
-    try {
-      available = window.liff && typeof liff.isApiAvailable === 'function' && liff.isApiAvailable('shareTargetPicker');
-    } catch (err) {
-      available = false;
+    if (!(await pickAndSend(messages))) return false;
+    if (window.LineShareUI && typeof LineShareUI.afterSent === 'function') {
+      LineShareUI.afterSent({ resend: () => pickAndSend(messages), title: (opts && opts.sentTitle) || '送りました' });
+    } else {
+      AppUtil.notify('送りました');
     }
-
-    if (available) {
-      const pickerResult = await liff.shareTargetPicker(messages);
-      console.log('shareTargetPicker result', pickerResult);
-      if (pickerResult && pickerResult.status === 'cancel') {
-        return false;
-      }
-      if ((!opts || opts.closeAfter !== false) && liff.isInClient && liff.isInClient()) {
-        liff.closeWindow();
-      }
-      return true;
-    }
-
-    console.warn('shareTargetPicker は利用できません。生成されたFlexを表示します。', messages);
-    const inClient = window.liff && typeof liff.isInClient === 'function' && liff.isInClient();
-    AppUtil.ask({
-      title: 'この環境では共有できません',
-      text: inClient
-        ? 'LINE Developers Console の LIFF アプリ設定で「Share target picker」の Scope が有効か確かめてください。'
-        : 'LINE アプリの中で開くと共有できます。',
-      ok: 'OK',
-      cancel: null,
-    });
-    return false;
+    return true;
   }
 
   async function shareEvent(eventId) {
     const flex = await AppApi.buildShareFlex({ eventId });
-    return sendFlexMessage(flex);
+    return sendFlexMessage(flex, { sentTitle: '予定を送りました' });
   }
 
   const REMIND_PRESETS = ['回答ありがとうございます', '回答の更新をお願いします', 'イベントが近づいています'];
@@ -63,19 +64,19 @@ const AppShare = (() => {
     const flex = await AppApi.buildReminderFlex(params);
     const hasMaybe = !!(params.groups && params.groups['△'] && params.groups['△'].length);
     const defaultPresetIndex = hasMaybe ? 1 : 0;
-    return sendFlexMessage(flex, { closeAfter: false, presets: REMIND_PRESETS, defaultPresetIndex, groups: params.groups });
+    return sendFlexMessage(flex, { sentTitle: '連絡を送りました', presets: REMIND_PRESETS, defaultPresetIndex, groups: params.groups });
   }
 
   async function inviteEditor(eventId) {
     const flex = await AppApi.buildEditorInviteFlex({ eventId });
-    return sendFlexMessage(flex, { closeAfter: false });
+    return sendFlexMessage(flex, { sentTitle: '招待を送りました' });
   }
 
   async function notifyChange(params) {
     const flex = await AppApi.buildChangeNotificationFlex(params);
     return sendFlexMessage(flex, {
-      closeAfter: false,
-      target: { note: '次の画面で、変更を伝えたい相手（トークやグループ）を選んでください' },
+      sentTitle: '変更を知らせました',
+      target: { note: '次の画面で、変更を伝えたいトークやグループを選べます' },
     });
   }
 
@@ -116,7 +117,7 @@ const AppShare = (() => {
         styles: liffUrl ? { footer: { separator: true, separatorColor: '#EEEEEE' } } : undefined,
       },
     };
-    return sendFlexMessage(flex, { closeAfter: false });
+    return sendFlexMessage(flex, { sentTitle: 'くるかなを紹介しました' });
   }
 
   // 編集権限の依頼Flexを生成して送る（送信先は依頼者自身がピッカーで選ぶ＝作成者のトークへ）。
@@ -176,11 +177,11 @@ const AppShare = (() => {
       },
     };
     return sendFlexMessage(flex, {
-      closeAfter: false,
+      sentTitle: '依頼を送りました',
       target: {
         displayName: creator.displayName,
         pictureUrl: creator.pictureUrl,
-        note: '次の画面でLINEのトークから予定作成者を選んで依頼を送信してください',
+        note: '次の画面で、予定を作った人のトークを選んで送れます',
       },
     });
   }
@@ -222,20 +223,14 @@ const AppShare = (() => {
       console.warn('sendMessages に失敗したため送信先ピッカーにフォールバックします', err);
     }
 
-    let pickerAvailable = false;
-    try {
-      pickerAvailable = window.liff && typeof liff.isApiAvailable === 'function' && liff.isApiAvailable('shareTargetPicker');
-    } catch (err) {
-      pickerAvailable = false;
-    }
-    if (pickerAvailable) {
+    if (canPickTarget()) {
       const result = await liff.shareTargetPicker([{ type: 'text', text }]);
       if (result && result.status === 'cancel') return false;
       if (liff.isInClient && liff.isInClient()) liff.closeWindow();
       return true;
     }
 
-    AppUtil.ask({ title: 'この環境では送信できません', text: 'LINE アプリの中で開くと送信できます。', ok: 'OK', cancel: null });
+    AppUtil.ask({ title: 'ここからは送れません', text: 'LINE アプリで開くと送れます。', ok: '閉じる', cancel: null });
     return false;
   }
 

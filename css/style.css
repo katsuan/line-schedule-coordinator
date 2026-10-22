@@ -51,18 +51,14 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .event-description { color: var(--ls-subtext); font-size: 0.9rem; white-space: pre-wrap; }
 
 /* ---- 読みこみ中 ---- */
-.loading { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 40px; text-align: center; color: var(--ls-subtext); }
-.spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid var(--qk-fill);
-  border-top-color: var(--ls-accent);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
+.loading { display: grid; gap: 12px; margin-top: 8px; color: var(--ls-subtext); }
+.loading-head { min-height: 64px; }
+.loading-card { min-height: 96px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-tip {
+  justify-self: center;
   max-width: 280px;
+  text-align: center;
   font-size: 0.75rem;
   background: var(--ls-surface);
   border-radius: 8px;
@@ -449,3 +445,24 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .guide-faq-item { gap: 4px; padding: 12px 14px; }
 .guide-faq-q { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.86rem; }
 .guide-faq-q .status-badge { flex-shrink: 0; }
+
+/* ---- LINE の外で開いたとき（js/platform.js の showOutsideChoice） ---- */
+.outside-choice { z-index: 1000; align-items: center; }
+.outside-choice-card { justify-items: center; gap: 10px; width: min(100%, 360px); text-align: center; }
+.outside-choice-card .ls-outside-button { width: 100%; min-height: 48px; font-size: 15px; font-weight: 800; }
+
+/* 送る内容の見本で、ここからは送れないときの一言（見本の上） */
+.preview-outside { text-align: left; }
+.ls-sheet-actions.is-stacked { grid-template-columns: minmax(0, 1fr); }
+
+/* 暗い表示でも、送る内容の見本（LINE のトークの見た目）は明るいまま（使い心地の決まり A3） */
+@media (prefers-color-scheme: dark) {
+  :root[data-ls-dark="auto"] .preview-scope {
+    --ls-surface: #ffffff;
+    --ls-surface-sub: #ffffff;
+    --ls-text: #111111;
+    --ls-subtext: #8c8c8c;
+    --ls-line: rgba(0, 0, 0, 0.08);
+    color: var(--ls-text);
+  }
+}

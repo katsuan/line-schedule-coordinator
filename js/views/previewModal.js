@@ -11,6 +11,7 @@ const PreviewModal = (() => {
     const groups = (opts && opts.groups) || null;
     const groupAnswers = groups ? ['○', '△', '×'].filter((a) => groups[a] && groups[a].length) : [];
     const target = (opts && opts.target) || null;
+    const canSend = !opts || opts.canSend !== false; // LINE の送り先を選ぶ画面が使えるか（使えないときは理由と「LINE アプリで開く」）
     const headerNode = flex.contents.header;
     const headerTitleNode = headerNode && headerNode.contents && headerNode.contents[0];
     const headerTitle = headerTitleNode ? headerTitleNode.text : null;
@@ -24,9 +25,10 @@ const PreviewModal = (() => {
       ));
       const lines = linesFor([]);
       const sheet = Sheet.open({
-        title: '送信内容プレビュー',
+        title: '送る内容の見本',
         onDismiss: () => resolve(null),
         bodyHtml: `
+          ${canSend ? '' : `<p class="ls-outside-text preview-outside">ここからは送れません。LINE アプリで開くと送れます。</p>`}
           <p class="event-meta">※実際の見え方は端末によって異なります</p>
           <p class="preview-scope-label">👇 プレビュー範囲（実際に送信される内容）</p>
           <div class="preview-scope">
@@ -72,12 +74,13 @@ const PreviewModal = (() => {
             <input type="checkbox" id="preview-comment-as-chat" checked>
             コメントをチャット形式で送信する（OFFでカードに埋め込む）
           </label>
-          ${target && target.note ? `<p class="event-meta">${AppUtil.escapeHtml(target.note)}</p>` : ''}
-          <div class="ls-sheet-actions">
-            <button type="button" class="ls-button is-primary" id="preview-confirm">
-              ${target && target.displayName ? `${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}を選ぶ` : '送信先を選ぶ'}
-            </button>
-            <button type="button" class="ls-sheet-cancel" id="preview-cancel">キャンセル</button>
+          ${canSend && target && target.note ? `<p class="event-meta">${AppUtil.escapeHtml(target.note)}</p>` : ''}
+          <div class="ls-sheet-actions${canSend && !(target && target.displayName) ? '' : ' is-stacked'}">
+            ${canSend ? `
+              <button type="button" class="ls-button is-primary" id="preview-confirm">
+                ${target && target.displayName ? `💬 ${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}${AppUtil.escapeHtml(target.displayName)} に送る` : '💬 LINEで送る'}
+              </button>` : (opts.appUrl ? `<a class="ls-button is-primary" href="${AppUtil.escapeHtml(opts.appUrl)}">💬 LINE アプリで開く</a>` : '')}
+            <button type="button" class="ls-sheet-cancel" id="preview-cancel">やめる</button>
           </div>`,
       });
       const overlay = sheet.el; // シートの外側（中身をここから探す）
@@ -170,7 +173,8 @@ const PreviewModal = (() => {
 
       const close = (result) => { sheet.close(); resolve(result); };
       overlay.querySelector('#preview-cancel').addEventListener('click', sheet.dismiss);
-      overlay.querySelector('#preview-confirm').addEventListener('click', () => {
+      const confirmBtn = overlay.querySelector('#preview-confirm');
+      if (confirmBtn) confirmBtn.addEventListener('click', () => {
         close({
           comment: textarea.value.trim(),
           sendAsChat,

@@ -56,8 +56,17 @@ const ListView = (() => {
             </button>`).join('')}
         </div>
         ${tabs.map((t) => `<div class="tab-panel" data-panel="${t.key}" role="tabpanel" hidden>${itemsHtml(t.list)}</div>`).join('')}
-      ` : '<p class="ls-empty">予定はまだありません。</p>'}
+      ` : '<p class="ls-empty">予定はまだありません。「＋ 新規作成」から作れます。</p>'}
     `;
+
+    // はじめて開いた人にだけ、短い使い方（Q キット。「わかった」で消え、この端末では二度と出さない）
+    if (window.LineShareUI && typeof LineShareUI.firstTip === 'function') {
+      LineShareUI.firstTip('qurukana', [
+        '「＋ 新規作成」で、候補の日をいくつか入れます',
+        '「💬 予定をLINEで送る」で、みんなに ○△× で答えてもらえます',
+        '答えは押したときに保存されます。あとから変えてもOK',
+      ], root.querySelector('.ls-tabs, .ls-empty'));
+    }
 
     if (!events.length) return;
 

@@ -25,11 +25,11 @@ const DetailView = (() => {
 
   function wireCommonActions(root, ctx, { canShare, isCreator }) {
     AppUtil.wireAsyncButton(root.querySelector('#share-app-btn'), () => AppShare.shareApp(), {
-      errorPrefix: '共有に失敗しました',
+      errorPrefix: '送れませんでした',
     });
     if (canShare) {
       AppUtil.wireAsyncButton(root.querySelector('#share-event'), () => AppShare.shareEvent(ctx.eventId), {
-        errorPrefix: '共有に失敗しました',
+        errorPrefix: '送れませんでした',
       });
     }
     if (isCreator) {
@@ -37,11 +37,11 @@ const DetailView = (() => {
         await AppApi.deleteEvent({ eventId: ctx.eventId, userId: ctx.identity.userId });
         AppRouter.navigate({ view: 'list' });
       }, {
-        confirmMessage: 'この予定を削除します。回答データもすべて削除され、元に戻せません。よろしいですか？',
-        errorPrefix: '削除に失敗しました',
+        confirm: { title: 'この予定を消しますか？', text: '回答とコメントもすべて消えて、元に戻せません。', ok: '消す', danger: true },
+        errorPrefix: '消せませんでした',
       });
       AppUtil.wireAsyncButton(root.querySelector('#invite-editor'), () => AppShare.inviteEditor(ctx.eventId), {
-        errorPrefix: '招待の送信に失敗しました',
+        errorPrefix: '招待を送れませんでした',
       });
     }
   }
@@ -87,7 +87,7 @@ const DetailView = (() => {
       const answerByUser = {};
       ANSWERS.forEach((a) => (row.respondents[a] || []).forEach((r) => { answerByUser[r.userId] = a; }));
       const enrichedComments = (row.comments || []).map((c) => ({ ...c, answer: answerByUser[c.userId] }));
-      // 「LINE送信」で使う、○△× ごとの名前
+      // 「💬 LINEで送る」で使う、○△× ごとの名前
       const groups = {};
       ANSWERS.forEach((a) => {
         const names = (row.respondents[a] || []).map((r) => r.displayName);
@@ -104,7 +104,7 @@ const DetailView = (() => {
                 ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
                 ${OptionComments.commentAddToggleHtml(opt.optionId)}
               </span>
-              ${canEdit && totalCount ? `<button type="button" class="ls-button remind-btn" data-row="${rowIndex}">LINE送信</button>` : ''}
+              ${canEdit && totalCount ? `<button type="button" class="ls-button remind-btn" data-row="${rowIndex}">💬 LINEで送る</button>` : ''}
             </div>
           </div>
           <details class="respondents-fold">
@@ -144,7 +144,7 @@ const DetailView = (() => {
         if (!Object.keys(groups).length) return;
 
         btn.disabled = true;
-        btn.textContent = '送信中...';
+        btn.textContent = '準備中…';
         try {
           await AppShare.remindRespondents({
             eventId, groups,
@@ -154,11 +154,12 @@ const DetailView = (() => {
             optionEndAt: rowEl ? rowEl.dataset.optionEnd : '',
             optionLocation: rowEl ? rowEl.dataset.optionLocation : '',
           });
-          btn.textContent = '送信しました';
-          setTimeout(() => { btn.textContent = 'LINE送信'; btn.disabled = false; }, 2000);
+          // 送ったあとの知らせは送る流れ（Q キットの送ったあとのシート）が出す
+          btn.textContent = '💬 LINEで送る';
+          btn.disabled = false;
         } catch (err) {
-          AppUtil.notifyError('連絡の送信に失敗しました', err);
-          btn.textContent = 'LINE送信';
+          AppUtil.notifyError('連絡を送れませんでした', err);
+          btn.textContent = '💬 LINEで送る';
           btn.disabled = false;
         }
       });
@@ -191,11 +192,11 @@ const DetailView = (() => {
             </div>
           </div>
         </details>
-        ${data.isCreator ? '<button id="delete-event" class="ls-button is-danger is-block" type="button">予定を削除する</button>' : ''}
+        ${data.isCreator ? '<button id="delete-event" class="ls-button is-danger is-block" type="button">🗑 予定を消す</button>' : ''}
         <div class="sendbar-spacer"></div>
         <div class="ls-sendbar">
           <div class="ls-sendbar-inner">
-            <button id="share-event" class="ls-send" type="button">イベント一覧をLINEで送信</button>
+            <button id="share-event" class="ls-send" type="button">💬 予定をLINEで送る</button>
           </div>
         </div>` : ''}
     `;
@@ -228,7 +229,7 @@ const DetailView = (() => {
         await AppUtil.saveWithButton(e.currentTarget, async () => {
           await AppApi.addOptions({ eventId: ctx.eventId, userId: ctx.identity.userId, options: [fields] });
           await refresh();
-        }, 'イベントの追加に失敗しました');
+        }, 'イベントを足せませんでした');
       });
     }
   }

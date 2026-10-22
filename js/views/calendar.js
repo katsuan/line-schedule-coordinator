@@ -132,7 +132,7 @@ const CalendarView = (() => {
             if (item) item.myAnswer = value;
             paint();
           } catch (err) {
-            AppUtil.notifyError('回答の保存に失敗しました', err);
+            AppUtil.notifyError('回答を保存できませんでした', err);
           } finally {
             saving = false;
           }

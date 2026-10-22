@@ -40,7 +40,7 @@ const DetailHeader = (() => {
           <textarea id="edit-event-description" class="ls-input is-short" placeholder="説明（任意）">${AppUtil.escapeHtml(event.description || '')}</textarea>
           <div class="option-edit-actions">
             <button type="button" class="ls-button is-primary" id="save-event-btn">保存</button>
-            <button type="button" class="ls-button" id="cancel-event-btn">キャンセル</button>
+            <button type="button" class="ls-button" id="cancel-event-btn">やめる</button>
           </div>
         </div>` : ''}
       </header>`;
@@ -58,7 +58,7 @@ const DetailHeader = (() => {
           </div>
           <div class="ls-sheet-actions">
             <button type="button" class="ls-button is-primary" id="approve-confirm">承認する</button>
-            <button type="button" class="ls-sheet-cancel" id="approve-cancel">キャンセル</button>
+            <button type="button" class="ls-sheet-cancel" id="approve-cancel">やめる</button>
           </div>`,
         onDismiss: () => resolve(false),
       });
@@ -75,7 +75,7 @@ const DetailHeader = (() => {
         displayName: ctx.identity.displayName,
         pictureUrl: ctx.identity.pictureUrl,
       }, data.creator), {
-        errorPrefix: '依頼の送信に失敗しました',
+        errorPrefix: '依頼を送れませんでした',
       });
     }
 
@@ -100,8 +100,8 @@ const DetailHeader = (() => {
           approveBtn.replaceWith(replyBtn);
           AppUtil.wireAsyncButton(replyBtn, () => AppShare.replyInChat(
             `✅ ${data.event.title} の編集権限を承認しました`
-          ), { errorPrefix: '返信に失敗しました' });
-        }, '許可に失敗しました');
+          ), { errorPrefix: '返事を送れませんでした' });
+        }, '許可できませんでした');
       });
     }
   }
@@ -126,7 +126,7 @@ const DetailHeader = (() => {
         await AppUtil.saveWithButton(e.currentTarget, async () => {
           await AppApi.updateEvent({ eventId: ctx.eventId, userId: ctx.identity.userId, title, description });
           await refresh();
-        }, '更新に失敗しました');
+        }, '変えられませんでした');
       });
     }
 
