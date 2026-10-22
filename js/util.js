@@ -245,7 +245,47 @@ const AppUtil = (() => {
     }
   }
 
+  // ---- カレンダーの週のはじまり（0＝日曜・いままでどおりの既定、1＝月曜）。この端末に残す ----
+  const WEEK_START_KEY = 'qurukana:weekStart';
+  const WEEK_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
+
+  function getWeekStart() {
+    try {
+      return window.localStorage.getItem(WEEK_START_KEY) === '1' ? 1 : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function setWeekStart(value) {
+    try {
+      window.localStorage.setItem(WEEK_START_KEY, value === 1 ? '1' : '0');
+    } catch (e) {
+      // 残せない端末でも、開いているあいだは使える
+    }
+  }
+
+  // ひと月のマス：前の空きは ''、日は 1〜。7 の倍数にそろえる
+  function monthCells(year, month, weekStart) {
+    const offset = (new Date(year, month, 1).getDay() - weekStart + 7) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < offset; i++) cells.push('');
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    while (cells.length % 7 !== 0) cells.push('');
+    return cells;
+  }
+
+  // 曜日の見出し（週のはじまりから7つ）。dow：0＝日 … 6＝土
+  function weekHeader(weekStart) {
+    return Array.from({ length: 7 }, (_, i) => {
+      const dow = (weekStart + i) % 7;
+      return { label: WEEK_LABELS[dow], dow };
+    });
+  }
+
   return {
+    getWeekStart, setWeekStart, monthCells, weekHeader,
     escapeHtml, safeImageUrl, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, loadingHtml, titleIconHtml,
     extractIcon, shortTime, validateEventFields, wireAsyncButton, saveWithButton, relativeDayPillHtml,
     beginButtonLoading, avatarHtml, notify, notifyError, friendlyReason, ask,

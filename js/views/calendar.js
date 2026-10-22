@@ -16,6 +16,7 @@ const CalendarView = (() => {
     const today = new Date();
     let viewYear = today.getFullYear();
     let viewMonth = today.getMonth();
+    let weekStart = AppUtil.getWeekStart();
 
     function byDayMap() {
       const map = {};
@@ -27,16 +28,10 @@ const CalendarView = (() => {
     }
 
     function monthGridHtml(year, month, byDay) {
-      const first = new Date(year, month, 1);
-      const startOffset = first.getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const cells = [];
-      for (let i = 0; i < startOffset; i++) cells.push('');
-      for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-      while (cells.length % 7 !== 0) cells.push('');
+      const cells = AppUtil.monthCells(year, month, weekStart);
 
-      const weekHeader = ['日', '月', '火', '水', '木', '金', '土']
-        .map((w) => `<div class="cal-weekday">${w}</div>`).join('');
+      const weekHeader = AppUtil.weekHeader(weekStart)
+        .map((w) => `<div class="cal-weekday${w.dow === 0 ? ' is-sun' : w.dow === 6 ? ' is-sat' : ''}">${w.label}</div>`).join('');
 
       const dayCells = cells.map((d) => {
         if (!d) return '<div class="cal-cell empty"></div>';
@@ -152,6 +147,13 @@ const CalendarView = (() => {
           <button type="button" id="cal-next" class="ls-icon-button" aria-label="次の月">→</button>
         </div>
         <div id="cal-grid-container"></div>
+        <div class="cal-week-start">
+          <span>週のはじまり</span>
+          <div class="ls-chips" role="radiogroup" aria-label="週のはじまり">
+            <button type="button" class="ls-chip is-small" role="radio" data-week-start="1">月曜</button>
+            <button type="button" class="ls-chip is-small" role="radio" data-week-start="0">日曜</button>
+          </div>
+        </div>
         <h2>今後の予定一覧</h2>
         <div class="cal-item-list">${listHtml()}</div>
       `;
@@ -166,6 +168,13 @@ const CalendarView = (() => {
         if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
         paintGrid();
       });
+      root.querySelectorAll('[data-week-start]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          weekStart = Number(btn.dataset.weekStart) === 1 ? 1 : 0;
+          AppUtil.setWeekStart(weekStart);
+          paintGrid();
+        });
+      });
       root.querySelector('#cal-next').addEventListener('click', () => {
         viewMonth += 1;
         if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
@@ -177,6 +186,9 @@ const CalendarView = (() => {
       const byDay = byDayMap();
       root.querySelector('#cal-month-label').textContent = `${viewYear}年${viewMonth + 1}月`;
       root.querySelector('#cal-grid-container').innerHTML = monthGridHtml(viewYear, viewMonth, byDay);
+      root.querySelectorAll('[data-week-start]').forEach((btn) => {
+        btn.setAttribute('aria-checked', String(Number(btn.dataset.weekStart) === weekStart));
+      });
       root.querySelectorAll('.cal-cell.has-items').forEach((cell) => {
         cell.addEventListener('click', () => openDaySheet(cell.dataset.key));
       });
