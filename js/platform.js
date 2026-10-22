@@ -91,9 +91,10 @@ const AppPlatform = (() => {
         <img src="icon.svg" alt="" width="56" height="56">
         <p id="outsideChoiceTitle" class="ls-sheet-title">LINE の外で開いています</p>
         <p class="ls-hint">くるかなは、LINE の名前で ○△× を答えます。LINE アプリで開くか、ログインすると使えます。</p>
-        <a class="ls-outside-button is-app" href="https://liff.line.me/${liffId}${window.location.search}">💬 LINE アプリで開く</a>
+        <a class="ls-outside-button is-app">💬 LINE アプリで開く</a>
         <button class="ls-outside-button" type="button">🔑 ログインして使う</button>
       </div>`;
+    sheet.querySelector('a').setAttribute('href', `https://liff.line.me/${encodeURIComponent(liffId)}${window.location.search}`);
     sheet.querySelector('button').addEventListener('click', () => {
       liff.login({ redirectUri: loginReturnUrl() });
     });

@@ -1,0 +1,85 @@
+/**
+ * 外から来た中身の確かめ（長さ・数・形）と、シートに書く前の守り、同時に書くときの順番、エラーの出し方。
+ * Q のセキュリティの決まり（q-oqrn の docs/security.md）の G1・G2・G6・G7。
+ */
+
+const LIMITS = {
+  TITLE: 100,
+  DESCRIPTION: 2000,
+  OPTION_TITLE: 100,
+  LOCATION: 200,
+  DATETIME: 40,
+  ICON: 16,
+  COMMENT: 500,
+  NAME: 60,
+  OPTIONS: 50,
+  ANSWERS: 200,
+};
+
+// 書きこむ操作（同時に来たら1つずつ順番に）
+const WRITE_ACTIONS = [
+  'createEvent', 'addOptions', 'updateOption', 'updateEvent', 'claimEditor',
+  'approveEditRequest', 'deleteEvent', 'submitAnswer', 'addComment', 'deleteComment',
+];
+
+/** シートに書く文字が = + - @ で始まると式として動くので、' を付けて文字のままにする（G1） */
+function safeCell(value) {
+  if (typeof value !== 'string') return value;
+  if (/^[=+\-@\t\r]/.test(value) && !/^[+-]?\d+(\.\d+)?$/.test(value)) return "'" + value;
+  return value;
+}
+
+/** 文字の長さを確かめる。undefined はそのまま（「変えない」の意味で使うため） */
+function limitText_(value, max, label) {
+  if (value === undefined || value === null) return value;
+  const text = String(value);
+  if (text.length > max) {
+    throw new Error(label + 'が長すぎます（' + max + '字まで）');
+  }
+  return text;
+}
+
+/** 候補（イベント）の並び。数・形・長さを確かめて、使う項目だけにする */
+function cleanOptions_(options) {
+  if (!Array.isArray(options) || !options.length) {
+    throw new Error('イベントを1件以上指定してください');
+  }
+  if (options.length > LIMITS.OPTIONS) {
+    throw new Error('イベントが多すぎます（' + LIMITS.OPTIONS + '件まで）');
+  }
+  return options.map((opt) => {
+    if (!opt || typeof opt !== 'object' || !opt.startAt) {
+      throw new Error('イベントの開始は必須です');
+    }
+    return {
+      startAt: limitText_(opt.startAt, LIMITS.DATETIME, '開始'),
+      endAt: limitText_(opt.endAt || '', LIMITS.DATETIME, '完了'),
+      title: limitText_(opt.title || '', LIMITS.OPTION_TITLE, 'イベント名'),
+      location: limitText_(opt.location || '', LIMITS.LOCATION, '場所'),
+    };
+  });
+}
+
+/** 書きこむ操作は、ほかの人の書きこみと重ならないように1つずつ（G7） */
+function withWriteLock_(action, fn) {
+  if (WRITE_ACTIONS.indexOf(action) === -1) return fn();
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    return fn();
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// 画面に出してよいエラー（自分で書いたやさしい言葉）。それ以外は中身を出さずログへ（G2）
+const PUBLIC_ERROR_PATTERN = /ログインしなおして|のみです|見つかりません|必須です|未対応|長すぎ|多すぎ|選べません|招待のリンク|サービスに接続できなくなりました/;
+
+function publicErrorMessage_(err) {
+  const message = String((err && err.message) || err || '');
+  if (PUBLIC_ERROR_PATTERN.test(message) && !/Script Properties|Exception:/.test(message)) {
+    return message.slice(0, 200);
+  }
+  console.error(err && err.stack ? err.stack : message);
+  return 'うまく処理できませんでした。時間をおいて、もう一度ためしてね。';
+}

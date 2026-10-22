@@ -4,13 +4,15 @@
  */
 
 function createEvent_(payload) {
-  const { title, description, deadline, options, creatorUserId, creatorDisplayName, creatorPictureUrl, icon } = payload;
+  const { creatorUserId, creatorDisplayName, creatorPictureUrl } = payload;
+  const title = limitText_(payload.title, LIMITS.TITLE, 'タイトル');
+  const description = limitText_(payload.description, LIMITS.DESCRIPTION, '説明');
+  const deadline = limitText_(payload.deadline, LIMITS.DATETIME, '回答期限');
+  const icon = limitText_(payload.icon, LIMITS.ICON, 'アイコン');
   if (!title || !creatorUserId) {
     throw new Error('title / creatorUserId は必須です');
   }
-  if (!options || !options.length) {
-    throw new Error('イベントを1件以上指定してください');
-  }
+  const options = cleanOptions_(payload.options);
 
   upsertUser_(creatorUserId, creatorDisplayName, creatorPictureUrl);
 
@@ -46,7 +48,10 @@ function createEvent_(payload) {
 }
 
 function updateEvent_(payload) {
-  const { eventId, userId, title, description, deadline } = payload;
+  const { eventId, userId } = payload;
+  const title = limitText_(payload.title, LIMITS.TITLE, 'タイトル');
+  const description = limitText_(payload.description, LIMITS.DESCRIPTION, '説明');
+  const deadline = limitText_(payload.deadline, LIMITS.DATETIME, '回答期限');
   if (!eventId || !title) {
     throw new Error('eventId / title は必須です');
   }
@@ -70,10 +75,11 @@ function updateEvent_(payload) {
 }
 
 function addOptions_(payload) {
-  const { eventId, userId, options } = payload;
-  if (!eventId || !options || !options.length) {
+  const { eventId, userId } = payload;
+  if (!eventId || !payload.options || !payload.options.length) {
     throw new Error('eventId / options は必須です');
   }
+  const options = cleanOptions_(payload.options);
   const event = findEventById_(eventId);
   if (!event) {
     throw new Error('イベントが見つかりません');
@@ -83,6 +89,9 @@ function addOptions_(payload) {
   }
 
   const existingOptions = getEventOptions_(eventId);
+  if (existingOptions.length + options.length > LIMITS.OPTIONS * 2) {
+    throw new Error('イベントが多すぎます（' + LIMITS.OPTIONS * 2 + '件まで）');
+  }
   let nextSort = existingOptions.reduce((max, o) => Math.max(max, Number(o.sort)), -1) + 1;
 
   options.forEach((opt) => {
@@ -101,7 +110,11 @@ function addOptions_(payload) {
 }
 
 function updateOption_(payload) {
-  const { eventId, userId, optionId, title, startAt, endAt, location } = payload;
+  const { eventId, userId, optionId } = payload;
+  const title = limitText_(payload.title, LIMITS.OPTION_TITLE, 'イベント名');
+  const startAt = limitText_(payload.startAt, LIMITS.DATETIME, '開始');
+  const endAt = limitText_(payload.endAt, LIMITS.DATETIME, '完了');
+  const location = limitText_(payload.location, LIMITS.LOCATION, '場所');
   if (!eventId || !optionId) {
     throw new Error('eventId / optionId は必須です');
   }
@@ -141,6 +154,10 @@ function claimEditor_(payload) {
   upsertUser_(userId, displayName, pictureUrl);
 
   if (!isEditorOrCreator_(event, userId)) {
+    // 編集者になれるのは、作成者が送った招待のリンク（合言葉つき）から開いた人だけ
+    if (String(payload.inviteKey || '') !== editorInviteKey_(eventId)) {
+      throw new Error('編集者になるには、作成者からの招待のリンクが必要です');
+    }
     const ids = editorIdsOf_(event);
     ids.push(userId);
     updateRowObject_(SHEET.EVENTS, event._rowIndex, {

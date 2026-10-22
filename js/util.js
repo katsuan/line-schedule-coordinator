@@ -7,11 +7,23 @@ const AppUtil = (() => {
 
   const AVATAR_ANSWER_CLASS = { '○': 'avatar-ok', '△': 'avatar-maybe', '×': 'avatar-ng' };
 
+  // 画像の URL は https だけ（ほかは頭文字を出す）。CSS と HTML の両方で文字が外に出ないようにする
+  function safeImageUrl(value) {
+    if (typeof value !== 'string' || !value || value.length > 1000) return '';
+    try {
+      const url = new URL(value);
+      return url.protocol === 'https:' ? url.href.replace(/['"()\\\s]/g, encodeURIComponent) : '';
+    } catch (err) {
+      return '';
+    }
+  }
+
   function avatarHtml(displayName, pictureUrl, answer) {
-    const initial = escapeHtml(String(displayName || '?').slice(0, 1));
-    const style = pictureUrl ? ` style="background-image:url('${pictureUrl.replace(/'/g, '%27')}')"` : '';
+    const initial = escapeHtml(Array.from(String(displayName || '?'))[0] || '?');
+    const url = safeImageUrl(pictureUrl);
+    const style = url ? ` style="background-image:url('${escapeHtml(url)}')"` : '';
     const cls = AVATAR_ANSWER_CLASS[answer] ? ` ${AVATAR_ANSWER_CLASS[answer]}` : '';
-    return `<span class="avatar${cls}"${style}>${pictureUrl ? '' : initial}</span>`;
+    return `<span class="avatar${cls}"${style}>${url ? '' : initial}</span>`;
   }
 
   function formatDateTimeLocal(isoLike) {
@@ -112,7 +124,7 @@ const AppUtil = (() => {
   function calendarLinkHtml(title, description, startAt, endAt, location) {
     const url = buildGoogleCalendarUrl(title, description, startAt, endAt, location);
     if (!url) return '';
-    return `<a class="cal-link" href="${url}" target="_blank" rel="noopener">${CALENDAR_ICON_SVG}<span>カレンダー追加</span></a>`;
+    return `<a class="cal-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">${CALENDAR_ICON_SVG}<span>カレンダー追加</span></a>`;
   }
 
   const TIPS = [
@@ -172,7 +184,7 @@ const AppUtil = (() => {
     if (window.LineShareUI && typeof LineShareUI.toast === 'function') {
       LineShareUI.toast(message, options);
     } else {
-      alert(message);
+      alert(message); // qcheck-ok: W8 Q キットが読めなかったときだけの代わり
     }
   }
 
@@ -182,16 +194,18 @@ const AppUtil = (() => {
     if (window.LineShareUI && typeof LineShareUI.ask === 'function') return LineShareUI.ask(options);
     const text = [options.title, options.text].filter(Boolean).join('\n');
     if (options.cancel === null) {
-      alert(text);
+      alert(text); // qcheck-ok: W8 Q キットが読めなかったときだけの代わり
       return Promise.resolve(true);
     }
-    return Promise.resolve(confirm(text));
+    return Promise.resolve(confirm(text)); // qcheck-ok: W8 Q キットが読めなかったときだけの代わり
   }
 
   // 失敗したときの「次にすること」。GAS の返すエラーの中身は画面に出さず、種類だけ見て言いかえる（くわしくはコンソール）
   function friendlyReason(err) {
     const message = String((err && err.message) || '');
     if (/ログインしなおして/.test(message)) return 'LINE で開きなおしてね。';
+    if (/長すぎ|多すぎ/.test(message)) return 'もう少し短く（少なく）してね。';
+    if (/招待のリンク/.test(message)) return '作成者に「🔑 編集を依頼」してね。';
     if (/のみです|作成者|投稿者/.test(message)) return 'この操作は、予定を作った人（編集をまかされた人）だけができます。';
     if (/見つかりません/.test(message)) return '予定が見つかりませんでした。消されたのかもしれません。';
     return '電波のよいところで、もう一度ためしてね。';
@@ -232,7 +246,7 @@ const AppUtil = (() => {
   }
 
   return {
-    escapeHtml, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, loadingHtml, titleIconHtml,
+    escapeHtml, safeImageUrl, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, loadingHtml, titleIconHtml,
     extractIcon, shortTime, validateEventFields, wireAsyncButton, saveWithButton, relativeDayPillHtml,
     beginButtonLoading, avatarHtml, notify, notifyError, friendlyReason, ask,
   };

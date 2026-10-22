@@ -173,14 +173,18 @@ function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optio
   };
 }
 
-function buildEditorInviteFlex_(eventId) {
+function buildEditorInviteFlex_(eventId, userId) {
   const event = findEventById_(eventId);
   if (!event) {
-    throw new Error('イベントが見つかりません: ' + eventId);
+    throw new Error('イベントが見つかりません');
+  }
+  if (event.creatorUserId !== userId) {
+    throw new Error('編集者を招待できるのは作成者のみです');
   }
   const liffUrl = getLiffUrl_();
   const inviteUrl = liffUrl
-    ? liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId) + '&claimEditor=1'
+    ? liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId) + '&claimEditor=1' +
+      '&key=' + encodeURIComponent(editorInviteKey_(eventId))
     : '';
 
   const bubble = {

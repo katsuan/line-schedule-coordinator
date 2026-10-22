@@ -5,13 +5,24 @@
 
 function submitAnswer_(payload) {
   const { eventId, userId, displayName, pictureUrl, answers } = payload;
-  if (!eventId || !userId || !answers || !answers.length) {
+  if (!eventId || !userId || !Array.isArray(answers) || !answers.length) {
     throw new Error('eventId / userId / answers は必須です');
+  }
+  if (answers.length > LIMITS.ANSWERS) {
+    throw new Error('回答が多すぎます');
   }
   const event = findEventById_(eventId);
   if (!event) {
     throw new Error('イベントが見つかりません');
   }
+  // 答えは ○△× だけ、候補はこの予定のものだけ
+  const optionIds = new Set(getEventOptions_(eventId).map((o) => o.optionId));
+  const choices = [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG];
+  answers.forEach((item) => {
+    if (!item || !optionIds.has(item.optionId) || choices.indexOf(item.answer) === -1) {
+      throw new Error('その答えは選べません');
+    }
+  });
 
   upsertUser_(userId, displayName, pictureUrl);
 
@@ -38,12 +49,14 @@ function submitAnswer_(payload) {
 }
 
 function addComment_(payload) {
-  const { eventId, optionId, userId, displayName, pictureUrl, text } = payload;
-  if (!eventId || !optionId || !userId || !text || !text.trim()) {
+  const { eventId, optionId, userId, displayName, pictureUrl } = payload;
+  const text = typeof payload.text === 'string' ? payload.text : '';
+  if (!eventId || !optionId || !userId || !text.trim()) {
     throw new Error('eventId / optionId / userId / text は必須です');
   }
+  limitText_(text.trim(), LIMITS.COMMENT, 'コメント');
   const event = findEventById_(eventId);
-  if (!event) {
+  if (!event || !findOptionById_(eventId, optionId)) {
     throw new Error('イベントが見つかりません');
   }
 

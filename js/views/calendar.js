@@ -85,7 +85,7 @@ const CalendarView = (() => {
 
     function daySheetItemHtml(it) {
       return `
-        <div class="answer-row" data-option-id="${it.optionId}" data-event-id="${it.eventId}">
+        <div class="answer-row" data-option-id="${AppUtil.escapeHtml(it.optionId)}" data-event-id="${AppUtil.escapeHtml(it.eventId)}">
           <div class="option-meta">
             <div class="option-meta-title">${AppUtil.titleIconHtml(it.optionTitle || it.eventTitle)}</div>
             <div class="option-meta-info-row option-meta-info-row-split">
@@ -94,7 +94,7 @@ const CalendarView = (() => {
             </div>
             ${it.location ? `<div class="option-meta-info-row"><span class="option-meta-location">📍 ${AppUtil.escapeHtml(it.location)}</span></div>` : ''}
           </div>
-          <span class="answer-choices" data-option-id="${it.optionId}">
+          <span class="answer-choices" data-option-id="${AppUtil.escapeHtml(it.optionId)}">
             ${OptionCard.choiceButtonsHtml(it.optionId, { [it.optionId]: it.myAnswer })}
           </span>
           <a class="cal-open-link" href="?event=${encodeURIComponent(it.eventId)}">この予定を開く →</a>
