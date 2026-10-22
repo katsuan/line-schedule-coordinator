@@ -12,7 +12,8 @@ const AppApi = (() => {
       method: 'POST',
       // GASはカスタムCORSヘッダーを返せないため、text/plainでpreflightを回避する
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action, ...payload }),
+      // accessToken：GAS はこれを LINE に確かめて本人を決める（payload の userId は使わない）
+      body: JSON.stringify({ action, ...payload, accessToken: AppPlatform.getAccessToken() }),
     });
 
     const json = await res.json();

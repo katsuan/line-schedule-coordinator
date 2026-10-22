@@ -28,6 +28,8 @@ function getSummary_(payload) {
 
   const userById = new Map(users.map((u) => [u.userId, u]));
   const userOf = (uid) => userById.get(uid) || {};
+  // 外に出すのは本物の userId ではなく、この予定だけの記号（11_auth.js）
+  const pid = (uid) => publicIdOf_(eventId, uid);
   const responsesByOption = _groupBy_(responses, 'optionId');
   const commentsByOption = _groupBy_(comments, 'optionId');
 
@@ -42,7 +44,7 @@ function getSummary_(payload) {
       if (byAnswer[r.answer]) {
         const u = userOf(r.userId);
         byAnswer[r.answer].push({
-          userId: r.userId,
+          userId: pid(r.userId),
           displayName: u.displayName || '(名前未取得)',
           pictureUrl: u.pictureUrl || '',
         });
@@ -55,7 +57,7 @@ function getSummary_(payload) {
         const u = userOf(c.userId);
         return {
           commentId: c.commentId,
-          userId: c.userId,
+          userId: pid(c.userId),
           displayName: u.displayName || '(名前未取得)',
           pictureUrl: u.pictureUrl || '',
           text: c.text,
@@ -77,12 +79,15 @@ function getSummary_(payload) {
 
   const editors = editorIdsOf_(event).map((id) => {
     const u = userById.get(id);
-    return { userId: id, displayName: (u && u.displayName) || '(名前未取得)' };
+    return { userId: pid(id), displayName: (u && u.displayName) || '(名前未取得)' };
   });
   const creatorUser = userById.get(event.creatorUserId);
 
+  // 予定の行にある作成者・編集者の本物の ID は外さない
+  const { creatorUserId, editorUserIds, ...publicEvent } = stripRowMeta_(event);
   return {
-    event: stripRowMeta_(event),
+    me: pid(userId),
+    event: publicEvent,
     options: options.map(stripRowMeta_),
     isCreator: event.creatorUserId === userId,
     isEditor: isEditorOrCreator_(event, userId),
@@ -90,7 +95,7 @@ function getSummary_(payload) {
     myAnswers,
     editors,
     creator: {
-      userId: event.creatorUserId,
+      userId: pid(event.creatorUserId),
       displayName: (creatorUser && creatorUser.displayName) || '(名前未取得)',
       pictureUrl: (creatorUser && creatorUser.pictureUrl) || '',
     },

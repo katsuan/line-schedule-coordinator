@@ -156,7 +156,9 @@ function claimEditor_(payload) {
 // claimEditor_ は「自分を編集者にする」（招待リンク経由の自己登録）。
 // こちらは「作成者が特定のユーザーを編集者として承認する」（編集権限の依頼フロー）用。
 function approveEditRequest_(payload) {
-  const { eventId, userId, targetUserId, targetDisplayName, targetPictureUrl } = payload;
+  const { eventId, userId } = payload;
+  // 依頼のリンクに入っているのは、本物の ID ではなく、その予定の記号（11_auth.js）
+  const targetUserId = userIdFromPublicId_(eventId, payload.targetUserId);
   if (!eventId || !userId || !targetUserId) {
     throw new Error('eventId / userId / targetUserId は必須です');
   }
@@ -167,8 +169,6 @@ function approveEditRequest_(payload) {
   if (event.creatorUserId !== userId) {
     throw new Error('編集権限を許可できるのは作成者のみです');
   }
-
-  upsertUser_(targetUserId, targetDisplayName, targetPictureUrl);
 
   if (!isEditorOrCreator_(event, targetUserId)) {
     const ids = editorIdsOf_(event);

@@ -6,9 +6,17 @@
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
-    const { action, ...payload } = body;
+    const { action, accessToken, ...payload } = body;
     if (!action) {
       throw new Error('action は必須です');
+    }
+    // 本人は LINE に確かめて決める（画面から来た userId・名前は使わない。11_auth.js）
+    const me = resolveIdentity_(body);
+    payload.userId = me.userId;
+    payload.creatorUserId = me.userId;
+    if (me.verified) {
+      payload.displayName = me.displayName;
+      payload.pictureUrl = me.pictureUrl;
     }
     const result = routeAction_(action, payload);
     return jsonResponse_({ ok: true, data: result });

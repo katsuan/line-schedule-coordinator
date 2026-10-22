@@ -79,7 +79,7 @@ const DetailHeader = (() => {
     const requestBtn = root.querySelector('#request-edit-btn');
     if (requestBtn) {
       AppUtil.wireAsyncButton(requestBtn, () => AppShare.requestEditAccess(ctx.eventId, data.event.title, {
-        userId: ctx.identity.userId,
+        userId: data.me, // 本物の LINE の ID ではなく、この予定だけの記号（リンクでトークに流れるため）
         displayName: ctx.identity.displayName,
         pictureUrl: ctx.identity.pictureUrl,
       }, data.creator), {

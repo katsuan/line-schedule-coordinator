@@ -172,7 +172,8 @@ const DetailView = (() => {
 
   function renderSummary(root, ctx, data, refresh) {
     const canEdit = data.isCreator || data.isEditor;
-    const rows = summaryRowsHtml(data.event, data.summary, canEdit, ctx.identity.userId, data.myAnswers);
+    // 回答者・コメントの ID は、この予定だけの記号。自分の記号は data.me
+    const rows = summaryRowsHtml(data.event, data.summary, canEdit, data.me, data.myAnswers);
 
     root.innerHTML = `
       ${DetailHeader.headerHtml(data.event, data, canEdit, ctx)}
