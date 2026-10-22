@@ -8,13 +8,13 @@ const OptionComments = (() => {
   function commentEntryHtml(comment, myUserId) {
     const isMine = comment.userId === myUserId;
     return `
-      <div class="option-comment" data-comment-id="${comment.commentId}">
+      <div class="option-comment" data-comment-id="${AppUtil.escapeHtml(comment.commentId)}">
         ${AppUtil.avatarHtml(comment.displayName, comment.pictureUrl, comment.answer)}
         <div class="option-comment-body">
           <span class="option-comment-author">${AppUtil.escapeHtml(comment.displayName)}${isMine ? '（自分）' : ''}</span>
           <span class="option-comment-text">${AppUtil.escapeHtml(comment.text)}</span>
         </div>
-        ${isMine ? `<button type="button" class="comment-delete-btn" data-comment-id="${comment.commentId}" aria-label="コメントを消す">×</button>` : ''}
+        ${isMine ? `<button type="button" class="comment-delete-btn" data-comment-id="${AppUtil.escapeHtml(comment.commentId)}" aria-label="コメントを消す">×</button>` : ''}
       </div>`;
   }
 
@@ -34,12 +34,12 @@ const OptionComments = (() => {
   }
 
   function commentAddToggleHtml(optionId) {
-    return `<button type="button" class="comment-add-toggle" data-option-id="${optionId}">💬 コメントを追加</button>`;
+    return `<button type="button" class="comment-add-toggle" data-option-id="${AppUtil.escapeHtml(optionId)}">💬 コメントを追加</button>`;
   }
 
   function commentAddFormHtml(optionId) {
     return `
-      <div class="comment-add-form" data-option-id="${optionId}" hidden>
+      <div class="comment-add-form" data-option-id="${AppUtil.escapeHtml(optionId)}" hidden>
         <input type="text" class="ls-input comment-input" placeholder="例: 友達が1名参加します" maxlength="200">
         <button type="button" class="ls-button comment-save-btn">保存</button>
       </div>`;

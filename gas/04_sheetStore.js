@@ -80,7 +80,7 @@ function sheetRowsAsObjects_(sheetName) {
 function appendRowObject_(sheetName, obj) {
   const sheet = getOrCreateSheet_(sheetName);
   const headers = SCHEMA[sheetName];
-  const row = headers.map((h) => (obj[h] !== undefined ? obj[h] : ''));
+  const row = headers.map((h) => safeCell(obj[h] !== undefined ? obj[h] : ''));
   sheet.appendRow(row);
   delete _rowsCache_[sheetName];
 }
@@ -95,7 +95,7 @@ function deleteRows_(sheetName, rowIndices) {
 function updateRowObject_(sheetName, rowIndex, obj) {
   const sheet = getOrCreateSheet_(sheetName);
   const headers = SCHEMA[sheetName];
-  const row = headers.map((h) => (obj[h] !== undefined ? obj[h] : ''));
+  const row = headers.map((h) => safeCell(obj[h] !== undefined ? obj[h] : ''));
   sheet.getRange(rowIndex, 1, 1, headers.length).setValues([row]);
   delete _rowsCache_[sheetName];
 }

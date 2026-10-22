@@ -11,9 +11,10 @@ const DetailView = (() => {
           userId: ctx.identity.userId,
           displayName: ctx.identity.displayName,
           pictureUrl: ctx.identity.pictureUrl,
+          inviteKey: ctx.inviteKey,
         });
       } catch (err) {
-        console.error('編集者登録に失敗しました', err);
+        AppUtil.notifyError('編集者になれませんでした', err);
       }
     }
 

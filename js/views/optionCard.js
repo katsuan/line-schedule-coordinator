@@ -18,7 +18,7 @@ const OptionCard = (() => {
 
   function answerButtonsHtml(optionId, myAnswer, counts) {
     return `
-      <div class="answer-buttons" data-option-id="${optionId}">
+      <div class="answer-buttons" data-option-id="${AppUtil.escapeHtml(optionId)}">
         ${ANSWERS.map((a) => `
           <span class="choice-count-wrap">
             <button type="button" class="choice-btn ${ANSWER_CLASS[a]} ${myAnswer === a ? 'selected' : ''}" data-value="${a}">${a}</button>
@@ -57,7 +57,7 @@ const OptionCard = (() => {
 
   function metaHtml(opt, canEdit, comments, myUserId) {
     return `
-      <div class="option-meta" data-option-id="${opt.optionId}">
+      <div class="option-meta" data-option-id="${AppUtil.escapeHtml(opt.optionId)}">
         <div class="option-meta-view">
           <div class="option-meta-title-row">
             <div class="option-meta-title">${AppUtil.titleIconHtml(opt.title || '(タイトルなし)')} ${AppUtil.relativeDayPillHtml(opt.startAt)}</div>

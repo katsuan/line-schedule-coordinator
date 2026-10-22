@@ -37,9 +37,11 @@ function sha256Hex_(text) {
 function resolveIdentity_(body) {
   const token = String((body && body.accessToken) || '').trim();
   if (!token) {
-    const claimed = String((body && body.userId) || '');
-    if (claimed.indexOf(AUTH.DEBUG_PREFIX) === 0) {
-      return { userId: claimed, displayName: body.displayName || '', pictureUrl: body.pictureUrl || '', verified: false };
+    // ローカルで試すときの仮の ID は、Script Properties の ALLOW_DEBUG_USERS が 1 のときだけ通す
+    const claimed = String((body && body.userId) || ''); // qcheck-ok: G4 仮の ID（debug-user-）だけ。ALLOW_DEBUG_USERS が 1 のときのみ
+    if (claimed.indexOf(AUTH.DEBUG_PREFIX) === 0 && /^[A-Za-z0-9_-]{1,40}$/.test(claimed) &&
+        PROPS.getProperty('ALLOW_DEBUG_USERS') === '1') {
+      return { userId: claimed, displayName: String(body.displayName || '').slice(0, LIMITS.NAME), pictureUrl: '', verified: false };
     }
     throw new Error('LINE でログインしなおしてください（本人確認ができませんでした）');
   }
@@ -96,6 +98,12 @@ function publicIdOf_(eventId, userId) {
   if (!userId) return '';
   const mac = Utilities.computeHmacSha256Signature(String(eventId) + ':' + String(userId), idSalt_());
   return 'p_' + Utilities.base64EncodeWebSafe(mac).replace(/=+$/, '').slice(0, 16);
+}
+
+/** 編集者の招待のリンクに入れる合言葉（予定ごと。作成者だけが作れる） */
+function editorInviteKey_(eventId) {
+  const mac = Utilities.computeHmacSha256Signature('editor-invite:' + String(eventId), idSalt_());
+  return Utilities.base64EncodeWebSafe(mac).replace(/=+$/, '').slice(0, 22);
 }
 
 /** 記号から本物の userId を探す（その予定の記号として作られたものだけ） */
