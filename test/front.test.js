@@ -63,3 +63,18 @@ test("URL の中身：形と長さが合わないものは使わない", () => {
     "&requesterName=" + encodeURIComponent("x".repeat(61)));
   assert.deepStrictEqual([bad.view, bad.eventId, bad.inviteKey, bad.requesterId, bad.requesterPic, bad.requesterName], ["", "", "", "", "", ""]);
 });
+
+test("カレンダー：週のはじまり（日曜が既定、月曜にも）でマスと見出しがずれる", () => {
+  const store = new Map();
+  const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "", href: "" }, localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) } } });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/util.js"), "utf8") + "\n;globalThis.AppUtil = AppUtil;", context);
+  const AppUtil = context.AppUtil;
+  assert.strictEqual(AppUtil.getWeekStart(), 0);
+  // 2026年10月1日は木曜
+  assert.strictEqual(AppUtil.monthCells(2026, 9, 0).indexOf(1), 4);
+  assert.strictEqual(AppUtil.monthCells(2026, 9, 1).indexOf(1), 3);
+  assert.strictEqual(AppUtil.monthCells(2026, 9, 1).length % 7, 0);
+  assert.strictEqual(AppUtil.weekHeader(1).map((w) => w.label).join(""), "月火水木金土日");
+  AppUtil.setWeekStart(1);
+  assert.strictEqual(AppUtil.getWeekStart(), 1);
+});
