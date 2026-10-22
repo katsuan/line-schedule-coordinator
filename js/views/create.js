@@ -5,7 +5,7 @@ const CreateView = (() => {
         <div class="option-card-head">
           <span class="option-card-icon">🗓️</span>
           ${OptionCard.titleFieldHtml('option', null, 'イベント名（例: BBQ）')}
-          <button type="button" class="ls-icon-button btn-remove-option" aria-label="このイベントを削除">×</button>
+          <button type="button" class="ls-icon-button btn-remove-option" aria-label="このイベントを消す">×</button>
         </div>
         ${OptionCard.rangeLocationFieldsHtml('option')}
       </div>`;
@@ -51,8 +51,18 @@ const CreateView = (() => {
     optionList.addEventListener('click', (e) => {
       const removeBtn = e.target.closest('.btn-remove-option');
       if (removeBtn && optionList.querySelectorAll('.option-card').length > 1) {
-        removeBtn.closest('.option-card').remove();
+        // 確かめずにすぐ消し、トーストの「元に戻す」で同じ場所に戻す（入れた中身もそのまま）
+        const card = removeBtn.closest('.option-card');
+        const next = card.nextElementSibling;
+        card.remove();
         updateRemoveButtons();
+        AppUtil.notify('イベントを消しました', {
+          actionLabel: '元に戻す',
+          onAction: () => {
+            optionList.insertBefore(card, next && next.parentNode === optionList ? next : null);
+            updateRemoveButtons();
+          },
+        });
       }
     });
 
@@ -89,7 +99,7 @@ const CreateView = (() => {
           creatorPictureUrl: ctx.identity.pictureUrl,
         });
         AppRouter.navigate({ event: eventId });
-      }, '作成に失敗しました');
+      }, '作れませんでした');
     });
   }
 

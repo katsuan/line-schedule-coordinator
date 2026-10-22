@@ -3,6 +3,7 @@
  */
 const OptionComments = (() => {
   const COMMENT_VISIBLE_LIMIT = 2;
+  const UNDO_MS = 6000; // トーストが出ている長さ（Q キットの toast と同じ）
 
   function commentEntryHtml(comment, myUserId) {
     const isMine = comment.userId === myUserId;
@@ -13,7 +14,7 @@ const OptionComments = (() => {
           <span class="option-comment-author">${AppUtil.escapeHtml(comment.displayName)}${isMine ? '（自分）' : ''}</span>
           <span class="option-comment-text">${AppUtil.escapeHtml(comment.text)}</span>
         </div>
-        ${isMine ? `<button type="button" class="comment-delete-btn" data-comment-id="${comment.commentId}" aria-label="コメントを削除">×</button>` : ''}
+        ${isMine ? `<button type="button" class="comment-delete-btn" data-comment-id="${comment.commentId}" aria-label="コメントを消す">×</button>` : ''}
       </div>`;
   }
 
@@ -76,21 +77,44 @@ const OptionComments = (() => {
             input.disabled = false;
             throw err;
           }
-        }, 'コメントの保存に失敗しました');
+        }, 'コメントを保存できませんでした');
       });
     });
 
+    // 自分のコメントを消す：確かめずにすぐ見えなくし、トーストの「元に戻す」を待ってから消す（戻したら何もしない）
     root.querySelectorAll('.comment-delete-btn').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        if (!(await AppUtil.ask({ title: 'コメントを削除しますか？', ok: '削除', danger: true }))) return;
-        await AppUtil.saveWithButton(btn, async () => {
-          await AppApi.deleteComment({
-            eventId: ctx.eventId,
-            userId: ctx.identity.userId,
-            commentId: btn.dataset.commentId,
-          });
-          await refresh();
-        }, 'コメントの削除に失敗しました');
+      btn.addEventListener('click', () => {
+        const entry = btn.closest('.option-comment');
+        if (!entry || entry.hidden) return;
+        entry.hidden = true;
+        let settled = false;
+        const commit = async () => {
+          window.removeEventListener('pagehide', commit);
+          if (settled) return;
+          settled = true;
+          try {
+            await AppApi.deleteComment({
+              eventId: ctx.eventId,
+              userId: ctx.identity.userId,
+              commentId: btn.dataset.commentId,
+            });
+            await refresh();
+          } catch (err) {
+            entry.hidden = false;
+            AppUtil.notifyError('コメントを消せませんでした', err);
+          }
+        };
+        window.addEventListener('pagehide', commit);
+        AppUtil.notify('コメントを消しました', {
+          actionLabel: '元に戻す',
+          onAction: () => {
+            if (settled) return;
+            settled = true;
+            window.removeEventListener('pagehide', commit);
+            entry.hidden = false;
+          },
+        });
+        setTimeout(commit, UNDO_MS);
       });
     });
   }

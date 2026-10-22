@@ -128,12 +128,14 @@ const AppUtil = (() => {
     '○＝参加できる／△＝未定／×＝参加できない、という意味です。',
   ];
 
-  function loadingHtml(message) {
+  // 読みこみ中：中身（見出し・カード）と同じくらいの大きさの箱（Q キットの ls-skeleton）。中身が出ても位置がずれにくい
+  function loadingHtml() {
     const tip = TIPS[Math.floor(Math.random() * TIPS.length)];
     return `
-      <div class="loading">
-        <span class="spinner"></span>
-        <span>${escapeHtml(message || '読み込み中...')}</span>
+      <div class="loading" role="status" aria-label="読みこみ中">
+        <span class="ls-skeleton loading-head"></span>
+        <span class="ls-skeleton loading-card"></span>
+        <span class="ls-skeleton loading-card"></span>
         <p class="loading-tip">💡 ${escapeHtml(tip)}</p>
       </div>`;
   }
@@ -164,17 +166,18 @@ const AppUtil = (() => {
     };
   }
 
-  // 下に数秒出る知らせ（Q キットのトースト）。Q キットが読めなかったときは alert
-  function notify(message) {
+  // 下に数秒出る知らせ（Q キットのトースト）。options に { actionLabel: '元に戻す', onAction } を渡すとボタンが付く。
+  // Q キットが読めなかったときは alert（ボタンは付けられない）
+  function notify(message, options) {
     if (window.LineShareUI && typeof LineShareUI.toast === 'function') {
-      LineShareUI.toast(message);
+      LineShareUI.toast(message, options);
     } else {
       alert(message);
     }
   }
 
   // 確かめる窓（Q キットの LineShareUI.ask。下から出るシート）。OK なら true。Q キットが読めなかったときは confirm
-  // 知らせるだけのとき（alert の代わり）は ask({ title, ok: 'OK', cancel: null })
+  // 知らせるだけのとき（alert の代わり）は ask({ title, ok: '閉じる', cancel: null })
   function ask(options) {
     if (window.LineShareUI && typeof LineShareUI.ask === 'function') return LineShareUI.ask(options);
     const text = [options.title, options.text].filter(Boolean).join('\n');
@@ -185,15 +188,26 @@ const AppUtil = (() => {
     return Promise.resolve(confirm(text));
   }
 
-  function notifyError(errorPrefix, err) {
-    notify((errorPrefix || '処理に失敗しました') + ': ' + err.message);
+  // 失敗したときの「次にすること」。GAS の返すエラーの中身は画面に出さず、種類だけ見て言いかえる（くわしくはコンソール）
+  function friendlyReason(err) {
+    const message = String((err && err.message) || '');
+    if (/ログインしなおして/.test(message)) return 'LINE で開きなおしてね。';
+    if (/のみです|作成者|投稿者/.test(message)) return 'この操作は、予定を作った人（編集をまかされた人）だけができます。';
+    if (/見つかりません/.test(message)) return '予定が見つかりませんでした。消されたのかもしれません。';
+    return '電波のよいところで、もう一度ためしてね。';
   }
 
-  function wireAsyncButton(btn, action, { confirmMessage, errorPrefix } = {}) {
+  function notifyError(what, err) {
+    console.warn(what, err);
+    notify(`${what || 'うまくいきませんでした'}。${friendlyReason(err)}`);
+  }
+
+  // confirm：元に戻せない操作だけ、押す前に確かめる（{ title, text, ok: '消す', danger: true }。ok にはすることを書く）
+  function wireAsyncButton(btn, action, { confirm: confirmOptions, errorPrefix } = {}) {
     if (!btn) return;
     btn.addEventListener('click', async (e) => {
       const target = e.currentTarget;
-      if (confirmMessage && !(await ask({ title: confirmMessage, ok: 'OK' }))) return;
+      if (confirmOptions && !(await ask(confirmOptions))) return;
       const stopLoading = beginButtonLoading(target || e.target);
       try {
         await action(e);
@@ -220,6 +234,6 @@ const AppUtil = (() => {
   return {
     escapeHtml, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, loadingHtml, titleIconHtml,
     extractIcon, shortTime, validateEventFields, wireAsyncButton, saveWithButton, relativeDayPillHtml,
-    beginButtonLoading, avatarHtml, notify, notifyError, ask,
+    beginButtonLoading, avatarHtml, notify, notifyError, friendlyReason, ask,
   };
 })();

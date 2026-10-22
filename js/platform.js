@@ -53,6 +53,11 @@ const AppPlatform = (() => {
 
       if (!liff.isLoggedIn()) {
         if (typeof liff.login === 'function') {
+          // LINE の外（ブラウザ）では、黙ってログイン画面へ飛ばさず、LINE アプリで開くかログインするかを選んでもらう
+          if (typeof liff.isInClient === 'function' && !liff.isInClient()) {
+            showOutsideChoice(liffId);
+            return new Promise(() => {}); // どちらかを選ぶとページを移るので解決しない
+          }
           // ログイン後は今のページ（?event= 付き）に戻す。指定しないと LIFF の入口に戻り、開いていた予定から外れる
           liff.login({ redirectUri: loginReturnUrl() });
           return new Promise(() => {}); // ログインリダイレクトへ遷移するため解決しない
@@ -74,6 +79,25 @@ const AppPlatform = (() => {
     })();
 
     return identityPromise;
+  }
+
+  // LINE の外で開いたとき：だれの回答かを LINE で分けるので、LINE アプリで開くかログインするかを選ぶ（ひっくり・おくるんと同じ考え方）。
+  // LINE アプリで開くときは、開いていた予定（?event=）もそのまま持っていく
+  function showOutsideChoice(liffId) {
+    const sheet = document.createElement('div');
+    sheet.className = 'ls-sheet outside-choice';
+    sheet.innerHTML = `
+      <div class="ls-sheet-card outside-choice-card" role="dialog" aria-modal="true" aria-labelledby="outsideChoiceTitle">
+        <img src="icon.svg" alt="" width="56" height="56">
+        <p id="outsideChoiceTitle" class="ls-sheet-title">LINE の外で開いています</p>
+        <p class="ls-hint">くるかなは、LINE の名前で ○△× を答えます。LINE アプリで開くか、ログインすると使えます。</p>
+        <a class="ls-outside-button is-app" href="https://liff.line.me/${liffId}${window.location.search}">💬 LINE アプリで開く</a>
+        <button class="ls-outside-button" type="button">🔑 ログインして使う</button>
+      </div>`;
+    sheet.querySelector('button').addEventListener('click', () => {
+      liff.login({ redirectUri: loginReturnUrl() });
+    });
+    document.body.appendChild(sheet);
   }
 
   // ログインの受け渡しで付く一時的なパラメータは外す（おくるんの shared/liff.js と同じ）

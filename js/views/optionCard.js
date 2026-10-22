@@ -76,7 +76,7 @@ const OptionCard = (() => {
           ${fieldsHtml('edit', opt)}
           <div class="option-edit-actions">
             <button type="button" class="ls-button is-primary save-option-btn">保存</button>
-            <button type="button" class="ls-button cancel-option-btn">キャンセル</button>
+            <button type="button" class="ls-button cancel-option-btn">やめる</button>
           </div>
         </div>` : ''}
       </div>`;
@@ -121,12 +121,12 @@ const OptionCard = (() => {
                 optionEndAt: fields.endAt, optionLocation: fields.location, names: respondentNames,
               });
             } catch (notifyErr) {
-              AppUtil.notifyError('通知の送信に失敗しました', notifyErr);
+              AppUtil.notifyError('お知らせを送れませんでした', notifyErr);
             }
           }
 
           await refresh();
-        }, '更新に失敗しました');
+        }, '変えられませんでした');
       });
     });
   }
@@ -153,7 +153,7 @@ const OptionCard = (() => {
           });
           await refresh();
         } catch (err) {
-          AppUtil.notifyError('回答の保存に失敗しました', err);
+          AppUtil.notifyError('回答を保存できませんでした', err);
           stopLoading();
           wrap.querySelectorAll('.choice-btn').forEach((b) => { b.disabled = false; });
         }

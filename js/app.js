@@ -20,6 +20,6 @@
     }
   } catch (err) {
     console.error(err);
-    GuideView.render(root, {}, { errorMessage: err.message });
+    GuideView.render(root, {}, { error: err });
   }
 })();

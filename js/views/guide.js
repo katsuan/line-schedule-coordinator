@@ -32,8 +32,8 @@ const GuideView = (() => {
   }
 
   function render(root, ctx, opts) {
-    const notice = opts && opts.errorMessage
-      ? `<div class="guide-notice">⚠️ ページを表示できませんでした（${AppUtil.escapeHtml(opts.errorMessage)}）。下のボタンから一覧をご確認ください。</div>`
+    const notice = opts && opts.error
+      ? `<div class="guide-notice">⚠️ ページを開けませんでした。${AppUtil.escapeHtml(AppUtil.friendlyReason(opts.error))}下のボタンから一覧も見られます。</div>`
       : '';
 
     root.innerHTML = `
@@ -81,7 +81,7 @@ const GuideView = (() => {
         <div class="ls-panel guide-step-card">
           <div class="guide-step-list">
             ${stepItem(1, '一覧の「＋ 新規作成」', 'タイトルと、候補日時を1つ以上入力します（複数候補もOK）。')}
-            ${stepItem(2, '「LINEで共有する」で参加者に送る', '送る前に内容のプレビューを確認できます。')}
+            ${stepItem(2, '「💬 予定をLINEで送る」で参加者に送る', '送る前に内容のプレビューを確認できます。')}
             ${stepItem(3, '予定ページで回答状況をいつでも確認', '候補ごとの人数・回答者・コメントがまとまって見られます。')}
           </div>
         </div>
@@ -94,7 +94,7 @@ const GuideView = (() => {
           <span class="status-badge status-creator">作成者・編集者</span>
           <ul class="guide-role-can">
             <li>候補や予定内容を編集する</li>
-            <li>候補ごとに未回答・要更新の人へ「LINE送信」で個別に連絡する</li>
+            <li>候補ごとに未回答・要更新の人へ「💬 LINEで送る」で個別に連絡する</li>
             <li>他の人を編集者として招待し、候補づくりを任せる</li>
             <li>このアプリ自体を友だちに紹介する</li>
           </ul>
@@ -102,7 +102,7 @@ const GuideView = (() => {
         <div class="ls-panel guide-role-card">
           <span class="status-badge status-pending">作成者のみ</span>
           <ul class="guide-role-can">
-            <li>予定をまるごと削除する</li>
+            <li>予定をまるごと消す</li>
           </ul>
         </div>
       </section>
@@ -111,8 +111,8 @@ const GuideView = (() => {
         <p class="guide-label">💡 知っておくと便利</p>
         <h2 class="guide-section-title">よくある操作</h2>
         ${faqItem('common', '共通', '複数の予定をまとめて見たい', '一覧の「🗓️ カレンダー」から月表示で確認できます。日付をタップすると、その日の候補にその場で回答できます。')}
-        ${faqItem('organizer', '幹事', '連絡するとき、名前を出したくない', '「LINE送信」のプレビュー画面で「名前を隠す（人数のみ表示）」にチェックすると、○10人／△5人のように人数だけが伝わる形式に変わります。')}
-        ${faqItem('organizer', '幹事', 'コメントの届き方を選びたい', '送信プレビューの「コメントをチャット形式で送信する」がONなら、予定カードとは別の普通のメッセージとして届きます。OFFにすると、予定カードの中に埋め込んで1通にまとめられます。')}
+        ${faqItem('organizer', '幹事', '連絡するとき、名前を出したくない', '「💬 LINEで送る」の見本の画面で「名前を隠す（人数のみ表示）」にチェックすると、○10人／△5人のように人数だけが伝わる形式に変わります。')}
+        ${faqItem('organizer', '幹事', 'コメントの届き方を選びたい', '送る内容の見本の「コメントをチャット形式で送信する」がONなら、予定カードとは別の普通のメッセージとして届きます。OFFにすると、予定カードの中に埋め込んで1通にまとめられます。')}
         ${faqItem('organizer', '幹事', '予定の内容が変わったとき', '日時やメモを編集すると、すでに回答している人がいれば「変更を知らせますか？」と確認が出ます。「はい」を選ぶと自動で通知メッセージが用意されます。')}
         ${faqItem('member', '参加者', '自分も候補を編集したい', '予定ページの「🔑 編集を依頼」から作成者に依頼を送れます。作成者が承認すると、編集者として候補の追加・変更ができるようになります。')}
       </section>
