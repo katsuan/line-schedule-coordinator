@@ -17,6 +17,8 @@ function doPost(e) {
     if (me.verified) {
       payload.displayName = me.displayName;
       payload.pictureUrl = me.pictureUrl;
+      payload.creatorDisplayName = me.displayName;
+      payload.creatorPictureUrl = me.pictureUrl;
     }
     const result = routeAction_(action, payload);
     return jsonResponse_({ ok: true, data: result });
