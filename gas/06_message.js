@@ -1,6 +1,20 @@
 /**
- * イベント共有用の Flex Message（バブル1枚）を組み立てる。
+ * LINE に送る Flex Message（共有・連絡・変更・編集者の招待）を組み立てる。
  */
+
+/** 予定の画面を開く URL（LIFF）。extra は後ろに足す query（例 '&claimEditor=1'） */
+function eventPageUrl_(eventId, extra) {
+  const liffUrl = getLiffUrl_();
+  if (!liffUrl) return '';
+  return liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId) + (extra || '');
+}
+
+/** 名前の並びを短く（3人まで＋「他○名」） */
+function shortNameList_(names, separator) {
+  return names.length > 3
+    ? names.slice(0, 3).join(separator) + `他${names.length - 3}名`
+    : names.join(separator);
+}
 
 function buildEventShareFlex_(eventId) {
   const event = findEventById_(eventId);
@@ -48,8 +62,7 @@ function buildEventShareFlex_(eventId) {
     };
   });
 
-  const liffUrl = getLiffUrl_();
-  const answerUrl = liffUrl ? (liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId)) : '';
+  const answerUrl = eventPageUrl_(eventId);
 
   const bubble = {
     type: 'bubble',
@@ -61,7 +74,9 @@ function buildEventShareFlex_(eventId) {
         _createSeparator_(),
         { type: 'box', layout: 'vertical', margin: 'md', contents: [_createFlexBody_(headerRows)] },
         _createSeparator_(),
-        { type: 'box', layout: 'vertical', margin: 'md', spacing: 'md', contents: optionCards },
+        optionCards.length
+          ? { type: 'box', layout: 'vertical', margin: 'md', spacing: 'md', contents: optionCards }
+          : { type: 'text', text: 'これからのイベントはありません', size: 'sm', color: COLOR.SUB_TEXT, margin: 'md', wrap: true },
       ],
     },
     footer: answerUrl ? _createFlexButtonFooter_('回答する', answerUrl) : undefined,
@@ -79,10 +94,12 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
   if (!event) {
     throw new Error('イベントが見つかりません: ' + eventId);
   }
-  groups = groups || {};
+  // 名前の並びは画面から届くので、文字だけ・数と長さを決める
+  const source = groups && typeof groups === 'object' ? groups : {};
+  groups = {};
+  [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].forEach((ans) => { groups[ans] = cleanNames_(source[ans]); });
 
-  const liffUrl = getLiffUrl_();
-  const answerUrl = liffUrl ? (liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId)) : '';
+  const answerUrl = eventPageUrl_(eventId);
   const targetTitle = optionTitle || event.title;
 
   const rows = [
@@ -93,7 +110,7 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
   [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].forEach((ans) => {
     const names = groups[ans];
     if (names && names.length) {
-      rows.push(_createAnswerGroupRow_(ans, names.length, names.join('、')));
+      rows.push(_createAnswerGroupRow_(ans, names.length, joinNamesForCard_(names, '、')));
     }
   });
   if (optionId) {
@@ -103,10 +120,8 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
   }
   rows.push(_createSnapshotNoteRow_());
 
-  const allNames = [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].reduce((acc, ans) => acc.concat(groups[ans] || []), []);
-  const nameLabel = allNames.length > 3
-    ? allNames.slice(0, 3).join('・') + `他${allNames.length - 3}名`
-    : allNames.join('・');
+  const allNames = [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].reduce((acc, ans) => acc.concat(groups[ans]), []);
+  const nameLabel = shortNameList_(allNames, '・');
 
   const bubble = {
     type: 'bubble',
@@ -128,7 +143,7 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
   };
 
   return {
-    altText: targetTitle + 'への連絡（' + nameLabel + '）',
+    altText: (targetTitle + 'への連絡（' + nameLabel + '）').slice(0, 400),
     contents: bubble,
   };
 }
@@ -139,11 +154,8 @@ function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optio
     throw new Error('イベントが見つかりません: ' + eventId);
   }
 
-  const nameList = names.length > 3
-    ? names.slice(0, 3).join('、') + `他${names.length - 3}名`
-    : names.join('、');
-  const liffUrl = getLiffUrl_();
-  const answerUrl = liffUrl ? (liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId)) : '';
+  const nameList = shortNameList_(cleanNames_(names), '、');
+  const answerUrl = eventPageUrl_(eventId);
 
   const rows = [
     _createInfoRow_('イベント名', optionTitle || event.title),
@@ -168,7 +180,7 @@ function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optio
   };
 
   return {
-    altText: '【変更あり】' + (optionTitle || event.title),
+    altText: ('【変更あり】' + (optionTitle || event.title)).slice(0, 400),
     contents: bubble,
   };
 }
@@ -181,11 +193,7 @@ function buildEditorInviteFlex_(eventId, userId) {
   if (event.creatorUserId !== userId) {
     throw new Error('編集者を招待できるのは作成者のみです');
   }
-  const liffUrl = getLiffUrl_();
-  const inviteUrl = liffUrl
-    ? liffUrl + (liffUrl.indexOf('?') >= 0 ? '&' : '?') + 'event=' + encodeURIComponent(eventId) + '&claimEditor=1' +
-      '&key=' + encodeURIComponent(editorInviteKey_(eventId))
-    : '';
+  const inviteUrl = eventPageUrl_(eventId, '&claimEditor=1&key=' + encodeURIComponent(editorInviteKey_(eventId)));
 
   const bubble = {
     type: 'bubble',
@@ -198,10 +206,4 @@ function buildEditorInviteFlex_(eventId, userId) {
     styles: inviteUrl ? _footerStyles_() : undefined,
   };
   return { altText: event.title + ' の編集をお願いします', contents: bubble };
-}
-
-function formatDateTime_(value) {
-  const date = value instanceof Date ? value : new Date(value);
-  if (isNaN(date.getTime())) return String(value);
-  return Utilities.formatDate(date, 'Asia/Tokyo', 'M/d(E) HH:mm');
 }

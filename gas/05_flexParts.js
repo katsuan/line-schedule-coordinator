@@ -94,14 +94,19 @@ function _weekdayColor_(date) {
   return COLOR.TEXT;
 }
 
+const WEEKDAY_NAMES = ['日', '月', '火', '水', '木', '金', '土'];
+
 function _createEventTimeRow_(label, startAt, endAt) {
   const start = new Date(startAt);
-  const weekdayNames = ['日', '月', '火', '水', '木', '金', '土'];
   const datePart = Utilities.formatDate(start, 'Asia/Tokyo', 'M/d');
-  const weekday = weekdayNames[start.getDay()];
+  const weekday = WEEKDAY_NAMES[start.getDay()];
   let timePart = Utilities.formatDate(start, 'Asia/Tokyo', 'HH:mm');
   if (endAt) {
-    timePart += ' 〜 ' + Utilities.formatDate(new Date(endAt), 'Asia/Tokyo', 'HH:mm');
+    const end = new Date(endAt);
+    // 日をまたぐときは、終わりの日付も出す（「22:00 〜 02:00」だと、どの日の 2 時かわからない）
+    const sameDay = Utilities.formatDate(end, 'Asia/Tokyo', 'yyyyMMdd') === Utilities.formatDate(start, 'Asia/Tokyo', 'yyyyMMdd');
+    timePart += ' 〜 ' + (sameDay ? '' : Utilities.formatDate(end, 'Asia/Tokyo', 'M/d') + '(' + WEEKDAY_NAMES[end.getDay()] + ') ') +
+      Utilities.formatDate(end, 'Asia/Tokyo', 'HH:mm');
   }
   return {
     type: 'box',

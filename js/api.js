@@ -3,8 +3,20 @@ const AppApi = (() => {
   // 「GET は未対応です」等の一時的なエラーになることがあるため、1回だけ自動リトライする。
   const TRANSIENT_ERROR_PATTERNS = ['GET は未対応', 'サービスに接続できなくなりました', 'Failed to fetch'];
 
+  // 作る・足す操作は、届いたかわからないまま送りなおすと2つできてしまう。
+  // GAS に届いていないとわかるとき（GET として届いた）だけやりなおす
+  const NOT_REPEATABLE_ACTIONS = ['createEvent', 'addOptions', 'addComment'];
+  const NOT_DELIVERED_PATTERN = 'GET は未対応';
+
   function isTransientError_(message) {
     return TRANSIENT_ERROR_PATTERNS.some((p) => message && message.indexOf(p) >= 0);
+  }
+
+  function canRetry_(action, message) {
+    if (NOT_REPEATABLE_ACTIONS.indexOf(action) >= 0) {
+      return !!message && message.indexOf(NOT_DELIVERED_PATTERN) >= 0;
+    }
+    return isTransientError_(message);
   }
 
   async function callOnce_(gasUrl, action, payload) {
@@ -32,7 +44,7 @@ const AppApi = (() => {
     try {
       return await callOnce_(config.gasUrl, action, payload);
     } catch (err) {
-      if (!isTransientError_(err.message)) throw err;
+      if (!canRetry_(action, err.message)) throw err;
       console.warn('一時的なエラーのため再試行します', action, err.message);
       return await callOnce_(config.gasUrl, action, payload);
     }

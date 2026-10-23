@@ -14,6 +14,7 @@ const LIMITS = {
   NAME: 60,
   OPTIONS: 50,
   ANSWERS: 200,
+  CARD_NAMES: 30,
 };
 
 // 書きこむ操作（同時に来たら1つずつ順番に）
@@ -63,13 +64,34 @@ function cleanOptions_(options) {
 /** 書きこむ操作は、ほかの人の書きこみと重ならないように1つずつ（G7） */
 function withWriteLock_(action, fn) {
   if (WRITE_ACTIONS.indexOf(action) === -1) return fn();
+  return withScriptLock_(fn);
+}
+
+/** 鍵を持って fn を動かす。もう持っていれば（書きこむ操作の中から呼ばれたとき）そのまま */
+function withScriptLock_(fn) {
   const lock = LockService.getScriptLock();
+  if (lock.hasLock()) return fn();
   lock.waitLock(20000);
   try {
     return fn();
   } finally {
     lock.releaseLock();
   }
+}
+
+/** カードに入れる名前の並び（画面から届くので、文字だけ・数と長さを決める） */
+function cleanNames_(list) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((name) => typeof name === 'string' && name.trim())
+    .slice(0, LIMITS.ANSWERS)
+    .map((name) => name.trim().slice(0, LIMITS.NAME));
+}
+
+/** カードに並べる名前。多いときは CARD_NAMES 人までにして「ほか○名」 */
+function joinNamesForCard_(names, separator) {
+  if (names.length <= LIMITS.CARD_NAMES) return names.join(separator);
+  return names.slice(0, LIMITS.CARD_NAMES).join(separator) + separator + 'ほか' + (names.length - LIMITS.CARD_NAMES) + '名';
 }
 
 // 画面に出してよいエラー（自分で書いたやさしい言葉）。それ以外は中身を出さずログへ（G2）

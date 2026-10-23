@@ -131,38 +131,55 @@ const OptionCard = (() => {
     });
   }
 
+  /**
+   * ○△× を押したとき：すぐ印を付けて保存する。保存できなければ、押す前の印に戻して知らせる。
+   * save は保存の Promise を返す関数。保存できたら true
+   */
+  async function saveChoice(container, btn, save) {
+    const buttons = Array.from(container.querySelectorAll('.choice-btn'));
+    const before = buttons.find((b) => b.classList.contains('selected')) || null;
+    buttons.forEach((b) => {
+      b.classList.toggle('selected', b === btn);
+      b.disabled = true;
+    });
+    const stopLoading = AppUtil.beginButtonLoading(btn);
+    try {
+      await save();
+      return true;
+    } catch (err) {
+      buttons.forEach((b) => b.classList.toggle('selected', b === before));
+      AppUtil.notifyError('回答を保存できませんでした', err);
+      return false;
+    } finally {
+      stopLoading();
+      buttons.forEach((b) => { b.disabled = false; });
+    }
+  }
+
+  /** 1つの候補の答えを送る（画面の本人の名前・アイコンもいっしょに） */
+  function submitOne(ctx, eventId, optionId, answer) {
+    return AppApi.submitAnswer({
+      eventId,
+      userId: ctx.identity.userId,
+      displayName: ctx.identity.displayName,
+      pictureUrl: ctx.identity.pictureUrl,
+      answers: [{ optionId, answer }],
+    });
+  }
+
   function wireAnswerButtons(root, ctx, refresh) {
     root.querySelectorAll('.answer-buttons').forEach((wrap) => {
       wrap.addEventListener('click', async (e) => {
         const btn = e.target.closest('.choice-btn');
-        if (!btn) return;
-        const optionId = wrap.dataset.optionId;
-        const value = btn.dataset.value;
-        wrap.querySelectorAll('.choice-btn').forEach((b) => {
-          b.classList.toggle('selected', b === btn);
-          b.disabled = true;
-        });
-        const stopLoading = AppUtil.beginButtonLoading(btn);
-        try {
-          await AppApi.submitAnswer({
-            eventId: ctx.eventId,
-            userId: ctx.identity.userId,
-            displayName: ctx.identity.displayName,
-            pictureUrl: ctx.identity.pictureUrl,
-            answers: [{ optionId, answer: value }],
-          });
-          await refresh();
-        } catch (err) {
-          AppUtil.notifyError('回答を保存できませんでした', err);
-          stopLoading();
-          wrap.querySelectorAll('.choice-btn').forEach((b) => { b.disabled = false; });
-        }
+        if (!btn || btn.disabled) return;
+        const saved = await saveChoice(wrap, btn, () => submitOne(ctx, ctx.eventId, wrap.dataset.optionId, btn.dataset.value));
+        if (saved) await refresh();
       });
     });
   }
 
   return {
     metaHtml, titleFieldHtml, rangeLocationFieldsHtml, readFields,
-    choiceButtonsHtml, answerButtonsHtml, statusClass, wireEditForms, wireAnswerButtons,
+    choiceButtonsHtml, answerButtonsHtml, statusClass, wireEditForms, wireAnswerButtons, saveChoice, submitOne,
   };
 })();

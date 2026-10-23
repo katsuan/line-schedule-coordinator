@@ -199,8 +199,9 @@ test("エラーの中身は出さない（やさしい言葉だけ）", () => {
 
 test("書きこむ操作は1つずつ（LockService）", () => {
   const gas = makeGas();
-  const log = [];
-  gas.ctx.LockService.getScriptLock = () => ({ waitLock: () => log.push("wait"), releaseLock: () => log.push("release") });
+  create(gas); // 名前を覚えてから
+  summary(gas, "x", "tok-guest");
+  const { log } = trackLock(gas);
   const eventId = create(gas);
   assert.deepStrictEqual(log, ["wait", "release"]);
   summary(gas, eventId); // 読むだけの操作は待たない
@@ -227,4 +228,97 @@ test("返すカードを LINE が受けつける形。ボタンは画面を開�
     const actions = JSON.stringify(res.data.contents).match(/"action":\{[^}]*\}/g) || [];
     actions.forEach((a) => assert.match(a, /"type":"uri"/, call.action + " " + a));
   });
+});
+
+// ---- 2026-10-23 の見直しで足したもの ----
+
+// 本物に近い鍵：だれが持っているか（hasLock）を覚える
+function trackLock(gas) {
+  const lock = { held: false, log: [] };
+  gas.ctx.LockService.getScriptLock = () => ({
+    waitLock() { lock.held = true; lock.log.push("wait"); },
+    tryLock() { lock.held = true; lock.log.push("wait"); return true; },
+    releaseLock() { lock.held = false; lock.log.push("release"); },
+    hasLock: () => lock.held,
+  });
+  return lock;
+}
+
+test("はじめての人が読むだけの操作を同時にしても、USERS は鍵の中で1行だけ書く", () => {
+  const gas = makeGas();
+  const eventId = create(gas);
+  const lock = trackLock(gas);
+  const res = summary(gas, eventId, "tok-guest"); // はじめての人
+  assert.strictEqual(res.ok, true);
+  assert.deepStrictEqual(lock.log, ["wait", "release"]);
+  const guests = gas.rows("USERS").filter((r) => r[0] === "U_GUEST");
+  assert.strictEqual(guests.length, 1);
+  // 2回目（名前も同じ）は書かないので待たない
+  lock.log.length = 0;
+  gas.ctx.CacheService.getScriptCache().remove && gas.ctx.CacheService.getScriptCache().remove("x");
+  summary(gas, eventId, "tok-guest");
+  assert.deepStrictEqual(lock.log, []);
+});
+
+test("LINE に本人を確かめているあいだは、書きこみの鍵を持たない（ほかの人を待たせない）", () => {
+  let heldDuringFetch = null;
+  const gas = createGas({
+    dir: path.join(__dirname, "../gas"),
+    properties: { SPREADSHEET_ID: "SPREADSHEET_TEST", LIFF_URL: "https://liff.line.me/2009927582-abc" },
+    fetch: (url, opt) => { if (heldDuringFetch === null || heldDuringFetch === false) heldDuringFetch = lock.held; return lineFetch(url, opt); },
+  });
+  const lock = trackLock(gas);
+  create(gas);
+  assert.strictEqual(heldDuringFetch, false);
+  assert.strictEqual(lock.held, false);
+});
+
+test("イベントがみんな終わった予定を送っても、LINE が受けつけるカードになる", () => {
+  const gas = makeGas();
+  const eventId = create(gas, { options: [{ startAt: "2020-01-01T10:00", title: "むかし" }] });
+  const res = gas.doPost({ action: "buildShareFlex", accessToken: "tok-owner", eventId });
+  assert.strictEqual(res.ok, true, JSON.stringify(res));
+  const msg = { type: "flex", altText: res.data.altText, contents: res.data.contents };
+  assert.deepStrictEqual(gas.flexProblems([msg]), []); // 中身のない箱も出さない
+  assert.match(JSON.stringify(msg), /これからのイベントはありません/);
+});
+
+test("日をまたぐイベントは、終わりの日付もカードに出す", () => {
+  const gas = makeGas();
+  const eventId = create(gas);
+  const res = gas.doPost({ action: "buildReminderFlex", accessToken: "tok-owner", eventId, groups: {},
+    optionTitle: "夜", optionStartAt: "2026-11-01T22:00", optionEndAt: "2026-11-02T02:00" });
+  const text = JSON.stringify(res.data.contents);
+  assert.match(text, /11\/1 /);
+  assert.match(text, /〜 11\/2\(月\) 02:00/);
+  // 同じ日なら時刻だけ
+  const same = gas.doPost({ action: "buildReminderFlex", accessToken: "tok-owner", eventId, groups: {},
+    optionStartAt: "2026-11-01T10:00", optionEndAt: "2026-11-01T12:00" });
+  assert.match(JSON.stringify(same.data.contents), /10:00 〜 12:00/);
+});
+
+test("連絡・変更のカードに入れる名前は、数と長さを決めて入れる（変な中身でも落ちない）", () => {
+  const gas = makeGas();
+  const eventId = create(gas);
+  const many = Array.from({ length: 500 }, (_, i) => "な".repeat(200) + i);
+  const calls = [
+    { action: "buildReminderFlex", groups: { "○": many, "△": "x", "×": [5, null, {}] } },
+    { action: "buildReminderFlex", groups: "x" },
+    { action: "buildChangeNotificationFlex", names: many },
+    { action: "buildChangeNotificationFlex", names: "たろう" },
+    { action: "buildChangeNotificationFlex" },
+  ];
+  calls.forEach((call) => {
+    const res = gas.doPost(Object.assign({ accessToken: "tok-owner", eventId }, call));
+    assert.strictEqual(res.ok, true, JSON.stringify(call).slice(0, 80) + " " + JSON.stringify(res));
+    const msg = { type: "flex", altText: res.data.altText, contents: res.data.contents };
+    assert.deepStrictEqual(gas.flexProblems([msg]).filter((p) => p.level === "error"), [], call.action);
+    assert.ok(JSON.stringify(msg).length < 25000, call.action + " " + JSON.stringify(msg).length);
+    assert.ok(msg.altText.length <= 400);
+  });
+  // 人数は本当の数のまま、名前の並びだけ短く
+  const res = gas.doPost({ accessToken: "tok-owner", eventId, action: "buildReminderFlex", groups: { "○": Array.from({ length: 45 }, (_, i) => "人" + i) } });
+  const text = JSON.stringify(res.data.contents);
+  assert.match(text, /○ 45人/);
+  assert.match(text, /ほか15名/);
 });

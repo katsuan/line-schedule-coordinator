@@ -88,3 +88,54 @@ test("「許可する」のカードがあとで押されても、いまの状�
   assert.strictEqual(DetailHeader.approveState({ approveEditor: true, requesterId: "" }, data), "invalid");
   assert.strictEqual(DetailHeader.approveState({ approveEditor: false }, data), "");
 });
+
+test("○△× の保存に失敗したら、押す前の答えの印に戻す", async () => {
+  // ボタン3つだけのにせものの箱
+  function fakeChoices(selected) {
+    const buttons = ["○", "△", "×"].map((value) => {
+      const classes = new Set(value === selected ? ["choice-btn", "selected"] : ["choice-btn"]);
+      return { dataset: { value }, disabled: false, classList: { contains: (c) => classes.has(c), toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)) } };
+    });
+    return { buttons, querySelectorAll: () => buttons, selected: () => buttons.filter((b) => b.classList.contains("selected")).map((b) => b.dataset.value) };
+  }
+  const notices = [];
+  const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "" } },
+    AppUtil: { notifyError: (m) => notices.push(m), beginButtonLoading: () => () => {}, escapeHtml: String } });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/views/optionCard.js"), "utf8") + "\n;globalThis.OptionCard = OptionCard;", context);
+  const { OptionCard } = context;
+
+  const box = fakeChoices("○");
+  const ok = await OptionCard.saveChoice(box, box.buttons[2], () => Promise.reject(new Error("x")));
+  assert.strictEqual(ok, false);
+  assert.deepStrictEqual(box.selected(), ["○"]);
+  assert.ok(box.buttons.every((b) => !b.disabled));
+  assert.strictEqual(notices.length, 1);
+
+  const box2 = fakeChoices("");
+  assert.strictEqual(await OptionCard.saveChoice(box2, box2.buttons[1], () => Promise.resolve()), true);
+  assert.deepStrictEqual(box2.selected(), ["△"]);
+});
+
+test("通信が途中で切れたとき、作る・足す操作は自動でやりなおさない（2つできてしまうため）", async () => {
+  function run(action, firstError) {
+    const calls = [];
+    const context = vm.createContext({ URL, URLSearchParams, console: { warn() {} }, window: {},
+      AppConfig: { load: async () => ({ gasUrl: "https://script.google.com/macros/s/x/exec" }) },
+      AppPlatform: { getAccessToken: () => "tok" },
+      fetch: async (url, opt) => {
+        calls.push(JSON.parse(opt.body).action);
+        if (calls.length === 1) throw new TypeError(firstError);
+        return { json: async () => ({ ok: true, data: {} }) };
+      } });
+    vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/api.js"), "utf8") + "\n;globalThis.AppApi = AppApi;", context);
+    return context.AppApi[action]({}).then(() => calls.length, () => calls.length);
+  }
+  assert.strictEqual(await run("createEvent", "Failed to fetch"), 1);
+  assert.strictEqual(await run("addOptions", "Failed to fetch"), 1);
+  assert.strictEqual(await run("addComment", "Failed to fetch"), 1);
+  // 同じ答えを送りなおしても変わらない操作・読むだけの操作は、1回だけやりなおす
+  assert.strictEqual(await run("submitAnswer", "Failed to fetch"), 2);
+  assert.strictEqual(await run("getSummary", "Failed to fetch"), 2);
+  // GAS に届いていない（GET として届いた）ときは、作る操作もやりなおしてよい
+  assert.strictEqual(await run("createEvent", "GET は未対応です"), 2);
+});
