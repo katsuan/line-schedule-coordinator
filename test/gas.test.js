@@ -210,11 +210,21 @@ test("書きこむ操作は1つずつ（LockService）", () => {
   assert.deepStrictEqual(log.slice(2), ["wait", "release"]);
 });
 
-test("返すカードを LINE が受けつける形", () => {
+test("返すカードを LINE が受けつける形。ボタンは画面を開くだけ（あとで押されても困らない）", () => {
   const gas = makeGas();
   const eventId = create(gas, { title: XSS });
-  const share = gas.doPost({ action: "buildShareFlex", accessToken: "tok-owner", eventId });
-  assert.strictEqual(share.ok, true);
-  const msg = { type: "flex", altText: share.data.altText, contents: share.data.contents };
-  assert.deepStrictEqual(gas.flexProblems([msg]).filter((p) => p.level === "error"), []);
+  const calls = [
+    { action: "buildShareFlex" },
+    { action: "buildReminderFlex", groups: { "○": ["たろう"], "△": [], "×": [] }, optionTitle: "1日目", optionStartAt: "2026-11-01T10:00" },
+    { action: "buildChangeNotificationFlex", optionTitle: "1日目", optionStartAt: "2026-11-01T10:00", names: ["たろう"] },
+    { action: "buildEditorInviteFlex" },
+  ];
+  calls.forEach((call) => {
+    const res = gas.doPost(Object.assign({ accessToken: "tok-owner", eventId }, call));
+    assert.strictEqual(res.ok, true, call.action + " " + JSON.stringify(res));
+    const msg = { type: "flex", altText: res.data.altText, contents: res.data.contents };
+    assert.deepStrictEqual(gas.flexProblems([msg]).filter((p) => p.level === "error"), [], call.action);
+    const actions = JSON.stringify(res.data.contents).match(/"action":\{[^}]*\}/g) || [];
+    actions.forEach((a) => assert.match(a, /"type":"uri"/, call.action + " " + a));
+  });
 });

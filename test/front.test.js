@@ -78,3 +78,13 @@ test("カレンダー：週のはじまり（日曜が既定、月曜にも）�
   AppUtil.setWeekStart(1);
   assert.strictEqual(AppUtil.getWeekStart(), 1);
 });
+
+test("「許可する」のカードがあとで押されても、いまの状態に合わせる", () => {
+  const DetailHeader = load("js/views/detailHeader.js", "DetailHeader");
+  const data = { isCreator: true, editors: [{ userId: "p_already" }] };
+  assert.strictEqual(DetailHeader.approveState({ approveEditor: true, requesterId: "p_new" }, data), "pending");
+  assert.strictEqual(DetailHeader.approveState({ approveEditor: true, requesterId: "p_already" }, data), "already");
+  assert.strictEqual(DetailHeader.approveState({ approveEditor: true, requesterId: "p_new" }, { isCreator: false, editors: [] }), "not-creator");
+  assert.strictEqual(DetailHeader.approveState({ approveEditor: true, requesterId: "" }, data), "invalid");
+  assert.strictEqual(DetailHeader.approveState({ approveEditor: false }, data), "");
+});
