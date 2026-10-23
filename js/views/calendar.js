@@ -109,27 +109,15 @@ const CalendarView = (() => {
           const btn = e.target.closest('.choice-btn');
           if (!btn || saving) return;
           const optionId = container.dataset.optionId;
-          const rowEl = container.closest('.answer-row');
-          const eventId = rowEl.dataset.eventId;
+          const eventId = container.closest('.answer-row').dataset.eventId;
           const value = btn.dataset.value;
-
-          container.querySelectorAll('.choice-btn').forEach((b) => b.classList.toggle('selected', b === btn));
           saving = true;
-          try {
-            await AppApi.submitAnswer({
-              eventId,
-              userId: ctx.identity.userId,
-              displayName: ctx.identity.displayName,
-              pictureUrl: ctx.identity.pictureUrl,
-              answers: [{ optionId, answer: value }],
-            });
+          const saved = await OptionCard.saveChoice(container, btn, () => OptionCard.submitOne(ctx, eventId, optionId, value));
+          saving = false;
+          if (saved) {
             const item = items.find((it) => it.optionId === optionId);
             if (item) item.myAnswer = value;
             paint();
-          } catch (err) {
-            AppUtil.notifyError('回答を保存できませんでした', err);
-          } finally {
-            saving = false;
           }
         });
       });

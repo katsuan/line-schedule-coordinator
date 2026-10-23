@@ -100,14 +100,32 @@ function updateRowObject_(sheetName, rowIndex, obj) {
   delete _rowsCache_[sheetName];
 }
 
+// 名前・アイコンを覚える。変わったときだけ、鍵を持って読みなおしてから書く
+// （はじめての人が読むだけの操作を同時に2つ送っても、行が2つにならないように）
 function upsertUser_(userId, displayName, pictureUrl) {
+  if (!userNeedsWrite_(userId, displayName, pictureUrl)) return;
+  withScriptLock_(() => {
+    delete _rowsCache_[SHEET.USERS];
+    writeUser_(userId, displayName, pictureUrl);
+  });
+}
+
+function findUserRow_(userId) {
   const { rows } = sheetRowsAsObjects_(SHEET.USERS);
+  return rows.find((r) => r.userId === userId) || null;
+}
+
+function userNeedsWrite_(userId, displayName, pictureUrl) {
+  const existing = findUserRow_(userId);
+  return !existing || !!(displayName && existing.displayName !== displayName) ||
+    !!(pictureUrl && existing.pictureUrl !== pictureUrl);
+}
+
+function writeUser_(userId, displayName, pictureUrl) {
   const now = new Date();
-  const existing = rows.find((r) => r.userId === userId);
+  const existing = findUserRow_(userId);
   if (existing) {
-    const changed = (displayName && existing.displayName !== displayName) ||
-      (pictureUrl && existing.pictureUrl !== pictureUrl);
-    if (changed) {
+    if (userNeedsWrite_(userId, displayName, pictureUrl)) {
       updateRowObject_(SHEET.USERS, existing._rowIndex, {
         ...existing,
         displayName: displayName || existing.displayName,

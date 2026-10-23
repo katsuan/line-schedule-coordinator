@@ -13,16 +13,17 @@ function doPost(e) { // qcheck-ok: G3 本人は handleAction_ で LINE のアク
     if (!action || typeof action !== 'string') {
       throw new Error('action は必須です');
     }
-    const result = withWriteLock_(action, () => handleAction_(action, body, payload));
+    // 本人を LINE に確かめるのは、書きこみの鍵の外で（待つあいだ、ほかの人を止めない）
+    const me = resolveIdentity_(body);
+    const result = withWriteLock_(action, () => handleAction_(action, me, payload));
     return jsonResponse_({ ok: true, data: result });
   } catch (err) {
     return jsonResponse_({ ok: false, error: publicErrorMessage_(err) });
   }
 }
 
-function handleAction_(action, body, payload) {
-  // 本人は LINE に確かめて決める（画面から来た userId・名前・画像は使わない。11_auth.js）
-  const me = resolveIdentity_(body);
+function handleAction_(action, me, payload) {
+  // 本人は LINE に確かめて決めた人（画面から来た userId・名前・画像は使わない。11_auth.js）
   payload.userId = me.userId; // qcheck-ok: G4 LINE に確かめた本人で上書きする
   payload.creatorUserId = me.userId;
   payload.displayName = me.displayName;
