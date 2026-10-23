@@ -3,6 +3,22 @@
  * js/views/detail.js から切り出した共有コンポーネント。
  */
 const DetailHeader = (() => {
+  // 「許可する」のカードは何日もあとに押されることがある。いまの状態を見て、承認を出すか案内するかを決める
+  //   pending：まだ → 承認する／already：もう編集者／not-creator：作った人ではない／invalid：依頼のリンクがこわれている
+  function approveState(ctx, data) {
+    if (!ctx.approveEditor) return '';
+    if (!data.isCreator) return 'not-creator';
+    if (!ctx.requesterId) return 'invalid';
+    if ((data.editors || []).some((ed) => ed.userId === ctx.requesterId)) return 'already';
+    return 'pending';
+  }
+
+  const APPROVE_NOTICE = {
+    already: (name) => `${name || '依頼した人'}さんは、もう編集者です。`,
+    'not-creator': () => '編集の許可は、予定を作った人だけができます。',
+    invalid: () => 'この依頼のリンクは使えません。もう一度「🔑 編集を依頼」してもらってね。',
+  };
+
   function headerHtml(event, data, canEdit, ctx) {
     const statusPill = data.isCreator
       ? '<span class="status-pill status-pill-creator">作成者</span>'
@@ -11,7 +27,7 @@ const DetailHeader = (() => {
         : '';
     const editors = data.editors || [];
     const showRequestChip = !canEdit && !data.isCreator && data.creator;
-    const showApproveChip = ctx.approveEditor && data.isCreator;
+    const showApproveChip = approveState(ctx, data) === 'pending';
     return `
       <header class="page-header">
         <div class="page-header-top-row">
@@ -68,6 +84,12 @@ const DetailHeader = (() => {
   }
 
   function wireEditAccessSection(root, ctx, data) {
+    const state = approveState(ctx, data);
+    if (APPROVE_NOTICE[state] && !ctx.approveNoticeShown) {
+      ctx.approveNoticeShown = true;
+      AppUtil.notify(APPROVE_NOTICE[state](ctx.requesterName));
+    }
+
     const requestBtn = root.querySelector('#request-edit-btn');
     if (requestBtn) {
       AppUtil.wireAsyncButton(requestBtn, () => AppShare.requestEditAccess(ctx.eventId, data.event.title, {
@@ -92,6 +114,7 @@ const DetailHeader = (() => {
             targetDisplayName: ctx.requesterName,
             targetPictureUrl: ctx.requesterPic,
           });
+          ctx.approveNoticeShown = true;
           const replyBtn = document.createElement('button');
           replyBtn.type = 'button';
           replyBtn.id = 'reply-approved-btn';
@@ -139,5 +162,5 @@ const DetailHeader = (() => {
     }
   }
 
-  return { headerHtml, wireEditAccessSection, wireEventEdit };
+  return { headerHtml, wireEditAccessSection, wireEventEdit, approveState };
 })();
