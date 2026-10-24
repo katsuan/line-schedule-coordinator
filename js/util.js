@@ -180,6 +180,12 @@ const AppUtil = (() => {
 
   // 下に数秒出る知らせ（Q キットのトースト）。options に { actionLabel: '元に戻す', onAction } を渡すとボタンが付く。
   // Q キットが読めなかったときは alert（ボタンは付けられない）
+  // 季節の絵文字（Q キットの season.js。tool-share.js があとから読むので、まだなければ付けない）。
+  // うれしい瞬間の短い文だけに使う（エラー・確認・ボタン・送るカードの本文には使わない）
+  function withSeason(text) {
+    return window.QSeason && typeof window.QSeason.decorate === 'function' ? window.QSeason.decorate(text) : text;
+  }
+
   function notify(message, options) {
     if (window.LineShareUI && typeof LineShareUI.toast === 'function') {
       LineShareUI.toast(message, options);
@@ -288,6 +294,6 @@ const AppUtil = (() => {
     getWeekStart, setWeekStart, monthCells, weekHeader,
     escapeHtml, safeImageUrl, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, loadingHtml, titleIconHtml,
     extractIcon, shortTime, validateEventFields, wireAsyncButton, saveWithButton, relativeDayPillHtml,
-    beginButtonLoading, avatarHtml, notify, notifyError, friendlyReason, ask,
+    beginButtonLoading, avatarHtml, notify, notifyError, friendlyReason, ask, withSeason,
   };
 })();

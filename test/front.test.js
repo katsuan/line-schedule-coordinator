@@ -139,3 +139,11 @@ test("通信が途中で切れたとき、作る・足す操作は自動でや�
   // GAS に届いていない（GET として届いた）ときは、作る操作もやりなおしてよい
   assert.strictEqual(await run("createEvent", "GET は未対応です"), 2);
 });
+
+test("季節の絵文字：QSeason があれば付ける・なければそのまま", () => {
+  const AppUtil = load("js/util.js", "AppUtil");
+  assert.strictEqual(AppUtil.withSeason("送りました"), "送りました");
+  const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "" }, QSeason: { decorate: (t) => t + " 🎃" } } });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/util.js"), "utf8") + "\n;globalThis.AppUtil = AppUtil;", context);
+  assert.strictEqual(context.AppUtil.withSeason("送りました"), "送りました 🎃");
+});
