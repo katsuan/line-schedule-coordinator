@@ -469,3 +469,11 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
     color: var(--ls-text);
   }
 }
+
+/* 送るボタンは LINE の緑（Q の決まり F1。LINE とわかるのは色にまかせる） */
+.ls-button.line,
+.ls-send.line {
+  background: #06c755;
+  border-color: #06c755;
+  color: #fff;
+}

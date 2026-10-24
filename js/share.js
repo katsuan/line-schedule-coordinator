@@ -230,7 +230,7 @@ const AppShare = (() => {
       return true;
     }
 
-    AppUtil.ask({ title: 'ここからは送れません', text: 'LINE アプリで開くと送れます。', ok: '閉じる', cancel: null });
+    AppUtil.ask({ title: '送るときは LINE 版で', text: 'ここでは見本だけ見られます。', ok: '閉じる', cancel: null });
     return false;
   }
 

@@ -89,9 +89,9 @@ const AppPlatform = (() => {
     sheet.innerHTML = `
       <div class="ls-sheet-card outside-choice-card" role="dialog" aria-modal="true" aria-labelledby="outsideChoiceTitle">
         <img src="icon.svg" alt="" width="56" height="56">
-        <p id="outsideChoiceTitle" class="ls-sheet-title">LINE の外で開いています</p>
-        <p class="ls-hint">くるかなは、LINE の名前で ○△× を答えます。LINE アプリで開くか、ログインすると使えます。</p>
-        <a class="ls-outside-button is-app">💬 LINE アプリで開く</a>
+        <p id="outsideChoiceTitle" class="ls-sheet-title">ブラウザ版で開いています</p>
+        <p class="ls-hint">くるかなは、LINE の名前で ○△× を答えます。下のどちらかで使えます。</p>
+        <a class="ls-outside-button is-app">💬 LINE 版で開く</a>
         <button class="ls-outside-button" type="button">🔑 ログインして使う</button>
       </div>`;
     sheet.querySelector('a').setAttribute('href', `https://liff.line.me/${encodeURIComponent(liffId)}${window.location.search}`);
