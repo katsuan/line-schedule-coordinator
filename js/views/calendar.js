@@ -3,9 +3,14 @@ const CalendarView = (() => {
   const STATUS_CLASS = { '○': 'dot-ok', '△': 'dot-maybe', '×': 'dot-ng' };
   const STATUS_LABEL = { '○': '○ 参加', '△': '△ 未定', '×': '× 不参加' };
 
+  // 日のマスの印（月は 0 はじまり）。予定の日付とマスを同じ形でつなぐ
+  function dayKey(year, month, day) {
+    return `${year}-${month}-${day}`;
+  }
+
   function dateKey(isoLike) {
     const d = new Date(isoLike);
-    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    return dayKey(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
   async function render(root, ctx) {
@@ -35,7 +40,7 @@ const CalendarView = (() => {
 
       const dayCells = cells.map((d) => {
         if (!d) return '<div class="cal-cell empty"></div>';
-        const key = `${year}-${month}-${d}`;
+        const key = dayKey(year, month, d);
         const dayItems = byDay[key] || [];
         const isToday = year === today.getFullYear() && month === today.getMonth() && d === today.getDate();
         const shown = dayItems.slice(0, 2);
@@ -151,11 +156,8 @@ const CalendarView = (() => {
         btn.addEventListener('click', () => openDaySheet(btn.dataset.key));
       });
 
-      root.querySelector('#cal-prev').addEventListener('click', () => {
-        viewMonth -= 1;
-        if (viewMonth < 0) { viewMonth = 11; viewYear -= 1; }
-        paintGrid();
-      });
+      root.querySelector('#cal-prev').addEventListener('click', () => shiftMonth(-1));
+      root.querySelector('#cal-next').addEventListener('click', () => shiftMonth(1));
       root.querySelectorAll('[data-week-start]').forEach((btn) => {
         btn.addEventListener('click', () => {
           weekStart = Number(btn.dataset.weekStart) === 1 ? 1 : 0;
@@ -163,11 +165,14 @@ const CalendarView = (() => {
           paintGrid();
         });
       });
-      root.querySelector('#cal-next').addEventListener('click', () => {
-        viewMonth += 1;
-        if (viewMonth > 11) { viewMonth = 0; viewYear += 1; }
-        paintGrid();
-      });
+    }
+
+    // 見ている月を前後に（年をまたぐときは年も）
+    function shiftMonth(delta) {
+      const next = new Date(viewYear, viewMonth + delta, 1);
+      viewYear = next.getFullYear();
+      viewMonth = next.getMonth();
+      paintGrid();
     }
 
     function paintGrid() {

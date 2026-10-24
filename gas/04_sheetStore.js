@@ -103,9 +103,9 @@ function updateRowObject_(sheetName, rowIndex, obj) {
 // 名前・アイコンを覚える。変わったときだけ、鍵を持って読みなおしてから書く
 // （はじめての人が読むだけの操作を同時に2つ送っても、行が2つにならないように）
 function upsertUser_(userId, displayName, pictureUrl) {
-  if (!userNeedsWrite_(userId, displayName, pictureUrl)) return;
+  if (!userNeedsWrite_(findUserRow_(userId), displayName, pictureUrl)) return;
   withScriptLock_(() => {
-    delete _rowsCache_[SHEET.USERS];
+    delete _rowsCache_[SHEET.USERS]; // 鍵を待つあいだに、ほかの人が書いたかもしれない
     writeUser_(userId, displayName, pictureUrl);
   });
 }
@@ -115,24 +115,23 @@ function findUserRow_(userId) {
   return rows.find((r) => r.userId === userId) || null;
 }
 
-function userNeedsWrite_(userId, displayName, pictureUrl) {
-  const existing = findUserRow_(userId);
-  return !existing || !!(displayName && existing.displayName !== displayName) ||
-    !!(pictureUrl && existing.pictureUrl !== pictureUrl);
+// 行がない・名前かアイコンが変わった、なら書く
+function userNeedsWrite_(row, displayName, pictureUrl) {
+  return !row || !!(displayName && row.displayName !== displayName) ||
+    !!(pictureUrl && row.pictureUrl !== pictureUrl);
 }
 
 function writeUser_(userId, displayName, pictureUrl) {
   const now = new Date();
   const existing = findUserRow_(userId);
+  if (!userNeedsWrite_(existing, displayName, pictureUrl)) return;
   if (existing) {
-    if (userNeedsWrite_(userId, displayName, pictureUrl)) {
-      updateRowObject_(SHEET.USERS, existing._rowIndex, {
-        ...existing,
-        displayName: displayName || existing.displayName,
-        pictureUrl: pictureUrl || existing.pictureUrl,
-        updatedAt: now,
-      });
-    }
+    updateRowObject_(SHEET.USERS, existing._rowIndex, {
+      ...existing,
+      displayName: displayName || existing.displayName,
+      pictureUrl: pictureUrl || existing.pictureUrl,
+      updatedAt: now,
+    });
     return;
   }
   appendRowObject_(SHEET.USERS, {
