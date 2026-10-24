@@ -63,7 +63,7 @@ const ListView = (() => {
     if (window.LineShareUI && typeof LineShareUI.firstTip === 'function') {
       LineShareUI.firstTip('qurukana', [
         '「＋ 新規作成」で、候補の日をいくつか入れます',
-        '「💬 カードで送る」で、みんなに ○△× で答えてもらえます',
+        '「カードで送る」で、みんなに ○△× で答えてもらえます',
         '答えは押したときに保存されます。あとから変えてもOK',
       ], root.querySelector('.ls-tabs, .ls-empty'));
     }

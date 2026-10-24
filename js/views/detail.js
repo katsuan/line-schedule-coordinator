@@ -105,7 +105,7 @@ const DetailView = (() => {
                 ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
                 ${OptionComments.commentAddToggleHtml(opt.optionId)}
               </span>
-              ${canEdit && totalCount ? `<button type="button" class="ls-button line remind-btn" data-row="${rowIndex}">💬 カードで送る</button>` : ''}
+              ${canEdit && totalCount ? `<button type="button" class="ls-button line is-oqrn remind-btn" data-row="${rowIndex}">カードで送る</button>` : ''}
             </div>
           </div>
           <details class="respondents-fold">
@@ -156,11 +156,10 @@ const DetailView = (() => {
             optionLocation: rowEl ? rowEl.dataset.optionLocation : '',
           });
           // 送ったあとの知らせは送る流れ（Q キットの送ったあとのシート）が出す
-          btn.textContent = '💬 カードで送る';
-          btn.disabled = false;
         } catch (err) {
           AppUtil.notifyError('連絡を送れませんでした', err);
-          btn.textContent = '💬 カードで送る';
+        } finally {
+          btn.textContent = 'カードで送る';
           btn.disabled = false;
         }
       });
@@ -197,7 +196,7 @@ const DetailView = (() => {
         <div class="sendbar-spacer"></div>
         <div class="ls-sendbar">
           <div class="ls-sendbar-inner">
-            <button id="share-event" class="ls-send line" type="button">💬 カードで送る</button>
+            <button id="share-event" class="ls-send line is-oqrn" type="button">カードで送る</button>
           </div>
         </div>` : ''}
     `;

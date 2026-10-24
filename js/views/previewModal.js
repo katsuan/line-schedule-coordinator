@@ -77,8 +77,8 @@ const PreviewModal = (() => {
           ${canSend && target && target.note ? `<p class="event-meta">${AppUtil.escapeHtml(target.note)}</p>` : ''}
           <div class="ls-sheet-actions${canSend && !(target && target.displayName) ? '' : ' is-stacked'}">
             ${canSend ? `
-              <button type="button" class="ls-button line" id="preview-confirm">
-                ${target && target.displayName ? `💬 ${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}${AppUtil.escapeHtml(target.displayName)} に送る` : '💬 カードで送る'}
+              <button type="button" class="ls-button line is-oqrn" id="preview-confirm">
+                ${target && target.displayName ? `${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}${AppUtil.escapeHtml(target.displayName)} に送る` : 'カードで送る'}
               </button>` : (opts.appUrl ? `<a class="ls-button is-primary" href="${AppUtil.escapeHtml(opts.appUrl)}">💬 LINE 版で開く</a>` : '')}
             <button type="button" class="ls-sheet-cancel" id="preview-cancel">やめる</button>
           </div>`,
