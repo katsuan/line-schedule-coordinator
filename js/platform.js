@@ -53,7 +53,7 @@ const AppPlatform = (() => {
 
       if (!liff.isLoggedIn()) {
         if (typeof liff.login === 'function') {
-          // LINE の外（ブラウザ）では、黙ってログイン画面へ飛ばさず、LINE アプリで開くかログインするかを選んでもらう
+          // ブラウザ版では、黙ってログイン画面へ飛ばさず、LINE 版で開くかログインするかを選んでもらう
           if (typeof liff.isInClient === 'function' && !liff.isInClient()) {
             showOutsideChoice(liffId);
             return new Promise(() => {}); // どちらかを選ぶとページを移るので解決しない
@@ -81,8 +81,8 @@ const AppPlatform = (() => {
     return identityPromise;
   }
 
-  // LINE の外で開いたとき：だれの回答かを LINE で分けるので、LINE アプリで開くかログインするかを選ぶ（ひっくり・おくるんと同じ考え方）。
-  // LINE アプリで開くときは、開いていた予定（?event=）もそのまま持っていく
+  // ブラウザ版で開いたとき：だれの回答かを LINE で分けるので、LINE 版で開くかログインするかを選ぶ（ひっくり・おくるんと同じ考え方）。
+  // LINE 版で開くときは、開いていた予定（?event=）もそのまま持っていく
   function showOutsideChoice(liffId) {
     const sheet = document.createElement('div');
     sheet.className = 'ls-sheet outside-choice';

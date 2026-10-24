@@ -11,7 +11,7 @@ const PreviewModal = (() => {
     const groups = (opts && opts.groups) || null;
     const groupAnswers = groups ? ['○', '△', '×'].filter((a) => groups[a] && groups[a].length) : [];
     const target = (opts && opts.target) || null;
-    const canSend = !opts || opts.canSend !== false; // LINE の送り先を選ぶ画面が使えるか（使えないときは理由と「LINE アプリで開く」）
+    const canSend = !opts || opts.canSend !== false; // LINE の送り先を選ぶ画面が使えるか（使えないときは理由と「LINE 版で開く」）
     const headerNode = flex.contents.header;
     const headerTitleNode = headerNode && headerNode.contents && headerNode.contents[0];
     const headerTitle = headerTitleNode ? headerTitleNode.text : null;

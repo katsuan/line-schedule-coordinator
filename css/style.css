@@ -363,7 +363,7 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .preview-chat-bubble {
   margin: 10px 0 0 auto;
   max-width: 75%;
-  background: #06C755;
+  background: var(--ls-line-green, #06c755);
   color: #fff;
   padding: 8px 12px;
   border-radius: 14px 14px 2px 14px;
@@ -449,7 +449,7 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .guide-faq-q { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.86rem; }
 .guide-faq-q .status-badge { flex-shrink: 0; }
 
-/* ---- LINE の外で開いたとき（js/platform.js の showOutsideChoice） ---- */
+/* ---- ブラウザ版で開いたとき（js/platform.js の showOutsideChoice） ---- */
 .outside-choice { z-index: 1000; align-items: center; }
 .outside-choice-card { justify-items: center; gap: 10px; width: min(100%, 360px); text-align: center; }
 .outside-choice-card .ls-outside-button { width: 100%; min-height: 48px; font-size: 15px; font-weight: 800; }
