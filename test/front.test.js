@@ -170,3 +170,26 @@ test("季節の絵文字：QSeason があれば付ける・なければそのま
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/util.js"), "utf8") + "\n;globalThis.AppUtil = AppUtil;", context);
   assert.strictEqual(context.AppUtil.withSeason("送りました"), "送りました 🎃");
 });
+
+test("編集を許可したお知らせは、予定を開くボタンつきのカード（LINE が受けつける形・ボタンは画面を開くだけ）", async () => {
+  const { checkMessages } = require(path.join(__dirname, "../../q-oqrn/tools/qtest/fake-gas.js"));
+  const sent = [];
+  const liff = {
+    isApiAvailable: () => true, isInClient: () => false,
+    permission: { query: async () => ({ state: "granted" }) },
+    sendMessages: async (m) => { sent.push(m); },
+    shareTargetPicker: async (m) => { sent.push(m); return { status: "success" }; },
+  };
+  const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "" }, liff }, liff,
+    AppConfig: { load: async () => ({ liffId: "2009927582-abc" }) }, AppUtil: { ask() {} }, PreviewModal: {}, FlexPreview: {} });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/share.js"), "utf8") + "\n;globalThis.AppShare = AppShare;", context);
+  const ok = await context.AppShare.sendApprovedCard("EVT_1", "🍖 BBQ", "たろう");
+  assert.strictEqual(ok, true);
+  const messages = JSON.parse(JSON.stringify(sent[0]));
+  assert.strictEqual(messages[0].type, "flex");
+  assert.match(messages[0].altText, /BBQ/);
+  assert.deepStrictEqual(checkMessages(messages).filter((p) => p.level === "error"), []);
+  const actions = JSON.stringify(messages).match(/"action":\{[^}]*\}/g) || [];
+  assert.strictEqual(actions.length, 1);
+  assert.match(actions[0], /"type":"uri".*event=EVT_1/);
+});

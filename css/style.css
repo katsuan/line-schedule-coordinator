@@ -157,6 +157,8 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
   font-weight: bold;
   cursor: pointer;
 }
+/* カードを送る札（おくるんのマークを文字の前に） */
+.editors-count-btn.is-oqrn { display: inline-flex; align-items: center; background: var(--ls-line-green, #06c755); color: #fff; }
 .editors-count-btn.edit-request-chip-pending { background: var(--ls-accent-soft); color: var(--ls-accent); }
 .edit-option-btn { flex-shrink: 0; border: none; background: none; cursor: pointer; font-size: 0.9rem; padding: 2px 4px; }
 

@@ -19,6 +19,35 @@ const AppShare = (() => {
     return config.liffId ? `https://liff.line.me/${config.liffId}${window.location.search}` : '';
   }
 
+  // カードの下のボタン（画面を開くだけ。あとで押されても困らない）。URL がなければボタンなし
+  function buttonFooter(label, uri) {
+    if (!uri) return undefined;
+    return {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'sm',
+      paddingAll: 'lg',
+      contents: [{
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#0284C7',
+        cornerRadius: 'xxl',
+        paddingAll: 'md',
+        action: { type: 'uri', label, uri },
+        contents: [{ type: 'text', text: label, color: '#ffffff', align: 'center', weight: 'bold', size: 'md' }],
+      }],
+    };
+  }
+
+  function footerStyles(uri) {
+    return uri ? { footer: { separator: true, separatorColor: '#EEEEEE' } } : undefined;
+  }
+
+  // 予定の画面を開く URL（LIFF）。extra は後ろに足す query
+  function eventPageUrl(liffId, eventId, extra) {
+    return liffId ? `https://liff.line.me/${liffId}?event=${encodeURIComponent(eventId)}${extra || ''}` : '';
+  }
+
   // 送り先を選んで送る。送れたら true（やめたら false）
   async function pickAndSend(messages) {
     const pickerResult = await liff.shareTargetPicker(messages);
@@ -84,7 +113,7 @@ const AppShare = (() => {
     const config = await AppConfig.load();
     const liffUrl = config.liffId ? `https://liff.line.me/${config.liffId}` : '';
     const flex = {
-      altText: 'Botの追加なしで日程調整ができるアプリです',
+      altText: 'くるかな：候補の日に ○△× で答えるだけの日程調整',
       contents: {
         type: 'bubble',
         body: {
@@ -99,22 +128,8 @@ const AppShare = (() => {
             },
           ],
         },
-        footer: liffUrl ? {
-          type: 'box',
-          layout: 'vertical',
-          spacing: 'sm',
-          paddingAll: 'lg',
-          contents: [{
-            type: 'box',
-            layout: 'vertical',
-            backgroundColor: '#0284C7',
-            cornerRadius: 'xxl',
-            paddingAll: 'md',
-            action: { type: 'uri', label: '使ってみる', uri: liffUrl },
-            contents: [{ type: 'text', text: '使ってみる', color: '#ffffff', align: 'center', weight: 'bold', size: 'md' }],
-          }],
-        } : undefined,
-        styles: liffUrl ? { footer: { separator: true, separatorColor: '#EEEEEE' } } : undefined,
+        footer: buttonFooter('使ってみる', liffUrl),
+        styles: footerStyles(liffUrl),
       },
     };
     return sendFlexMessage(flex, { sentTitle: 'くるかなを紹介しました' });
@@ -124,13 +139,10 @@ const AppShare = (() => {
   // 「許可する」は作成者側でLIFFを開いてapproveEditRequestを叩くuriリンク（postbackはBotなし構成では使えないため不採用）。
   async function requestEditAccess(eventId, eventTitle, requester, creator) {
     const config = await AppConfig.load();
-    const liffUrl = config.liffId ? `https://liff.line.me/${config.liffId}` : '';
-    const approveUrl = liffUrl
-      ? `${liffUrl}${liffUrl.indexOf('?') >= 0 ? '&' : '?'}event=${encodeURIComponent(eventId)}&approveEditor=1`
-        + `&requesterId=${encodeURIComponent(requester.userId)}`
-        + `&requesterName=${encodeURIComponent(requester.displayName || '')}`
-        + `&requesterPic=${encodeURIComponent(requester.pictureUrl || '')}`
-      : '';
+    const approveUrl = eventPageUrl(config.liffId, eventId, '&approveEditor=1'
+      + `&requesterId=${encodeURIComponent(requester.userId)}`
+      + `&requesterName=${encodeURIComponent(requester.displayName || '')}`
+      + `&requesterPic=${encodeURIComponent(requester.pictureUrl || '')}`);
     const flex = {
       altText: `${eventTitle} の編集権限を依頼します`,
       contents: {
@@ -158,22 +170,8 @@ const AppShare = (() => {
             },
           ],
         },
-        footer: approveUrl ? {
-          type: 'box',
-          layout: 'vertical',
-          spacing: 'sm',
-          paddingAll: 'lg',
-          contents: [{
-            type: 'box',
-            layout: 'vertical',
-            backgroundColor: '#0284C7',
-            cornerRadius: 'xxl',
-            paddingAll: 'md',
-            action: { type: 'uri', label: '許可する', uri: approveUrl },
-            contents: [{ type: 'text', text: '許可する', color: '#ffffff', align: 'center', weight: 'bold', size: 'md' }],
-          }],
-        } : undefined,
-        styles: approveUrl ? { footer: { separator: true, separatorColor: '#EEEEEE' } } : undefined,
+        footer: buttonFooter('許可する', approveUrl),
+        styles: footerStyles(approveUrl),
       },
     };
     return sendFlexMessage(flex, {
@@ -205,16 +203,46 @@ const AppShare = (() => {
     }
   }
 
-  // 承認直後、同じトークへそのまま一言返信する導線。
-  // liffがチャット内で開かれている（sendMessagesが使える）場合はピッカーなしで直接送信し、
-  // そうでなければshareTargetPickerで送信先を選んでもらう。
-  async function replyInChat(text) {
+  // 編集を許可したお知らせ（カード）。依頼した人が「予定を開く」からすぐ編集できるように。
+  // 同じトークで開いていれば（sendMessages が使えれば）選ばずにそのまま送り、そうでなければ送り先を選んで送る
+  function approvedMessage(liffId, eventId, eventTitle, requesterName) {
+    const url = eventPageUrl(liffId, eventId);
+    return {
+      type: 'flex',
+      altText: `✅ ${eventTitle} の編集を許可しました`,
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          paddingBottom: 'md',
+          contents: [
+            { type: 'text', text: '✅ 編集を許可しました', weight: 'bold', size: 'lg', color: '#111111' },
+            { type: 'text', text: eventTitle, size: 'sm', color: '#8C8C8C', wrap: true, margin: 'md' },
+            {
+              type: 'box', layout: 'baseline', spacing: 'sm', margin: 'md',
+              contents: [
+                { type: 'text', text: '編集できる人', size: 'sm', color: '#8C8C8C', flex: 3 },
+                { type: 'text', text: requesterName || '依頼した人', size: 'sm', color: '#111111', flex: 5, wrap: true },
+              ],
+            },
+          ],
+        },
+        footer: buttonFooter('予定を開く', url),
+        styles: footerStyles(url),
+      },
+    };
+  }
+
+  async function sendApprovedCard(eventId, eventTitle, requesterName) {
+    const config = await AppConfig.load();
+    const messages = [approvedMessage(config.liffId, eventId, eventTitle, requesterName)];
     try {
       const sendAvailable = window.liff && liff.isApiAvailable && liff.isApiAvailable('sendMessages');
       if (sendAvailable) {
         const hasPermission = await ensureSendMessagePermission_();
         if (hasPermission) {
-          await liff.sendMessages([{ type: 'text', text }]);
+          await liff.sendMessages(messages);
           if (liff.isInClient && liff.isInClient()) liff.closeWindow();
           return true;
         }
@@ -224,8 +252,7 @@ const AppShare = (() => {
     }
 
     if (canPickTarget()) {
-      const result = await liff.shareTargetPicker([{ type: 'text', text }]);
-      if (result && result.status === 'cancel') return false;
+      if (!(await pickAndSend(messages))) return false;
       if (liff.isInClient && liff.isInClient()) liff.closeWindow();
       return true;
     }
@@ -234,5 +261,5 @@ const AppShare = (() => {
     return false;
   }
 
-  return { shareEvent, remindRespondents, inviteEditor, notifyChange, shareApp, requestEditAccess, replyInChat };
+  return { shareEvent, remindRespondents, inviteEditor, notifyChange, shareApp, requestEditAccess, sendApprovedCard };
 })();

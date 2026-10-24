@@ -118,12 +118,14 @@ const DetailHeader = (() => {
           const replyBtn = document.createElement('button');
           replyBtn.type = 'button';
           replyBtn.id = 'reply-approved-btn';
-          replyBtn.className = 'editors-count-btn';
-          replyBtn.textContent = '✅ 権限許可を連絡する';
+          // 許可したことを、依頼した人にカードで知らせる（カードの「予定を開く」からすぐ編集できる）
+          // 下の帯の「カードで送る」（予定を送る）と並ぶので、何を送るかを書く。マークでカードとわかる
+          replyBtn.className = 'editors-count-btn is-oqrn';
+          replyBtn.textContent = '許可を知らせる';
           approveBtn.replaceWith(replyBtn);
-          AppUtil.wireAsyncButton(replyBtn, () => AppShare.replyInChat(
-            `✅ ${data.event.title} の編集権限を承認しました`
-          ), { errorPrefix: '返事を送れませんでした' });
+          AppUtil.wireAsyncButton(replyBtn, () => AppShare.sendApprovedCard(
+            ctx.eventId, data.event.title, ctx.requesterName
+          ), { errorPrefix: '送れませんでした' });
         }, '許可できませんでした');
       });
     }
