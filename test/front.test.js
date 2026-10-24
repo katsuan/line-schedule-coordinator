@@ -64,9 +64,9 @@ test("URL の中身：形と長さが合わないものは使わない", () => {
   assert.deepStrictEqual([bad.view, bad.eventId, bad.inviteKey, bad.requesterId, bad.requesterPic, bad.requesterName], ["", "", "", "", "", ""]);
 });
 
-function utilWithStore(initial) {
+function utilWithStore(initial, kit) {
   const store = new Map(Object.entries(initial || {}));
-  const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "", href: "" }, localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) } } });
+  const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "", href: "" }, localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) }, QWeekStart: kit } });
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/util.js"), "utf8") + "\n;globalThis.AppUtil = AppUtil;", context);
   return { AppUtil: context.AppUtil, store };
 }
@@ -91,6 +91,15 @@ test("週のはじまり：Q 共通の設定 → 前にくるかなで選んだ�
   // 前の版で「日曜」を選んだ人は、そのまま日曜
   assert.strictEqual(utilWithStore({ "qurukana:weekStart": "0" }).AppUtil.getWeekStart(), 0);
   assert.strictEqual(utilWithStore({ "qlove:weekStart": "x" }).AppUtil.getWeekStart(), 1);
+});
+
+test("週のはじまり：Q キットの部品（QWeekStart）が読めたら、それに前のくるかなの値を渡して使う", () => {
+  const calls = [];
+  const kit = { get: (fallback) => (calls.push(["get", fallback]), 0), set: (v) => calls.push(["set", v]) };
+  const { AppUtil } = utilWithStore({ "qurukana:weekStart": "0" }, kit);
+  assert.strictEqual(AppUtil.getWeekStart(), 0);
+  AppUtil.setWeekStart(1);
+  assert.deepStrictEqual(calls, [["get", 0], ["set", 1]]);
 });
 
 test("「許可する」のカードがあとで押されても、いまの状態に合わせる", () => {
