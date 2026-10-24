@@ -64,19 +64,33 @@ test("URL の中身：形と長さが合わないものは使わない", () => {
   assert.deepStrictEqual([bad.view, bad.eventId, bad.inviteKey, bad.requesterId, bad.requesterPic, bad.requesterName], ["", "", "", "", "", ""]);
 });
 
-test("カレンダー：週のはじまり（日曜が既定、月曜にも）でマスと見出しがずれる", () => {
-  const store = new Map();
+function utilWithStore(initial) {
+  const store = new Map(Object.entries(initial || {}));
   const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "", href: "" }, localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) } } });
   vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/util.js"), "utf8") + "\n;globalThis.AppUtil = AppUtil;", context);
-  const AppUtil = context.AppUtil;
-  assert.strictEqual(AppUtil.getWeekStart(), 0);
+  return { AppUtil: context.AppUtil, store };
+}
+
+test("カレンダー：週のはじまり（月曜が既定、日曜にも）でマスと見出しがずれる", () => {
+  const { AppUtil, store } = utilWithStore();
+  assert.strictEqual(AppUtil.getWeekStart(), 1);
   // 2026年10月1日は木曜
   assert.strictEqual(AppUtil.monthCells(2026, 9, 0).indexOf(1), 4);
   assert.strictEqual(AppUtil.monthCells(2026, 9, 1).indexOf(1), 3);
   assert.strictEqual(AppUtil.monthCells(2026, 9, 1).length % 7, 0);
   assert.strictEqual(AppUtil.weekHeader(1).map((w) => w.label).join(""), "月火水木金土日");
-  AppUtil.setWeekStart(1);
-  assert.strictEqual(AppUtil.getWeekStart(), 1);
+  AppUtil.setWeekStart(0);
+  assert.strictEqual(AppUtil.getWeekStart(), 0);
+  // 選んだ値は、Q のツールで共通のキーに残す
+  assert.strictEqual(store.get("qlove:weekStart"), "0");
+});
+
+test("週のはじまり：Q 共通の設定 → 前にくるかなで選んだ値 → 月曜、の順に読む", () => {
+  assert.strictEqual(utilWithStore({ "qlove:weekStart": "0" }).AppUtil.getWeekStart(), 0);
+  assert.strictEqual(utilWithStore({ "qlove:weekStart": "1", "qurukana:weekStart": "0" }).AppUtil.getWeekStart(), 1);
+  // 前の版で「日曜」を選んだ人は、そのまま日曜
+  assert.strictEqual(utilWithStore({ "qurukana:weekStart": "0" }).AppUtil.getWeekStart(), 0);
+  assert.strictEqual(utilWithStore({ "qlove:weekStart": "x" }).AppUtil.getWeekStart(), 1);
 });
 
 test("「許可する」のカードがあとで押されても、いまの状態に合わせる", () => {

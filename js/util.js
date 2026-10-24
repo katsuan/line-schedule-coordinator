@@ -251,21 +251,31 @@ const AppUtil = (() => {
     }
   }
 
-  // ---- カレンダーの週のはじまり（0＝日曜・いままでどおりの既定、1＝月曜）。この端末に残す ----
-  const WEEK_START_KEY = 'qurukana:weekStart';
+  // ---- カレンダーの週のはじまり（1＝月曜・既定、0＝日曜）。この端末に残す ----
+  // qlove:weekStart は Q のツールで共通に使うキー（同じ katsuan.github.io なら、ほかのツールでも読める）。
+  // qurukana:weekStart は前の版のキー（そこで日曜を選んだ人は日曜のまま）
+  const WEEK_START_KEY = 'qlove:weekStart';
+  const OLD_WEEK_START_KEY = 'qurukana:weekStart';
+  const DEFAULT_WEEK_START = 1;
   const WEEK_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
+
+  function readWeekStart(key) {
+    const value = window.localStorage.getItem(key);
+    return value === '0' || value === '1' ? Number(value) : null;
+  }
 
   function getWeekStart() {
     try {
-      return window.localStorage.getItem(WEEK_START_KEY) === '1' ? 1 : 0;
+      const saved = readWeekStart(WEEK_START_KEY) ?? readWeekStart(OLD_WEEK_START_KEY);
+      return saved ?? DEFAULT_WEEK_START;
     } catch (e) {
-      return 0;
+      return DEFAULT_WEEK_START;
     }
   }
 
   function setWeekStart(value) {
     try {
-      window.localStorage.setItem(WEEK_START_KEY, value === 1 ? '1' : '0');
+      window.localStorage.setItem(WEEK_START_KEY, value === 0 ? '0' : '1');
     } catch (e) {
       // 残せない端末でも、開いているあいだは使える
     }
