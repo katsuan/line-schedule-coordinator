@@ -264,18 +264,17 @@ const AppUtil = (() => {
     return value === '0' || value === '1' ? Number(value) : null;
   }
 
-  // Q キットの部品（line-share/shared/week-start.js → window.QWeekStart）が読めたらそれを使う。読めないときは下の同じ決まりで
+  // Q キットの部品（line-share/shared/week-start.js → window.QWeekStart）を使う。
+  // 前の版のくるかなの値を「まだ共通の設定がないとき」の値として渡す。部品が読めないときも同じ決まりで読む
   function getWeekStart() {
-    if (window.QWeekStart) {
-      let old = null;
-      try { old = readWeekStart(OLD_WEEK_START_KEY); } catch (e) { /* 読めない端末は月曜 */ }
-      return window.QWeekStart.get(old ?? DEFAULT_WEEK_START);
-    }
+    let old = null;
+    try { old = readWeekStart(OLD_WEEK_START_KEY); } catch (e) { /* 読めない端末は月曜 */ }
+    const fallback = old ?? DEFAULT_WEEK_START;
+    if (window.QWeekStart) return window.QWeekStart.get(fallback);
     try {
-      const saved = readWeekStart(WEEK_START_KEY) ?? readWeekStart(OLD_WEEK_START_KEY);
-      return saved ?? DEFAULT_WEEK_START;
+      return readWeekStart(WEEK_START_KEY) ?? fallback;
     } catch (e) {
-      return DEFAULT_WEEK_START;
+      return fallback;
     }
   }
 

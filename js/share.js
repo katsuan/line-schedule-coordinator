@@ -13,7 +13,7 @@ const AppShare = (() => {
     }
   }
 
-  // 送れないときに出す「LINE アプリで開く」の行き先（今のページのまま）
+  // 送れないときに出す「LINE 版で開く」の行き先（今のページのまま）
   async function lineAppUrl() {
     const config = await AppConfig.load();
     return config.liffId ? `https://liff.line.me/${config.liffId}${window.location.search}` : '';
