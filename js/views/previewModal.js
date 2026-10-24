@@ -28,7 +28,7 @@ const PreviewModal = (() => {
         title: '送る内容の見本',
         onDismiss: () => resolve(null),
         bodyHtml: `
-          ${canSend ? '' : `<p class="ls-outside-text preview-outside">ここからは送れません。LINE アプリで開くと送れます。</p>`}
+          ${canSend ? '' : `<p class="ls-outside-text preview-outside">ここでは見本だけ。送るときは下から開いてね。</p>`}
           <p class="event-meta">※実際の見え方は端末によって異なります</p>
           <p class="preview-scope-label">👇 プレビュー範囲（実際に送信される内容）</p>
           <div class="preview-scope">
@@ -77,9 +77,9 @@ const PreviewModal = (() => {
           ${canSend && target && target.note ? `<p class="event-meta">${AppUtil.escapeHtml(target.note)}</p>` : ''}
           <div class="ls-sheet-actions${canSend && !(target && target.displayName) ? '' : ' is-stacked'}">
             ${canSend ? `
-              <button type="button" class="ls-button is-primary" id="preview-confirm">
-                ${target && target.displayName ? `💬 ${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}${AppUtil.escapeHtml(target.displayName)} に送る` : '💬 LINEで送る'}
-              </button>` : (opts.appUrl ? `<a class="ls-button is-primary" href="${AppUtil.escapeHtml(opts.appUrl)}">💬 LINE アプリで開く</a>` : '')}
+              <button type="button" class="ls-button line" id="preview-confirm">
+                ${target && target.displayName ? `💬 ${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}${AppUtil.escapeHtml(target.displayName)} に送る` : '💬 カードで送る'}
+              </button>` : (opts.appUrl ? `<a class="ls-button is-primary" href="${AppUtil.escapeHtml(opts.appUrl)}">💬 LINE 版で開く</a>` : '')}
             <button type="button" class="ls-sheet-cancel" id="preview-cancel">やめる</button>
           </div>`,
       });
