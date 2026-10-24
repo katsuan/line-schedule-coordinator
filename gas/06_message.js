@@ -84,7 +84,8 @@ function buildEventShareFlex_(eventId) {
   };
 
   return {
-    altText: event.title + ' の日程調整',
+    // 季節の絵文字は、通知に出る1行（altText）にだけ、ときどき1つ（season.js）
+    altText: QSeason.decorate(event.title + ' の日程調整'),
     contents: bubble,
   };
 }

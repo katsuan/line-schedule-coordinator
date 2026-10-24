@@ -56,7 +56,7 @@ const ListView = (() => {
             </button>`).join('')}
         </div>
         ${tabs.map((t) => `<div class="tab-panel" data-panel="${t.key}" role="tabpanel" hidden>${itemsHtml(t.list)}</div>`).join('')}
-      ` : '<p class="ls-empty">予定はまだありません。「＋ 新規作成」から作れます。</p>'}
+      ` : `<p class="ls-empty">${AppUtil.escapeHtml(AppUtil.withSeason('予定はまだありません。「＋ 新規作成」から作れます。'))}</p>`}
     `;
 
     // はじめて開いた人にだけ、短い使い方（Q キット。「わかった」で消え、この端末では二度と出さない）

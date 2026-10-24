@@ -322,3 +322,28 @@ test("連絡・変更のカードに入れる名前は、数と長さを決め�
   assert.match(text, /○ 45人/);
   assert.match(text, /ほか15名/);
 });
+
+test("季節の絵文字：GAS の season.js は Q キットの season.js と同じ中身", () => {
+  const fs = require("node:fs");
+  const mine = fs.readFileSync(path.join(__dirname, "../gas/season.js"), "utf8");
+  const kit = fs.readFileSync(path.join(__dirname, "../../q-oqrn/shared/season.js"), "utf8");
+  assert.strictEqual(mine, kit);
+});
+
+test("季節の絵文字：予定を送るカードの altText にだけ、ときどき1つ", () => {
+  const gas = makeGas();
+  const eventId = create(gas);
+  const real = gas.ctx.QSeason.decorate;
+  const share = () => gas.doPost({ action: "buildShareFlex", accessToken: "tok-owner", eventId }).data;
+  gas.ctx.QSeason.decorate = (t) => real(t, { rand: () => 0, date: new Date("2026-10-31T03:00:00Z") });
+  const shown = share();
+  assert.strictEqual(shown.altText, "BBQ の日程調整 🎃");
+  assert.ok(!JSON.stringify(shown.contents).includes("🎃")); // カードの本文・ボタンには入れない
+  gas.ctx.QSeason.decorate = (t) => real(t, { rand: () => 0.99 });
+  assert.strictEqual(share().altText, "BBQ の日程調整");
+  // 連絡・変更・招待のカードには入れない
+  gas.ctx.QSeason.decorate = () => { throw new Error("使わない"); };
+  ["buildReminderFlex", "buildChangeNotificationFlex", "buildEditorInviteFlex"].forEach((action) => {
+    assert.strictEqual(gas.doPost({ action, accessToken: "tok-owner", eventId, names: [], groups: {} }).ok, true, action);
+  });
+});

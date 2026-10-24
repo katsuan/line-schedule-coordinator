@@ -46,9 +46,9 @@ const AppShare = (() => {
 
     if (!(await pickAndSend(messages))) return false;
     if (window.LineShareUI && typeof LineShareUI.afterSent === 'function') {
-      LineShareUI.afterSent({ resend: () => pickAndSend(messages), title: (opts && opts.sentTitle) || '送りました' });
+      LineShareUI.afterSent({ resend: () => pickAndSend(messages), title: AppUtil.withSeason((opts && opts.sentTitle) || '送りました') });
     } else {
-      AppUtil.notify('送りました');
+      AppUtil.notify(AppUtil.withSeason('送りました'));
     }
     return true;
   }
