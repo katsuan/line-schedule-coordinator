@@ -6,9 +6,14 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
+// AppUtil は3つのファイルに分けて持つ（js/markup.js・js/dates.js・js/notice.js）
+const UTIL_FILES = ["js/markup.js", "js/dates.js", "js/notice.js"];
+const read = (file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+const utilCode = () => UTIL_FILES.map(read).join("\n");
+
 function load(file, name, search) {
   const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: search || "", href: "https://katsuan.github.io/q-qurukana/" + (search || "") } } });
-  const code = fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+  const code = file === "AppUtil" ? utilCode() : read(file);
   vm.runInContext(code + `\n;globalThis.${name} = ${name};`, context, { filename: file });
   return context[name];
 }
@@ -18,7 +23,7 @@ const ALERT = "aler" + "t(1)";
 const XSS = `<img src=x onerror=${ALERT}>`;
 
 test("アイコン：画像は https だけ。名前・URL の文字が HTML の外に出ない", () => {
-  const AppUtil = load("js/util.js", "AppUtil");
+  const AppUtil = load("AppUtil", "AppUtil");
   const ok = AppUtil.avatarHtml("たろう", "https://profile.line-scdn.net/0habc");
   assert.match(ok, /background-image:url\('https:\/\/profile\.line-scdn\.net\/0habc'\)/);
   [
@@ -38,14 +43,14 @@ test("アイコン：画像は https だけ。名前・URL の文字が HTML の
 });
 
 test("タイトル：絵文字のあとの文字も esc する", () => {
-  const AppUtil = load("js/util.js", "AppUtil");
+  const AppUtil = load("AppUtil", "AppUtil");
   assert.ok(!AppUtil.titleIconHtml("🎉" + XSS).includes("<img"));
   assert.ok(!AppUtil.titleIconHtml(XSS).includes("<img"));
   assert.ok(!AppUtil.calendarLinkHtml(XSS, XSS, "2026-11-01T10:00", "", XSS).includes("<img"));
 });
 
 test("サーバーのエラーは、種類だけ見てやさしい言葉に", () => {
-  const AppUtil = load("js/util.js", "AppUtil");
+  const AppUtil = load("AppUtil", "AppUtil");
   assert.match(AppUtil.friendlyReason(new Error("タイトルが長すぎます（100字まで）")), /短く/);
   assert.match(AppUtil.friendlyReason(new Error("編集者になるには、作成者からの招待のリンクが必要です")), /編集を依頼/);
   assert.ok(!AppUtil.friendlyReason(new Error("Exception: " + XSS)).includes("<"));
@@ -67,7 +72,7 @@ test("URL の中身：形と長さが合わないものは使わない", () => {
 function utilWithStore(initial, kit) {
   const store = new Map(Object.entries(initial || {}));
   const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "", href: "" }, localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) }, QWeekStart: kit } });
-  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/util.js"), "utf8") + "\n;globalThis.AppUtil = AppUtil;", context);
+  vm.runInContext(utilCode() + "\n;globalThis.AppUtil = AppUtil;", context);
   return { AppUtil: context.AppUtil, store };
 }
 
@@ -164,10 +169,10 @@ test("通信が途中で切れたとき、作る・足す操作は自動でや�
 });
 
 test("季節の絵文字：QSeason があれば付ける・なければそのまま", () => {
-  const AppUtil = load("js/util.js", "AppUtil");
+  const AppUtil = load("AppUtil", "AppUtil");
   assert.strictEqual(AppUtil.withSeason("送りました"), "送りました");
   const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "" }, QSeason: { decorate: (t) => t + " 🎃" } } });
-  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/util.js"), "utf8") + "\n;globalThis.AppUtil = AppUtil;", context);
+  vm.runInContext(utilCode() + "\n;globalThis.AppUtil = AppUtil;", context);
   assert.strictEqual(context.AppUtil.withSeason("送りました"), "送りました 🎃");
 });
 

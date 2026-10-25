@@ -1,25 +1,6 @@
-(async () => {
-  const root = document.getElementById('app');
-
-  try {
-    const identity = await AppPlatform.initIdentity();
-    const { view, eventId, claimEditor, inviteKey, approveEditor, requesterId, requesterName, requesterPic } = AppRouter.getQueryState();
-    const ctx = { identity, eventId, claimEditor, inviteKey, approveEditor, requesterId, requesterName, requesterPic };
-
-    if (eventId) {
-      await DetailView.render(root, ctx);
-    } else if (view === 'create') {
-      CreateView.render(root, ctx);
-    } else if (view === 'calendar') {
-      await CalendarView.render(root, ctx);
-    } else if (view === 'list') {
-      await ListView.render(root, ctx);
-    } else {
-      // パラメータなしでの起動（LIFFルートURLへの直接アクセスなど）はガイド画面を入口にする
-      GuideView.render(root, ctx);
-    }
-  } catch (err) {
-    console.error(err);
-    GuideView.render(root, {}, { error: err });
-  }
-})();
+// 前の名前のファイル。入口はページの直下の app.js に移した（README の「前の名前のファイル」）。
+// 古い index.html を覚えている端末のために、新しいファイルを読むだけ。2026-11-25 ごろ消す
+(function () {
+  var base = document.currentScript ? document.currentScript.src : document.baseURI;
+  document.write('<script src="' + new URL('../app.js', base).href + '"><\/script>'); // qcheck-ok: 前の HTML のときだけ
+}());
