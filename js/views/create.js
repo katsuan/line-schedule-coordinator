@@ -62,6 +62,7 @@ const CreateView = (() => {
         updateRemoveButtons();
         AppUtil.notify('イベントを消しました', {
           actionLabel: '元に戻す',
+          // 「元に戻す」：消したイベントの入力欄を、元の場所に戻す
           onAction: () => {
             optionList.insertBefore(card, next && next.parentNode === optionList ? next : null);
             updateRemoveButtons();

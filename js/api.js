@@ -56,23 +56,13 @@ const AppApi = (() => {
     }
   }
 
-  return {
-    createEvent: (payload) => call('createEvent', payload),
-    submitAnswer: (payload) => call('submitAnswer', payload),
-    addComment: (payload) => call('addComment', payload),
-    deleteComment: (payload) => call('deleteComment', payload),
-    getSummary: (payload) => call('getSummary', payload),
-    listMyEvents: (payload) => call('listMyEvents', payload),
-    buildShareFlex: (payload) => call('buildShareFlex', payload),
-    deleteEvent: (payload) => call('deleteEvent', payload),
-    addOptions: (payload) => call('addOptions', payload),
-    claimEditor: (payload) => call('claimEditor', payload),
-    approveEditRequest: (payload) => call('approveEditRequest', payload),
-    updateOption: (payload) => call('updateOption', payload),
-    updateEvent: (payload) => call('updateEvent', payload),
-    listMyOptions: (payload) => call('listMyOptions', payload),
-    buildReminderFlex: (payload) => call('buildReminderFlex', payload),
-    buildEditorInviteFlex: (payload) => call('buildEditorInviteFlex', payload),
-    buildChangeNotificationFlex: (payload) => call('buildChangeNotificationFlex', payload),
-  };
+  // GAS の action（gas/03_routing.js の routeAction_）と同じ名前の関数を作る。AppApi.createEvent(payload) なら action は createEvent。
+  // action を足したら、ここと routeAction_ の両方に足す（テストで、そろっているかを確かめる）
+  const ACTIONS = [
+    'createEvent', 'submitAnswer', 'addComment', 'deleteComment', 'getSummary', 'listMyEvents', 'buildShareFlex',
+    'deleteEvent', 'addOptions', 'claimEditor', 'approveEditRequest', 'updateOption', 'updateEvent', 'listMyOptions',
+    'buildReminderFlex', 'buildEditorInviteFlex', 'buildChangeNotificationFlex',
+  ];
+
+  return Object.fromEntries(ACTIONS.map((action) => [action, (payload) => call(action, payload)]));
 })();

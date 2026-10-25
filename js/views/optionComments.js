@@ -114,6 +114,7 @@ const OptionComments = (() => {
         window.addEventListener('pagehide', commit);
         AppUtil.notify('コメントを消しました', {
           actionLabel: '元に戻す',
+          // 「元に戻す」：消すのをやめて、コメントを元のように出す
           onAction: () => {
             if (settled) return;
             settled = true;
