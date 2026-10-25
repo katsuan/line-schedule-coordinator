@@ -207,3 +207,23 @@ test("画面の AppApi と GAS の routeAction_ は、同じ action をそろえ
   const gas = [...routing.matchAll(/case '(\w+)':/g)].map((m) => m[1]).sort();
   assert.deepStrictEqual(front, gas);
 });
+
+test("使い方の文は、実際の確かめの窓のボタン（「知らせる」）と同じ言葉", () => {
+  const guide = read("js/views/guide.js");
+  const card = read("js/views/optionCard.js");
+  assert.match(card, /title: '変更を回答者に知らせますか？'[^\n]*ok: '知らせる'/);
+  assert.match(guide, /「変更を回答者に知らせますか？」/);
+  assert.match(guide, /「知らせる」を選ぶと/);
+  assert.doesNotMatch(guide, /「はい」を選ぶと/);
+});
+
+test("スマホの幅では、開始・完了の日時の欄を縦に並べる（iPhone で日時が切れない）", () => {
+  assert.match(read("style.css"), /@media \(max-width: 430px\)[\s\S]*\.option-range \{ grid-template-columns: minmax\(0, 1fr\); \}/);
+});
+
+test("「LINE 版で開く」は Q キットと同じ 📱", () => {
+  ["js/platform.js", "js/views/previewModal.js"].forEach((file) => {
+    assert.match(read(file), /📱 LINE 版で開く/, file);
+    assert.doesNotMatch(read(file), /💬 LINE 版で開く/, file);
+  });
+});

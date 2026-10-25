@@ -471,3 +471,8 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
     color: var(--ls-text);
   }
 }
+
+/* 開始・完了の日時：スマホの幅（iPhone は 430px まで）では縦に並べる。横に2つだと1つが 110〜140px になり、iPhone の「2026/12/01 10:00」が切れる */
+@media (max-width: 430px) {
+  .option-range { grid-template-columns: minmax(0, 1fr); }
+}
