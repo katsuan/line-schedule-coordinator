@@ -198,3 +198,12 @@ test("編集を許可したお知らせは、予定を開くボタンつきの�
   assert.strictEqual(actions.length, 1);
   assert.match(actions[0], /"type":"uri".*event=EVT_1/);
 });
+
+test("画面の AppApi と GAS の routeAction_ は、同じ action をそろえて持つ", () => {
+  const context = vm.createContext({ URL, URLSearchParams, console, window: {} });
+  vm.runInContext(read("js/api.js") + "\n;globalThis.AppApi = AppApi;", context);
+  const front = Object.keys(context.AppApi).sort();
+  const routing = read("gas/03_routing.js");
+  const gas = [...routing.matchAll(/case '(\w+)':/g)].map((m) => m[1]).sort();
+  assert.deepStrictEqual(front, gas);
+});
