@@ -14,16 +14,30 @@ Q はカレンダー（綴じ具と日付の点、真ん中の1日だけ ○）�
 
 ## 見た目（Q キット）
 
-部品（見出しの行・カード・タブ・入力欄・ボタン・開閉・下から出るシート・下の送る帯・トースト）はおくるんの Q キット（`https://katsuan.github.io/line-share/shared/ui.css`・`ui.js`。使い方はおくるんの README）。`css/style.css` には、くるかなの色と字（`:root` の `--ls-accent` など）と、くるかなにしかない見た目（○△× のボタン・回答者の顔・コメント・カレンダー・送信内容プレビュー・使い方の画面）だけを置く。
+部品（見出しの行・カード・タブ・入力欄・ボタン・開閉・下から出るシート・下の送る帯・トースト）はおくるんの Q キット（`https://katsuan.github.io/line-share/shared/ui.css`・`ui.js`。使い方はおくるんの README）。`style.css` には、くるかなの色と字（`:root` の `--ls-accent` など）と、くるかなにしかない見た目（○△× のボタン・回答者の顔・コメント・カレンダー・送信内容プレビュー・使い方の画面）だけを置く。
 
 公開する前に `python3 ../q-oqrn/tools/qstamp.py index.html` で、読みこむ JS・CSS の版（`?v=`）をつけ直す。
+
+### ファイルの並べ方（おくるんの `docs/structure.md` にそろえる）
+
+- `index.html`：画面。`app.js`：画面の入口（どの画面を出すか決める）。`style.css`：見た目
+- `js/`：役わりごとの部品。`markup.js`（画面に出す文字と小さな部品）・`dates.js`（日付と時刻・カレンダー）・`notice.js`（知らせ・確かめ・待つボタン）の3つで `AppUtil` を作る。ほかは `api.js`・`share.js`・`views/` など（CLAUDE.md にくわしく）
+- `gas/`：GAS（番号＋役わり。`season.js` は Q キットの `shared/season.js` の写し）
+
+#### 前の名前のファイル（2026-11-25 ごろ消す）
+
+LINE の中のブラウザが古い `index.html` を覚えていることがあるので、前の名前のファイルを、新しいファイルを読むだけの中身で残している。
+
+- `js/util.js` → `js/markup.js`・`js/dates.js`・`js/notice.js`
+- `js/app.js` → `app.js`
+- `css/style.css` → `style.css`
 
 幹事がLIFFで予定を作成 → Flex Messageを生成してLINEへ共有 → 参加者がLIFFで○/△/×回答 → 幹事が回答集計を確認、という一連の流れを実現する。
 
 ## 構成
 
 ```
-GitHub Pages (このリポジトリのルート: index.html + css/ + js/)
+GitHub Pages (このリポジトリのルート: index.html + app.js + style.css + js/)
         ↓ fetch POST (text/plain, action-based)
 GAS Web App (gas/ 配下、clasp管理)
         ↓
