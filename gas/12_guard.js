@@ -1,6 +1,7 @@
 /**
- * 外から来た中身の確かめ（長さ・数・形）と、シートに書く前の守り、同時に書くときの順番、エラーの出し方。
- * Q のセキュリティの決まり（q-oqrn の docs/security.md）の G1・G2・G6・G7。
+ * 外から来た中身を守る：文字の長さ・数・形を確かめる、書きこむ操作を1つずつにする、画面に出すエラーの言葉を決める。
+ * シートに書く文字の守り（safeCell）は selfcheck.js（Q 共通）にある。
+ * 呼ばれ方：01_entry.js（鍵・エラー）と 06・08・09 のファイル（確かめ）。Q のセキュリティの決まり（q-oqrn の docs/security.md）G1・G2・G6・G7。
  */
 
 const LIMITS = {
@@ -22,13 +23,6 @@ const WRITE_ACTIONS = [
   'createEvent', 'addOptions', 'updateOption', 'updateEvent', 'claimEditor',
   'approveEditRequest', 'deleteEvent', 'submitAnswer', 'addComment', 'deleteComment',
 ];
-
-/** シートに書く文字が = + - @ で始まると式として動くので、' を付けて文字のままにする（G1） */
-function safeCell(value) {
-  if (typeof value !== 'string') return value;
-  if (/^[=+\-@\t\r]/.test(value) && !/^[+-]?\d+(\.\d+)?$/.test(value)) return "'" + value;
-  return value;
-}
 
 /** 文字の長さを確かめる。undefined はそのまま（「変えない」の意味で使うため） */
 function limitText_(value, max, label) {
@@ -97,6 +91,7 @@ function joinNamesForCard_(names, separator) {
 // 画面に出してよいエラー（自分で書いたやさしい言葉）。それ以外は中身を出さずログへ（G2）
 const PUBLIC_ERROR_PATTERN = /ログインしなおして|のみです|見つかりません|必須です|未対応|長すぎ|多すぎ|選べません|招待のリンク|サービスに接続できなくなりました/;
 
+// 画面に出すエラーの言葉。自分で書いたやさしい言葉だけ出し、それ以外は中身を出さずにログへ
 function publicErrorMessage_(err) {
   const message = String((err && err.message) || err || '');
   if (PUBLIC_ERROR_PATTERN.test(message) && !/Script Properties|Exception:/.test(message)) {

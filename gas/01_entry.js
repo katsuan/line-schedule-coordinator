@@ -1,8 +1,5 @@
-/**
- * Web App エントリポイント。
- * フロントは text/plain で JSON.stringify({action, ...}) をPOSTする
- * （GASはカスタムCORSヘッダーを返せないため、preflightを避けるための約束事）。
- */
+// 画面から届いた { action, accessToken, ... } を受ける入口。本人は鍵の外で LINE に確かめ、書きこむ操作だけ鍵を持って動かす。
+// 返すもの：{ ok: true, data } か { ok: false, error（やさしい言葉）}
 function doPost(e) { // qcheck-ok: G3 本人は handleAction_ で LINE のアクセストークンを確かめて決める（11_auth.js）
   try {
     const body = JSON.parse(e.postData.contents);
@@ -22,6 +19,7 @@ function doPost(e) { // qcheck-ok: G3 本人は handleAction_ で LINE のアク
   }
 }
 
+// LINE に確かめた本人で、画面から来た userId・名前・アイコンを上書きしてから、action の処理（03_routing.js）へ渡す
 function handleAction_(action, me, payload) {
   // 本人は LINE に確かめて決めた人（画面から来た userId・名前・画像は使わない。11_auth.js）
   payload.userId = me.userId; // qcheck-ok: G4 LINE に確かめた本人で上書きする
@@ -33,10 +31,12 @@ function handleAction_(action, me, payload) {
   return routeAction_(action, payload);
 }
 
+// GET は使わない。来たら「POST で」と返す
 function doGet(e) {
   return jsonResponse_({ ok: false, error: 'GET は未対応です。POSTでactionを指定してください。' });
 }
 
+// obj を JSON の返事にする
 function jsonResponse_(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))

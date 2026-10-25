@@ -1,3 +1,5 @@
+// カレンダーの画面（CalendarView）：月のマスに自分のイベントの印、下にこれからの一覧。日を押すとその日の予定と ○△×。
+// app.js が ?view=calendar のとき render を呼ぶ。週のはじまりは AppUtil（dates.js）
 const CalendarView = (() => {
   // 自分の答えの色（日付の小さな印と、一覧の札で同じ）
   const STATUS_CLASS = { '○': 'dot-ok', '△': 'dot-maybe', '×': 'dot-ng' };
@@ -8,11 +10,13 @@ const CalendarView = (() => {
     return `${year}-${month}-${day}`;
   }
 
+  // 日時を、その日のマスの印にする
   function dateKey(isoLike) {
     const d = new Date(isoLike);
     return dayKey(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
+  // 自分のイベントを読んで、カレンダーの画面を描く
   async function render(root, ctx) {
     root.innerHTML = AppUtil.loadingHtml();
     let { items } = await AppApi.listMyOptions({ userId: ctx.identity.userId });
@@ -23,6 +27,7 @@ const CalendarView = (() => {
     let viewMonth = today.getMonth();
     let weekStart = AppUtil.getWeekStart();
 
+    // イベントを日ごとに分ける（マスの印 → イベントの並び）
     function byDayMap() {
       const map = {};
       items.forEach((it) => {
@@ -32,6 +37,7 @@ const CalendarView = (() => {
       return map;
     }
 
+    // 月のマス（曜日の見出しと日。イベントのある日は時刻の札）の HTML
     function monthGridHtml(year, month, byDay) {
       const cells = AppUtil.monthCells(year, month, weekStart);
 
@@ -57,13 +63,9 @@ const CalendarView = (() => {
       return `<div class="cal-grid-header">${weekHeader}</div><div class="cal-grid">${dayCells}</div>`;
     }
 
-    function isPast(it) {
-      const end = it.endAt || it.startAt;
-      return !!end && new Date(end) < new Date();
-    }
-
+    // これからのイベントの一覧の HTML（自分の答えの札つき）
     function listHtml() {
-      const upcoming = items.filter((it) => !isPast(it));
+      const upcoming = items.filter((it) => !AppUtil.hasEnded(it));
       if (!upcoming.length) return '<p class="ls-empty">今後の予定はありません。</p>';
       return upcoming.map((it) => {
         const statusText = it.myAnswer ? STATUS_LABEL[it.myAnswer] : '未回答';
@@ -83,6 +85,7 @@ const CalendarView = (() => {
       }).join('');
     }
 
+    // その日のシートに出す1つのイベント（○△× のボタン・カレンダー追加・予定を開く）
     function daySheetItemHtml(it) {
       return `
         <div class="answer-row" data-option-id="${AppUtil.escapeHtml(it.optionId)}" data-event-id="${AppUtil.escapeHtml(it.eventId)}">
@@ -101,6 +104,7 @@ const CalendarView = (() => {
         </div>`;
     }
 
+    // その日の予定のシートを開き、○△× を押したら保存する
     function openDaySheet(key) {
       const dayItems = items.filter((it) => dateKey(it.startAt) === key);
       if (!dayItems.length) return;
@@ -128,6 +132,7 @@ const CalendarView = (() => {
       });
     }
 
+    // 画面全体（見出し・月の切りかえ・週のはじまり・一覧）を描いて、ボタンをつなぐ
     function paint() {
       root.innerHTML = `
         <header class="page-header">
@@ -175,6 +180,7 @@ const CalendarView = (() => {
       paintGrid();
     }
 
+    // 見ている月のマスだけ描きなおす
     function paintGrid() {
       const byDay = byDayMap();
       root.querySelector('#cal-month-label').textContent = `${viewYear}年${viewMonth + 1}月`;

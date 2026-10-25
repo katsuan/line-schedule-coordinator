@@ -1,6 +1,6 @@
 /**
- * 詳細画面のページヘッダー（タイトル・チップ・編集フォーム・編集権限依頼/承認）。
- * js/views/detail.js から切り出した共有コンポーネント。
+ * 予定の画面の見出し（DetailHeader）：題・作成者／編集者の札・編集者の数・編集の依頼と承認・題と説明を変えるところ。
+ * 呼ばれ方：views/detail.js から（headerHtml で描き、wire○○ でボタンをつなぐ）。
  */
 const DetailHeader = (() => {
   // 「許可する」のカードは何日もあとに押されることがある。いまの状態を見て、承認を出すか案内するかを決める
@@ -19,6 +19,7 @@ const DetailHeader = (() => {
     invalid: () => 'この依頼のリンクは使えません。もう一度「🔑 編集を依頼」してもらってね。',
   };
 
+  // 見出しの HTML（題・札・編集のボタン・題と説明を変える欄）
   function headerHtml(event, data, canEdit, ctx) {
     const statusPill = data.isCreator
       ? '<span class="status-pill status-pill-creator">作成者</span>'
@@ -62,6 +63,7 @@ const DetailHeader = (() => {
       </header>`;
   }
 
+  // 編集の依頼を許可するかを確かめるシート。許可なら true
   function showApproveConfirmSheet(eventTitle, requesterName, requesterPic) {
     return new Promise((resolve) => {
       const sheet = Sheet.open({
@@ -83,6 +85,7 @@ const DetailHeader = (() => {
     });
   }
 
+  // 編集の依頼・承認・許可を知らせる のボタンをつなぐ（あとで開いた依頼のカードには、いまの状態の知らせを出す）
   function wireEditAccessSection(root, ctx, data) {
     const state = approveState(ctx, data);
     if (APPROVE_NOTICE[state] && !ctx.approveNoticeShown) {
@@ -131,6 +134,7 @@ const DetailHeader = (() => {
     }
   }
 
+  // 題と説明を変える欄を開く・保存する・やめる をつなぐ
   function wireEventEdit(root, ctx, refresh) {
     const editBtn = root.querySelector('#edit-event-btn');
     if (editBtn) {

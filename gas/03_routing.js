@@ -1,7 +1,4 @@
-/**
- * action 文字列 → ハンドラのディスパッチのみを行う。
- * 各アクションの実装は 07_lookups.js / 08_eventActions.js / 09_responseActions.js / 06_message.js を参照。
- */
+// action に合う処理を呼んで、その返り値を返す。知らない action はエラー
 function routeAction_(action, payload) {
   switch (action) {
     case 'createEvent': return createEvent_(payload);

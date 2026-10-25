@@ -1,20 +1,31 @@
 // 日付と時刻（見せ方・入力欄の値・Google カレンダーへのリンク・あと何日）と、カレンダーの月のマス・週のはじまり。
 // AppUtil に足す。HTML のエスケープは js/markup.js の AppUtil.escapeHtml を使う
 var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() => {
+  // 数を2けたの文字に（3 → "03"）
+  function pad(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  // もう終わったイベントか（終わりがなければ始まりで見る）
+  function hasEnded(item) {
+    const end = item && (item.endAt || item.startAt);
+    return !!end && new Date(end) < new Date();
+  }
+
+  // 日時を「2026/10/25 10:00」の形に
   function formatDateTimeLocal(isoLike) {
     if (!isoLike) return '';
     const date = new Date(isoLike);
     if (isNaN(date.getTime())) return String(isoLike);
-    const pad = (n) => String(n).padStart(2, '0');
     return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
+  // 「始まり 〜 終わり」の形に。同じ日なら終わりは時刻だけ
   function formatDateRange(startAt, endAt) {
     if (!startAt) return '';
     if (!endAt) return formatDateTimeLocal(startAt);
     const start = new Date(startAt);
     const end = new Date(endAt);
-    const pad = (n) => String(n).padStart(2, '0');
     const sameDay = start.getFullYear() === end.getFullYear() &&
       start.getMonth() === end.getMonth() &&
       start.getDate() === end.getDate();
@@ -25,28 +36,29 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     return `${startText} 〜 ${endText}`;
   }
 
+  // 日時を、入力欄（datetime-local）に入れる形「2026-10-25T10:00」に
   function toDatetimeLocalValue(isoLike) {
     if (!isoLike) return '';
     const date = new Date(isoLike);
     if (isNaN(date.getTime())) return '';
-    const pad = (n) => String(n).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
+  // 時刻だけ「10:00」
   function shortTime(isoLike) {
     if (!isoLike) return '';
     const d = new Date(isoLike);
     if (isNaN(d.getTime())) return '';
-    const pad = (n) => String(n).padStart(2, '0');
     return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
+  // Google カレンダーの URL に入れる形「20261025T100000」に
   function toGCalStamp(value) {
     const date = value instanceof Date ? value : new Date(value);
-    const pad = (n) => String(n).padStart(2, '0');
     return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
   }
 
+  // Google カレンダーに予定を足す画面の URL（終わりがなければ1時間）
   function buildGoogleCalendarUrl(title, description, startAt, endAt, location) {
     if (!startAt) return '';
     const start = toGCalStamp(startAt);
@@ -63,6 +75,7 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     return 'https://calendar.google.com/calendar/render?' + params.toString();
   }
 
+  // 7日以内なら「今日」「明日」「○日後」の札。それ以外は空
   function relativeDayPillHtml(startAt) {
     if (!startAt) return '';
     const start = new Date(startAt);
@@ -78,12 +91,14 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
 
   const CALENDAR_ICON_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 9.5H21" stroke="currentColor" stroke-width="1.6"/><path d="M8 3V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 3V6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 13V17M10 15H14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 
+  // 「カレンダー追加」のリンク（Google カレンダーを開く）
   function calendarLinkHtml(title, description, startAt, endAt, location) {
     const url = buildGoogleCalendarUrl(title, description, startAt, endAt, location);
     if (!url) return '';
     return `<a class="cal-link" href="${AppUtil.escapeHtml(url)}" target="_blank" rel="noopener">${CALENDAR_ICON_SVG}<span>カレンダー追加</span></a>`;
   }
 
+  // イベントの入力を確かめる。だめなら知らせる文、よければ null
   function validateEventFields({ title, startAt, endAt }) {
     if (!title || !startAt || !endAt) {
       return 'タイトル・開始・完了を入力してください';
@@ -102,13 +117,14 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
   const DEFAULT_WEEK_START = 1;
   const WEEK_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
 
+  // 端末に残した週のはじまり（0 か 1）。なければ null
   function readWeekStart(key) {
     const value = window.localStorage.getItem(key);
     return value === '0' || value === '1' ? Number(value) : null;
   }
 
-  // Q キットの部品（line-share/shared/week-start.js → window.QWeekStart）を使う。
-  // 前の版のくるかなの値を「まだ共通の設定がないとき」の値として渡す。部品が読めないときも同じ決まりで読む
+  // 週のはじまり（1＝月曜・0＝日曜）。Q キットの部品（week-start.js の QWeekStart）を使い、前の版のくるかなの値を
+  // 「まだ共通の設定がないとき」の値として渡す。部品が読めないときも同じ決まりで読む
   function getWeekStart() {
     let old = null;
     try { old = readWeekStart(OLD_WEEK_START_KEY); } catch (e) { /* 読めない端末は月曜 */ }
@@ -121,6 +137,7 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     }
   }
 
+  // 週のはじまりを残す（Q のツールで共通の設定に）
   function setWeekStart(value) {
     if (window.QWeekStart) {
       window.QWeekStart.set(value === 0 ? 0 : 1);
@@ -152,5 +169,5 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     });
   }
 
-  return { getWeekStart, setWeekStart, monthCells, weekHeader, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, shortTime, validateEventFields, relativeDayPillHtml };
+  return { hasEnded, getWeekStart, setWeekStart, monthCells, weekHeader, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, shortTime, validateEventFields, relativeDayPillHtml };
 })());

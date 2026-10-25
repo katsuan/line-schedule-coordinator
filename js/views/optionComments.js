@@ -1,10 +1,12 @@
 /**
- * イベントカードのコメント（追加・一覧表示・削除）まわり。js/views/optionCard.js から切り出し。
+ * イベントのコメント（OptionComments）：一覧（多いときは折りたたむ）・足す欄・消す（元に戻せる）。
+ * 呼ばれ方：views/optionCard.js と views/detail.js から。
  */
 const OptionComments = (() => {
   const COMMENT_VISIBLE_LIMIT = 2;
   const UNDO_MS = 6000; // トーストが出ている長さ（Q キットの toast と同じ）
 
+  // コメント1つ（アイコン・名前・文。自分のには消すボタン）
   function commentEntryHtml(comment, myUserId) {
     const isMine = comment.userId === myUserId;
     return `
@@ -18,6 +20,7 @@ const OptionComments = (() => {
       </div>`;
   }
 
+  // コメントの並び。多いときは最初のいくつかだけ出して、残りは開いて見る
   function commentsListHtml(comments, myUserId) {
     comments = comments || [];
     if (comments.length <= COMMENT_VISIBLE_LIMIT) {
@@ -33,10 +36,12 @@ const OptionComments = (() => {
       </details>`;
   }
 
+  // 「コメントを追加」のボタン
   function commentAddToggleHtml(optionId) {
     return `<button type="button" class="comment-add-toggle" data-option-id="${AppUtil.escapeHtml(optionId)}">💬 コメントを追加</button>`;
   }
 
+  // コメントを書く欄と保存のボタン（はじめは隠す）
   function commentAddFormHtml(optionId) {
     return `
       <div class="comment-add-form" data-option-id="${AppUtil.escapeHtml(optionId)}" hidden>
@@ -45,6 +50,7 @@ const OptionComments = (() => {
       </div>`;
   }
 
+  // コメントを足す・消す をつなぐ（消すときは数秒「元に戻す」を出し、そのあと本当に消す）
   function wireComments(root, ctx, refresh) {
     root.querySelectorAll('.comment-add-toggle').forEach((toggle) => {
       toggle.addEventListener('click', () => {
@@ -88,6 +94,7 @@ const OptionComments = (() => {
         if (!entry || entry.hidden) return;
         entry.hidden = true;
         let settled = false;
+        // 消すのを決める（元に戻すが押されなかった・ページを離れるとき）
         const commit = async () => {
           window.removeEventListener('pagehide', commit);
           if (settled) return;

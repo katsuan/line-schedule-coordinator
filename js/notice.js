@@ -1,6 +1,7 @@
 // 知らせと確かめ（Q キットのトースト・下から出る窓）、季節の絵文字、押してから終わるまで待つボタン。
 // AppUtil に足す
 var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() => {
+  // ボタンを押せなくして、くるくるを出す。返す関数を呼ぶと元に戻る
   function beginButtonLoading(btn) {
     const originalColor = getComputedStyle(btn).color;
     btn.classList.add('is-saving');
@@ -17,14 +18,14 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     };
   }
 
-  // 下に数秒出る知らせ（Q キットのトースト）。options に { actionLabel: '元に戻す', onAction } を渡すとボタンが付く。
-  // Q キットが読めなかったときは alert（ボタンは付けられない）
   // 季節の絵文字（Q キットの season.js。tool-share.js があとから読むので、まだなければ付けない）。
   // うれしい瞬間の短い文だけに使う（エラー・確認・ボタン・送るカードの本文には使わない）
   function withSeason(text) {
     return window.QSeason && typeof window.QSeason.decorate === 'function' ? window.QSeason.decorate(text) : text;
   }
 
+  // 下に数秒出る知らせ（Q キットのトースト）。options に { actionLabel: '元に戻す', onAction } でボタンが付く。
+  // Q キットが読めなかったときは alert（ボタンなし）
   function notify(message, options) {
     if (window.LineShareUI && typeof LineShareUI.toast === 'function') {
       LineShareUI.toast(message, options);
@@ -56,6 +57,7 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     return '電波のよいところで、もう一度ためしてね。';
   }
 
+  // 失敗の知らせ：「○○できませんでした。次にすること」をやさしく出す（くわしい中身はコンソールへ）
   function notifyError(what, err) {
     console.warn(what, err);
     notify(`${what || 'うまくいきませんでした'}。${friendlyReason(err)}`);

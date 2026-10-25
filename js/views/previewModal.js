@@ -1,10 +1,11 @@
 /**
- * LINE送信前の「送信内容プレビュー」（下から出るシート。js/views/sheet.js）。js/share.js から切り出した独立UIコンポーネント。
- * Flexツリーの変換自体は js/flexPreview.js (FlexPreview) を参照。
+ * 送る前の見本のシート（PreviewModal）：カードの見本・ひとこと・送る答え（○△×）の選択・名前を隠す・送るボタン。
+ * 呼ばれ方：share.js の sendFlexMessage から。カードの変換は flexPreview.js、シートは views/sheet.js。
  */
 const PreviewModal = (() => {
   const ANSWER_CLASS = { '○': 'choice-ok', '△': 'choice-maybe', '×': 'choice-ng' };
 
+  // 見本のシートを開く。送るなら選んだ中身（ひとこと・送る答え・隠す答え）、やめたら null で終わる Promise
   function show(flex, opts) {
     const presets = (opts && opts.presets) || [];
     const defaultIndex = (opts && opts.defaultPresetIndex) || 0;
@@ -19,6 +20,7 @@ const PreviewModal = (() => {
       let presetIndex = presets.length ? defaultIndex : null;
       let commentText = '';
       let sendAsChat = true;
+      // いまの選び方で、見本の行を作る
       const linesFor = (unselectedAnswers, hiddenAnswers) => FlexPreview.buildPreviewLines(FlexPreview.applyComment(
         FlexPreview.hideNames(FlexPreview.filterGroups(flex, unselectedAnswers), hiddenAnswers),
         sendAsChat ? '' : commentText, presetIndex, presetIndex != null ? presets[presetIndex] : null
@@ -96,6 +98,7 @@ const PreviewModal = (() => {
           : [];
         return { unselectedAnswers, hiddenAnswers };
       };
+      // 見本を描きなおす
       const renderPreview = () => {
         const { unselectedAnswers, hiddenAnswers } = answerFilter();
         previewBox.innerHTML = FlexPreview.renderPreviewLinesHtml(linesFor(unselectedAnswers, hiddenAnswers));
@@ -114,6 +117,7 @@ const PreviewModal = (() => {
       const bannerComment = overlay.querySelector('#preview-header-comment');
       const chatCheckbox = overlay.querySelector('#preview-comment-as-chat');
       const chatBubble = overlay.querySelector('#preview-chat-bubble');
+      // 見出しの色を、選んだひとことに合わせる
       const updateBanner = () => {
         if (!banner) return;
         const color = FlexPreview.headerColorFor(presetIndex);
@@ -122,6 +126,7 @@ const PreviewModal = (() => {
         if (bannerLabel) bannerLabel.textContent = presetIndex != null ? presets[presetIndex] : '';
         if (bannerComment) bannerComment.textContent = sendAsChat ? '' : commentText;
       };
+      // ひとことを別の文で送るときの、吹き出しの見本
       const updateChatBubble = () => {
         if (!chatBubble) return;
         const show = !!commentText && sendAsChat;
@@ -171,6 +176,7 @@ const PreviewModal = (() => {
         });
       });
 
+      // シートを閉じて、結果を返す
       const close = (result) => { sheet.close(); resolve(result); };
       overlay.querySelector('#preview-cancel').addEventListener('click', sheet.dismiss);
       const confirmBtn = overlay.querySelector('#preview-confirm');

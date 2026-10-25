@@ -1,6 +1,9 @@
+// 設定（AppConfig）：config.json（liffId・gasUrl）を1回だけ読んで覚える。読めなければ空で動く。
+// AppPlatform・AppApi・AppShare から AppConfig.load() で使う
 const AppConfig = (() => {
   let config = null;
 
+  // config.json を読んで返す（2回目からは覚えたもの）
   async function load() {
     if (config) return config;
     try {

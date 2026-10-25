@@ -1,8 +1,9 @@
 /**
- * 回答（RESPONSES）・コメント（COMMENTS）の登録・削除。
- * 集計・一覧系のクエリは 10_summary.js を参照。
+ * 回答（○△×）とコメントを書く・消す。
+ * 呼ばれ方：03_routing.js から（鍵を持って1つずつ）。集計や一覧は 10_summary.js。
  */
 
+// ○△× の答えを書く（同じ人・同じイベントは書きかえる）。答えは ○△× だけ、その予定のイベントだけ
 function submitAnswer_(payload) {
   const { eventId, userId, displayName, pictureUrl, answers } = payload;
   if (!eventId || !userId || !Array.isArray(answers) || !answers.length) {
@@ -48,6 +49,7 @@ function submitAnswer_(payload) {
   return { ok: true };
 }
 
+// イベントにコメントを足す。返すもの：{ commentId }
 function addComment_(payload) {
   const { eventId, optionId, userId, displayName, pictureUrl } = payload;
   const text = typeof payload.text === 'string' ? payload.text : '';
@@ -70,6 +72,7 @@ function addComment_(payload) {
   return { commentId };
 }
 
+// コメントを消す（書いた人だけ）
 function deleteComment_(payload) {
   const { eventId, userId, commentId } = payload;
   if (!eventId || !userId || !commentId) {

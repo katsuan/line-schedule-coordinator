@@ -1,21 +1,23 @@
 /**
- * イベントカード（予定枠1件分）の表示・編集・インライン回答まわりを
- * detail.js から切り出した共有コンポーネント。
- * コメントまわりは js/views/optionComments.js (OptionComments) を参照。
+ * イベント1つ分の部品（OptionCard）：題と日時の表示・変える欄・○△× のボタン（押すとすぐ保存）。
+ * 呼ばれ方：views/detail.js（予定の画面）と views/calendar.js（その日のシート）から。コメントは optionComments.js。
  */
 const OptionCard = (() => {
   const ANSWERS = ['○', '△', '×'];
   const ANSWER_CLASS = { '○': 'choice-ok', '△': 'choice-maybe', '×': 'choice-ng' };
 
+  // ○△× のボタン（自分の答えに印）
   function choiceButtonsHtml(optionId, myAnswers) {
     return ANSWERS.map((a) => `
       <button type="button" class="choice-btn ${ANSWER_CLASS[a]} ${myAnswers[optionId] === a ? 'selected' : ''}" data-value="${a}">${a}</button>`).join('');
   }
 
+  // 答えに合う色のクラス（答えがなければ status-none）
   function statusClass(answer) {
     return ANSWER_CLASS[answer] || 'status-none';
   }
 
+  // ○△× のボタンと、それぞれの人数
   function answerButtonsHtml(optionId, myAnswer, counts) {
     return `
       <div class="answer-buttons" data-option-id="${AppUtil.escapeHtml(optionId)}">
@@ -27,11 +29,13 @@ const OptionCard = (() => {
       </div>`;
   }
 
+  // イベント名の入力欄
   function titleFieldHtml(prefix, values, placeholder) {
     values = values || {};
     return `<input type="text" class="ls-input option-title-input ${prefix}-title" value="${AppUtil.escapeHtml(values.title || '')}" placeholder="${AppUtil.escapeHtml(placeholder || 'イベント名')}">`;
   }
 
+  // 開始・完了・場所の入力欄
   function rangeLocationFieldsHtml(prefix, values) {
     values = values || {};
     return `
@@ -42,10 +46,12 @@ const OptionCard = (() => {
       <input type="text" class="ls-input ${prefix}-location" value="${AppUtil.escapeHtml(values.location || '')}" placeholder="📍 場所・持ち物など（任意）">`;
   }
 
+  // イベント名・開始・完了・場所の入力欄をまとめて
   function fieldsHtml(prefix, values) {
     return titleFieldHtml(prefix, values) + rangeLocationFieldsHtml(prefix, values);
   }
 
+  // 入力欄から、イベント名・開始・完了・場所を読む
   function readFields(container, prefix) {
     return {
       title: container.querySelector(`.${prefix}-title`).value.trim(),
@@ -55,6 +61,7 @@ const OptionCard = (() => {
     };
   }
 
+  // イベントの題・日時・場所の表示と、変える欄（変えられる人だけ）
   function metaHtml(opt, canEdit, comments, myUserId) {
     return `
       <div class="option-meta" data-option-id="${AppUtil.escapeHtml(opt.optionId)}">
@@ -82,6 +89,7 @@ const OptionCard = (() => {
       </div>`;
   }
 
+  // イベントを変える・消すのボタンをつなぐ（答えた人がいれば、変えたことを知らせるか聞く）
   function wireEditForms(root, ctx, refresh) {
     root.querySelectorAll('.option-meta').forEach((meta) => {
       const editBtn = meta.querySelector('.edit-option-btn');
@@ -167,6 +175,7 @@ const OptionCard = (() => {
     });
   }
 
+  // ○△× のボタンをつなぐ（押すとすぐ保存して描きなおす）
   function wireAnswerButtons(root, ctx, refresh) {
     root.querySelectorAll('.answer-buttons').forEach((wrap) => {
       wrap.addEventListener('click', async (e) => {

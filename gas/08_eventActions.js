@@ -1,8 +1,9 @@
 /**
- * 予定（EVENTS）・イベント（EVENT_OPTIONS）本体のCRUDアクション。
- * 回答（RESPONSES）まわりは 09_responseActions.js を参照。
+ * 予定（EVENTS）とイベント（EVENT_OPTIONS）を作る・変える・消す。編集者になる・編集を許可する。
+ * 呼ばれ方：03_routing.js から（書きこむ操作は 01_entry.js で鍵を持って1つずつ）。回答は 09_responseActions.js。
  */
 
+// 新しい予定とイベントを作る。返すもの：{ eventId }
 function createEvent_(payload) {
   const { creatorUserId, creatorDisplayName, creatorPictureUrl } = payload;
   const title = limitText_(payload.title, LIMITS.TITLE, 'タイトル');
@@ -47,6 +48,7 @@ function createEvent_(payload) {
   return { eventId };
 }
 
+// 予定の題・説明・回答期限を変える（作った人か編集者だけ）
 function updateEvent_(payload) {
   const { eventId, userId } = payload;
   const title = limitText_(payload.title, LIMITS.TITLE, 'タイトル');
@@ -74,6 +76,7 @@ function updateEvent_(payload) {
   return { ok: true };
 }
 
+// 予定にイベントを足す（作った人か編集者だけ。多すぎるときは断る）
 function addOptions_(payload) {
   const { eventId, userId } = payload;
   if (!eventId || !payload.options || !payload.options.length) {
@@ -109,6 +112,7 @@ function addOptions_(payload) {
   return { ok: true };
 }
 
+// イベントの題・日時・メモを変える（作った人か編集者だけ）
 function updateOption_(payload) {
   const { eventId, userId, optionId } = payload;
   const title = limitText_(payload.title, LIMITS.OPTION_TITLE, 'イベント名');
@@ -141,6 +145,7 @@ function updateOption_(payload) {
   return { ok: true };
 }
 
+// 招待のリンク（合言葉つき）から開いた人を、編集者にする
 function claimEditor_(payload) {
   const { eventId, userId, displayName, pictureUrl } = payload;
   if (!eventId || !userId) {
@@ -170,8 +175,8 @@ function claimEditor_(payload) {
   return { ok: true };
 }
 
-// claimEditor_ は「自分を編集者にする」（招待リンク経由の自己登録）。
-// こちらは「作成者が特定のユーザーを編集者として承認する」（編集権限の依頼フロー）用。
+// 作った人が、編集を頼んだ人（記号で届く）を編集者にする。
+// （claimEditor_ は招待のリンクから自分でなるほう）
 function approveEditRequest_(payload) {
   const { eventId, userId } = payload;
   // 依頼のリンクに入っているのは、本物の ID ではなく、その予定の記号（11_auth.js）
@@ -200,6 +205,7 @@ function approveEditRequest_(payload) {
   return { ok: true };
 }
 
+// 予定と、そのイベント・回答・コメントを全部消す（作った人だけ）
 function deleteEvent_(payload) {
   const { eventId, userId } = payload;
   const event = findEventById_(eventId);
@@ -222,6 +228,7 @@ function deleteEvent_(payload) {
   return { ok: true };
 }
 
+// 予定を送るカードを返す（06_message.js の buildEventShareFlex_）
 function buildShareFlex_(payload) {
   const { eventId } = payload;
   return buildEventShareFlex_(eventId);

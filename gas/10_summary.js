@@ -1,9 +1,10 @@
 /**
- * 集計・一覧系のクエリ（getSummary_ / listMyEvents_ / listMyOptions_）。
- * 回答・コメントの登録/削除は 09_responseActions.js を参照。
+ * 集計と一覧：予定の画面に出す回答のようす（getSummary_）、自分の予定の一覧（listMyEvents_）、カレンダーのイベント（listMyOptions_）。
+ * 呼ばれ方：03_routing.js から（読むだけなので鍵は持たない）。他人の ID は本物ではなく記号にして返す。
  */
 
-function _groupBy_(items, key) {
+// 並びを key の値ごとに分けた Map を返す
+function groupBy_(items, key) {
   const map = new Map();
   items.forEach((item) => {
     const k = item[key];
@@ -27,11 +28,12 @@ function getSummary_(payload) {
   const { rows: users } = sheetRowsAsObjects_(SHEET.USERS);
 
   const userById = new Map(users.map((u) => [u.userId, u]));
+  // userId の人の行（なければ空）
   const userOf = (uid) => userById.get(uid) || {};
   // 外に出すのは本物の userId ではなく、この予定だけの記号（11_auth.js）
   const pid = (uid) => publicIdOf_(eventId, uid);
-  const responsesByOption = _groupBy_(responses, 'optionId');
-  const commentsByOption = _groupBy_(comments, 'optionId');
+  const responsesByOption = groupBy_(responses, 'optionId');
+  const commentsByOption = groupBy_(comments, 'optionId');
 
   const answeredUserIds = new Set(responses.map((r) => r.userId));
   const myAnswers = {};
@@ -104,6 +106,7 @@ function getSummary_(payload) {
   };
 }
 
+// 自分が作った・答えた予定の一覧（新しい順）。答えおわったか・もう終わった予定かもつける
 function listMyEvents_(payload) {
   const { userId } = payload;
   if (!userId) {
@@ -119,6 +122,7 @@ function listMyEvents_(payload) {
 
   const related = events.filter((e) => e.creatorUserId === userId || myResponseEventIds.has(e.eventId));
 
+  // その予定の全部のイベントに答えたか
   const hasFullyAnswered = (eventId) => {
     const optionIds = allOptions.filter((o) => o.eventId === eventId).map((o) => o.optionId);
     if (!optionIds.length) return false;
@@ -153,6 +157,7 @@ function listMyEvents_(payload) {
   return { events: list };
 }
 
+// 自分にかかわる予定のイベントを全部（カレンダー用）。自分の答えもつける
 function listMyOptions_(payload) {
   const { userId } = payload;
   if (!userId) {
