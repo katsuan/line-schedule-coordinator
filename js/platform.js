@@ -1,6 +1,9 @@
+// LINE（LIFF）とのつなぎ（AppPlatform）：だれが使っているか（本人）・LINE の鍵・ブラウザ版の案内。
+// app.js が最初に initIdentity を呼ぶ。手元で試すとき（localhost）は、この端末だけの仮の ID で動く
 const AppPlatform = (() => {
   let identityPromise = null;
 
+  // 手元で試しているか（file:・localhost・127.0.0.1）
   function isLocalPreviewEnvironment() {
     const hostname = String(window.location.hostname || '').toLowerCase();
     return (
@@ -11,6 +14,7 @@ const AppPlatform = (() => {
     );
   }
 
+  // 手元で試すときの仮の ID（この端末に残して、毎回同じにする）
   function getStableDebugUserId() {
     const storageKey = 'schedule-coordinator-debug-user-id';
     try {
@@ -25,6 +29,7 @@ const AppPlatform = (() => {
     }
   }
 
+  // 手元で試すときの本人（仮の ID と名前）
   function debugIdentity(displayName) {
     return {
       userId: getStableDebugUserId(),
@@ -33,6 +38,7 @@ const AppPlatform = (() => {
     };
   }
 
+  // 本人（userId・名前・アイコン）を決めて返す。LINE 版なら LIFF から、ブラウザ版ならログインするかを選んでもらう。1回だけ動く
   async function initIdentity() {
     if (identityPromise) return identityPromise;
 

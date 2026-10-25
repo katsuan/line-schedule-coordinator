@@ -1,7 +1,9 @@
 /**
- * Script Properties
- * @type {GoogleAppsScript.Properties.Properties}
+ * 設定の名前と決まった値：Script Properties のキー・シートの名前・○△× の印・予定の状態・カードの色。
+ * どのファイルからも読む（GAS は全部のファイルが1つの場所に並ぶので、ここは定数と小さな読み出しだけ）。
  */
+
+// Script Properties（SPREADSHEET_ID・LIFF_URL など。値は GAS エディタの「プロジェクトの設定」で入れる）
 const PROPS = PropertiesService.getScriptProperties();
 
 /** ========= KEYS ========= */
@@ -40,6 +42,7 @@ const COLOR = {
   BORDER: '#EEEEEE',
 };
 
+// 記録を置くスプレッドシートの ID。入っていなければ止める
 function getSpreadsheetId_() {
   const id = PROPS.getProperty(KEYS.SPREADSHEET_ID);
   if (!id) {
@@ -48,6 +51,7 @@ function getSpreadsheetId_() {
   return id;
 }
 
+// 画面（LIFF）の URL。カードのボタンの行き先に使う。なければ空
 function getLiffUrl_() {
   return PROPS.getProperty(KEYS.LIFF_URL) || '';
 }

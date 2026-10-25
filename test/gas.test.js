@@ -347,3 +347,16 @@ test("季節の絵文字：予定を送るカードの altText にだけ、と�
     assert.strictEqual(gas.doPost({ action, accessToken: "tok-owner", eventId, names: [], groups: {} }).ok, true, action);
   });
 });
+
+test("自己点検：selfcheck.js は Q キットの写しと同じ中身。checkSetup は ❌ なしで終わり、何も書かない", () => {
+  const fs = require("node:fs");
+  assert.strictEqual(fs.readFileSync(path.join(__dirname, "../gas/selfcheck.js"), "utf8"),
+    fs.readFileSync(path.join(__dirname, "../../q-oqrn/tools/qtest/selfcheck.gs"), "utf8"));
+  const gas = makeGas();
+  summary(gas, create(gas)); // シートを作る（読むときに、ないシートは作られる）
+  const before = JSON.stringify(gas.rows("EVENTS"));
+  const result = gas.call("checkSetup");
+  assert.strictEqual(result.ok, true, JSON.stringify(result.results));
+  assert.ok(result.results.some((r) => r.area && /シート|Sheets|sheet/i.test(r.area + r.text)), JSON.stringify(result.results));
+  assert.strictEqual(JSON.stringify(gas.rows("EVENTS")), before);
+});

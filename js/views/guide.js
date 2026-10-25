@@ -1,4 +1,7 @@
+// 使い方の画面（GuideView）：くるかなの流れ・幹事と参加者のよくある質問・はじめるボタン。
+// app.js が URL に何もないとき（と、開けなかったとき）に render を呼ぶ
 const GuideView = (() => {
+  // 使い方の1つの手順（番号・題・説明）
   function stepItem(num, title, desc) {
     return `
       <div class="guide-step-item">
@@ -16,6 +19,7 @@ const GuideView = (() => {
     member: 'status-answered',
   };
 
+  // よくある質問1つ（だれ向けかの札・問い・答え）
   function faqItem(audience, audienceLabel, q, a) {
     return `
       <div class="ls-panel guide-faq-item">
@@ -27,10 +31,12 @@ const GuideView = (() => {
       </div>`;
   }
 
+  // 「予定をはじめる」のボタン
   function ctaHtml() {
     return `<a class="ls-button is-primary is-block" href="?view=list">＋ 予定をはじめる</a>`;
   }
 
+  // 使い方の画面を描く（opts.error があれば上に知らせ）
   function render(root, ctx, opts) {
     const notice = opts && opts.error
       ? `<div class="guide-notice">⚠️ ページを開けませんでした。${AppUtil.escapeHtml(AppUtil.friendlyReason(opts.error))}下のボタンから一覧も見られます。</div>`

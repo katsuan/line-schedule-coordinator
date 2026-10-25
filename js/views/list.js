@@ -1,4 +1,7 @@
+// 予定の一覧（ListView）：未回答・回答済み・自分が作成 のタブ。予定がなければあいさつ。
+// app.js が ?view=list のとき render を呼ぶ
 const ListView = (() => {
+  // 自分の予定を読んで、一覧の画面を描く
   async function render(root, ctx) {
     root.innerHTML = AppUtil.loadingHtml();
     const { events } = await AppApi.listMyEvents({ userId: ctx.identity.userId });
@@ -15,6 +18,7 @@ const ListView = (() => {
       { key: 'created', label: '自分が作成', list: groups.created },
     ];
 
+    // 予定の札（作成者・回答済み・未回答）
     const statusBadge = (e) => {
       if (e.isCreator) return '<span class="status-badge status-creator">作成者</span>';
       return e.hasAnswered
@@ -22,6 +26,7 @@ const ListView = (() => {
         : '<span class="status-badge status-pending">未回答</span>';
     };
 
+    // 予定の並びの HTML（なければ「該当する予定はありません」）
     const itemsHtml = (list) => {
       if (!list.length) return '<p class="ls-empty">該当する予定はありません。</p>';
       return `<ul class="event-list ls-panel">${list.map((e) => `
@@ -70,6 +75,7 @@ const ListView = (() => {
 
     if (!events.length) return;
 
+    // タブを切りかえる
     const activate = (key) => {
       root.querySelectorAll('.ls-tab').forEach((btn) => {
         btn.setAttribute('aria-selected', String(btn.dataset.tab === key));

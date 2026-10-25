@@ -1,3 +1,5 @@
+// GAS とのやりとり（AppApi）。action と中身を POST で送り、返事の data を返す（だめならエラーにする）。
+// 画面のどこからでも AppApi.○○(payload) で呼ぶ。LINE の鍵（アクセストークン）をいっしょに送り、GAS が本人を確かめる
 const AppApi = (() => {
   // ネットワーク環境（一部のLINEアプリ内ブラウザ等）ではPOSTがGASに正しく届かず
   // 「GET は未対応です」等の一時的なエラーになることがあるため、1回だけ自動リトライする。
@@ -8,10 +10,12 @@ const AppApi = (() => {
   const NOT_REPEATABLE_ACTIONS = ['createEvent', 'addOptions', 'addComment'];
   const NOT_DELIVERED_PATTERN = 'GET は未対応';
 
+  // 一時的な通信のまちがい（やりなおせば通りそうなもの）か
   function isTransientError_(message) {
     return TRANSIENT_ERROR_PATTERNS.some((p) => message && message.indexOf(p) >= 0);
   }
 
+  // その action を、そのまちがいのあとで1回だけやりなおしてよいか（作る・足すは、届いていないとわかるときだけ）
   function canRetry_(action, message) {
     if (NOT_REPEATABLE_ACTIONS.indexOf(action) >= 0) {
       return !!message && message.indexOf(NOT_DELIVERED_PATTERN) >= 0;
@@ -19,6 +23,7 @@ const AppApi = (() => {
     return isTransientError_(message);
   }
 
+  // GAS に1回送る。返事が ok でなければ、その言葉でエラーにする
   async function callOnce_(gasUrl, action, payload) {
     const res = await fetch(gasUrl, {
       method: 'POST',
@@ -35,6 +40,7 @@ const AppApi = (() => {
     return json.data;
   }
 
+  // GAS に送る。gasUrl がなければ止め、一時的なまちがいなら1回だけやりなおす
   async function call(action, payload) {
     const config = await AppConfig.load();
     if (!config.gasUrl || config.gasUrl === 'YOUR_DEPLOYMENT_ID' || config.gasUrl.indexOf('YOUR_DEPLOYMENT_ID') >= 0) {

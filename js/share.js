@@ -1,7 +1,7 @@
 /**
- * LINEへの送信フロー（プレビューモーダル呼び出し＋shareTargetPicker/sendMessages送信）。
- * プレビューモーダルUI本体は js/views/previewModal.js (PreviewModal)、
- * Flexツリーの変換・プレビュー用テキスト生成は js/flexPreview.js (FlexPreview) を参照。
+ * LINE にカードを送る流れ（AppShare）：送る前の見本を見せる → 送り先を選ぶ → 送ったあとのシート。
+ * 中身：予定・連絡・変更・招待・紹介・編集の依頼・許可のお知らせを送る関数。カードは GAS か、ここで作る。
+ * 呼ばれ方：予定の画面（detail.js・detailHeader.js・optionCard.js）のボタンから。見本の画面は views/previewModal.js、カードの変換は flexPreview.js。
  */
 const AppShare = (() => {
   // LINE の送り先を選ぶ画面が使えるか（LIFF の準備前は例外を出すので、使えないあつかい）
@@ -39,6 +39,7 @@ const AppShare = (() => {
     };
   }
 
+  // カードのボタンの上に区切りの線を引く設定（ボタンがなければなし）
   function footerStyles(uri) {
     return uri ? { footer: { separator: true, separatorColor: '#EEEEEE' } } : undefined;
   }
@@ -82,6 +83,7 @@ const AppShare = (() => {
     return true;
   }
 
+  // 予定を送るカード（GAS で作る）を、見本を見せてから送る
   async function shareEvent(eventId) {
     const flex = await AppApi.buildShareFlex({ eventId });
     return sendFlexMessage(flex, { sentTitle: '予定を送りました' });
@@ -89,6 +91,7 @@ const AppShare = (() => {
 
   const REMIND_PRESETS = ['回答ありがとうございます', '回答の更新をお願いします', 'イベントが近づいています'];
 
+  // 1つのイベントについて、答えた人へ連絡のカードを送る（ひとことの見本つき。△ の人がいれば「更新をお願い」を先に）
   async function remindRespondents(params) {
     const flex = await AppApi.buildReminderFlex(params);
     const hasMaybe = !!(params.groups && params.groups['△'] && params.groups['△'].length);
@@ -96,11 +99,13 @@ const AppShare = (() => {
     return sendFlexMessage(flex, { sentTitle: '連絡を送りました', presets: REMIND_PRESETS, defaultPresetIndex, groups: params.groups });
   }
 
+  // 編集者になってもらう招待のカードを送る
   async function inviteEditor(eventId) {
     const flex = await AppApi.buildEditorInviteFlex({ eventId });
     return sendFlexMessage(flex, { sentTitle: '招待を送りました' });
   }
 
+  // イベントが変わったことを知らせるカードを送る
   async function notifyChange(params) {
     const flex = await AppApi.buildChangeNotificationFlex(params);
     return sendFlexMessage(flex, {
@@ -109,6 +114,7 @@ const AppShare = (() => {
     });
   }
 
+  // くるかなを紹介するカードを送る
   async function shareApp() {
     const config = await AppConfig.load();
     const liffUrl = config.liffId ? `https://liff.line.me/${config.liffId}` : '';
@@ -234,6 +240,7 @@ const AppShare = (() => {
     };
   }
 
+  // 許可したことを知らせるカードを送る（同じトークで開いていれば選ばずに、そうでなければ送り先を選んで）。送れたら true
   async function sendApprovedCard(eventId, eventTitle, requesterName) {
     const config = await AppConfig.load();
     const messages = [approvedMessage(config.liffId, eventId, eventTitle, requesterName)];

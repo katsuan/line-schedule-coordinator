@@ -1,6 +1,7 @@
 // 画面に出す文字と小さな部品（HTML に入れる前のエスケープ・アイコン・タイトルの絵文字・読みこみ中の箱）。
 // AppUtil に足す（js/dates.js・js/notice.js と分けて持つ）
 var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() => {
+  // 文字を HTML に入れても、タグとして動かない形にする
   function escapeHtml(str) {
     return String(str == null ? '' : str).replace(/[&<>"']/g, (ch) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -20,6 +21,7 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     }
   }
 
+  // 人の丸いアイコン（画像がなければ名前の1文字目）。答えの色の枠つき
   function avatarHtml(displayName, pictureUrl, answer) {
     const initial = escapeHtml(Array.from(String(displayName || '?'))[0] || '?');
     const url = safeImageUrl(pictureUrl);
@@ -30,12 +32,14 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
 
   const EMOJI_REGEX = /\p{Extended_Pictographic}/u;
 
+  // 題の1文字目が絵文字ならそれを、なければ 🗓️ を返す
   function extractIcon(title) {
     const trimmed = String(title || '').trim();
     const firstChar = Array.from(trimmed)[0] || '';
     return (firstChar && EMOJI_REGEX.test(firstChar)) ? firstChar : '🗓️';
   }
 
+  // 題を「絵文字　題」の HTML にする（絵文字がなければ 🗓️ を前に）
   function titleIconHtml(title) {
     const trimmed = String(title || '').trim();
     const firstChar = Array.from(trimmed)[0] || '';

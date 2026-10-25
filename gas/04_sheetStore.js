@@ -1,6 +1,7 @@
 /**
- * Spreadsheet を軽量DBとして扱うヘルパー群。
- * シートが無ければ作成し、ヘッダー行のスキーマを保証してから読み書きする。
+ * スプレッドシートを小さなデータベースとして使う：シートを作る・見出しをそろえる・行を読む／足す／書きかえる／消す。
+ * 中身：SCHEMA（シートの列。列を足すときは必ず最後に）・行の読み書き・名前とアイコンを覚える upsertUser_。
+ * 呼ばれ方：07〜11 のファイルから。1回の呼び出しの中では、開いたシートと読んだ行を覚えて使い回す。
  */
 
 const SCHEMA = {
@@ -21,6 +22,7 @@ let _spreadsheetCache_ = null;
 let _sheetCache_ = {};
 let _rowsCache_ = {};
 
+// 記録のスプレッドシートを開く（1回の呼び出しの中では1回だけ）
 function getSpreadsheet_() {
   if (!_spreadsheetCache_) {
     _spreadsheetCache_ = SpreadsheetApp.openById(getSpreadsheetId_());
@@ -28,6 +30,7 @@ function getSpreadsheet_() {
   return _spreadsheetCache_;
 }
 
+// 名前のシートを返す。なければ作り、見出しをそろえる
 function getOrCreateSheet_(sheetName) {
   if (_sheetCache_[sheetName]) return _sheetCache_[sheetName];
   const ss = getSpreadsheet_();
@@ -40,6 +43,7 @@ function getOrCreateSheet_(sheetName) {
   return sheet;
 }
 
+// 1行目の見出しを SCHEMA に合わせる。空なら書き、足りない列は最後に足す（前の列は動かさない）
 function ensureSheetSchema_(sheet, sheetName) {
   const headers = SCHEMA[sheetName];
   const lastCol = sheet.getLastColumn();
@@ -56,6 +60,7 @@ function ensureSheetSchema_(sheet, sheetName) {
   }
 }
 
+// シートの行を { 見出し: 値, _rowIndex } の並びで返す（同じ呼び出しの中では覚えて使い回す）
 function sheetRowsAsObjects_(sheetName) {
   if (_rowsCache_[sheetName]) return _rowsCache_[sheetName];
   const sheet = getOrCreateSheet_(sheetName);
@@ -77,6 +82,7 @@ function sheetRowsAsObjects_(sheetName) {
   return result;
 }
 
+// 1行足す（文字は safeCell を通す）
 function appendRowObject_(sheetName, obj) {
   const sheet = getOrCreateSheet_(sheetName);
   const headers = SCHEMA[sheetName];
@@ -85,6 +91,7 @@ function appendRowObject_(sheetName, obj) {
   delete _rowsCache_[sheetName];
 }
 
+// 行をまとめて消す（下から消して、行の番号がずれないように）
 function deleteRows_(sheetName, rowIndices) {
   const sheet = getOrCreateSheet_(sheetName);
   const sorted = [...rowIndices].sort((a, b) => b - a);
@@ -92,6 +99,7 @@ function deleteRows_(sheetName, rowIndices) {
   delete _rowsCache_[sheetName];
 }
 
+// 決まった行を書きかえる（文字は safeCell を通す）
 function updateRowObject_(sheetName, rowIndex, obj) {
   const sheet = getOrCreateSheet_(sheetName);
   const headers = SCHEMA[sheetName];
@@ -110,6 +118,7 @@ function upsertUser_(userId, displayName, pictureUrl) {
   });
 }
 
+// USERS から本人の行を探す。なければ null
 function findUserRow_(userId) {
   const { rows } = sheetRowsAsObjects_(SHEET.USERS);
   return rows.find((r) => r.userId === userId) || null;
@@ -121,6 +130,7 @@ function userNeedsWrite_(row, displayName, pictureUrl) {
     !!(pictureUrl && row.pictureUrl !== pictureUrl);
 }
 
+// USERS に本人の名前・アイコンを書く（なければ足す・変わっていれば書きかえる）。鍵の中で呼ぶ
 function writeUser_(userId, displayName, pictureUrl) {
   const now = new Date();
   const existing = findUserRow_(userId);

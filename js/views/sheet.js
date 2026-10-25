@@ -17,7 +17,9 @@ const Sheet = (() => {
       </div>`;
     document.body.appendChild(sheet);
 
+    // シートを閉じる（ボタンで閉じるとき）
     const close = () => sheet.remove();
+    // 「×」か外側で閉じる（onDismiss も呼ぶ）
     const dismiss = () => {
       close();
       if (onDismiss) onDismiss();

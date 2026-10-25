@@ -1,8 +1,9 @@
 /**
- * Flex Messageのツリーを操作する純粋関数群と、送信プレビュー用のテキスト変換。
- * DOM操作は行わない（モーダルUI自体は js/views/previewModal.js の PreviewModal が担当）。
+ * カード（Flex）の中身を変える・読む（画面には触らない）：送る前の見本の文字にする、ひとことを入れる、名前を隠す、○△× で絞る。
+ * 呼ばれ方：views/previewModal.js（見本）と share.js（送る前に同じ変換をかける）から。node のテストでも動く。
  */
 const FlexPreview = (() => {
+  // 箱の中の文字を全部つないで返す
   function collectText(node) {
     if (!node) return '';
     if (node.type === 'text' || node.type === 'span') {
@@ -21,16 +22,19 @@ const FlexPreview = (() => {
   const ANSWER_LINE_PREFIX = { '○': ' ANSok ', '△': ' ANSmb ', '×': ' ANSng ' };
   const ANSWER_SYMBOLS = ['○', '△', '×'];
 
+  // 「○ 3人」のようなラベルの先頭の ○△×。なければ null
   function answerSymbolOf(label) {
     if (!label) return null;
     return ANSWER_SYMBOLS.find((a) => label.startsWith(a)) || null;
   }
 
+  // ○△× の札が横に並んだ箱か
   function isPillGroupBox(node) {
     return node && node.type === 'box' && node.layout === 'horizontal' && Array.isArray(node.contents)
       && node.contents.every((c) => c.type === 'box' && Array.isArray(c.contents) && c.contents[0]);
   }
 
+  // カードの箱をたどって、見本の1行ずつ（ボタン・題・答えの行にしるし）を lines に足す
   function walkPreviewLines(node, lines) {
     if (!node) return;
     if (node.type === 'separator') { lines.push('---'); return; }
@@ -68,6 +72,7 @@ const FlexPreview = (() => {
     }
   }
 
+  // カードを、見本に出す行の並びにする
   function buildPreviewLines(flex) {
     const lines = [];
     walkPreviewLines(flex.contents.body, lines);
@@ -77,6 +82,7 @@ const FlexPreview = (() => {
 
   const ANSWER_LINE_CLASS = { ' ANSok ': 'choice-ok', ' ANSmb ': 'choice-maybe', ' ANSng ': 'choice-ng' };
 
+  // 見本の行の並びを HTML にする
   function renderPreviewLinesHtml(lines) {
     return lines.map((l) => {
       if (l === CARD_START) return '<div class="flex-preview-card">';
@@ -109,10 +115,12 @@ const FlexPreview = (() => {
     2: { bg: '#FFF6E5', text: '#C9862B' }, // 黄: イベントが近づいています
   };
 
+  // ひとことの見本（何番目か）に合う見出しの色
   function headerColorFor(presetIndex) {
     return HEADER_COLORS[presetIndex != null ? presetIndex : 'none'];
   }
 
+  // カードの見出しにひとことを入れる（見本の色も付ける）。元のカードは変えずに新しく返す
   function applyComment(flex, comment, presetIndex, presetLabel) {
     const bubble = JSON.parse(JSON.stringify(flex.contents));
     const color = headerColorFor(presetIndex);
@@ -155,6 +163,7 @@ const FlexPreview = (() => {
     return { altText: flex.altText, contents: bubble };
   }
 
+  // ○△× の行のうち、送らないものを消す
   function removeRowsByLabel(node, labels) {
     if (!node || !node.contents) return;
     node.contents = node.contents.filter((child) => {
@@ -166,6 +175,7 @@ const FlexPreview = (() => {
     node.contents.forEach((child) => removeRowsByLabel(child, labels));
   }
 
+  // 選ばなかった答え（○△×）の行を外したカードを返す
   function filterGroups(flex, unselectedAnswers) {
     if (!unselectedAnswers || !unselectedAnswers.length) return flex;
     const bubble = JSON.parse(JSON.stringify(flex.contents));
@@ -173,6 +183,7 @@ const FlexPreview = (() => {
     return { altText: flex.altText, contents: bubble };
   }
 
+  // 名前を隠す答えの行を「○ 3人」のように人数だけにする
   function mergeHiddenRows(node, hiddenAnswers) {
     if (!node || !node.contents) return;
     const idxs = [];
@@ -232,6 +243,7 @@ const FlexPreview = (() => {
     return false;
   }
 
+  // 名前を隠したカードを返す（人数だけ）
   function hideNames(flex, hiddenAnswers) {
     const bubble = JSON.parse(JSON.stringify(flex.contents));
     if (hiddenAnswers && hiddenAnswers.length) {

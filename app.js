@@ -1,3 +1,5 @@
+// くるかなの入口：LINE の本人を決め、URL を見て出す画面（予定・作る・カレンダー・一覧・使い方）を選ぶ。
+// index.html のいちばん最後に読む。開けなかったときは使い方の画面に、やさしい言葉で出す
 (async () => {
   const root = document.getElementById('app');
 

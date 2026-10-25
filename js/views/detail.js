@@ -1,4 +1,7 @@
+// 予定の画面（DetailView）：見出し・イベントごとの ○△× と答えた人・コメント・カードで送る。
+// app.js が ?event= のとき render を呼ぶ。見出しは detailHeader.js、イベントの行は optionCard.js・optionComments.js
 const DetailView = (() => {
+  // 予定を読んで画面を描く。opts.silent なら読みこみ中の箱を出さずに描きなおす
   async function render(root, ctx, opts) {
     if (!opts || !opts.silent) {
       root.innerHTML = AppUtil.loadingHtml();
@@ -19,11 +22,13 @@ const DetailView = (() => {
     }
 
     const data = await AppApi.getSummary({ eventId: ctx.eventId, userId: ctx.identity.userId });
+    // 同じ予定を、読みこみ中の箱なしで描きなおす
     const refresh = () => render(root, ctx, { silent: true });
 
     renderSummary(root, ctx, data, refresh);
   }
 
+  // 紹介・予定を送る・編集者を招待・予定を消す のボタンをつなぐ
   function wireCommonActions(root, ctx, { canShare, isCreator }) {
     AppUtil.wireAsyncButton(root.querySelector('#share-app-btn'), () => AppShare.shareApp(), {
       errorPrefix: '送れませんでした',
@@ -55,7 +60,9 @@ const DetailView = (() => {
     (row.comments || []).forEach((c) => {
       (commentTextByUser[c.userId] = commentTextByUser[c.userId] || []).push(c.text);
     });
+    // 答えた人の並べ順（自分 → コメントのある人 → ほか）
     const rank = (r) => (r.userId === myUserId ? 2 : commentTextByUser[r.userId] ? 1 : 0);
+    // 答えた人1人分（アイコンと名前。コメントがあれば押すと出る）
     const respondentHtml = (r, answer) => {
       const comments = commentTextByUser[r.userId];
       const isMe = r.userId === myUserId;
@@ -81,6 +88,7 @@ const DetailView = (() => {
     }).join('');
   }
 
+  // イベントごとの行（日時・○△× のボタンと数・答えた人・連絡のボタン）の HTML
   function summaryRowsHtml(event, summary, canEdit, myUserId, myAnswers) {
     myAnswers = myAnswers || {};
     return summary.map((row, rowIndex) => {
@@ -113,7 +121,7 @@ const DetailView = (() => {
             ${respondentGroupsHtml(row, myUserId)}
           </details>
         </div>`;
-      if (!isOptionPast(opt)) return card;
+      if (!AppUtil.hasEnded(opt)) return card;
       // 終わったイベントは、たたんでおく
       return `
         <details class="summary-row-collapsed">
@@ -123,11 +131,7 @@ const DetailView = (() => {
     }).join('');
   }
 
-  function isOptionPast(opt) {
-    const end = opt.endAt || opt.startAt;
-    return !!end && new Date(end) < new Date();
-  }
-
+  // アイコンを押すと、その人のコメントを出したり隠したりする
   function wireRespondentComments(root) {
     root.querySelectorAll('.avatar-wrap[data-comment-toggle]').forEach((wrap) => {
       wrap.addEventListener('click', () => {
@@ -137,6 +141,7 @@ const DetailView = (() => {
     });
   }
 
+  // イベントごとの「カードで送る」（答えた人への連絡）をつなぐ
   function wireRemindButtons(root, eventTitle, eventId) {
     root.querySelectorAll('.remind-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
@@ -166,6 +171,7 @@ const DetailView = (() => {
     });
   }
 
+  // 画面全体を描いて、全部のボタンをつなぐ
   function renderSummary(root, ctx, data, refresh) {
     const canEdit = data.isCreator || data.isEditor;
     // 回答者・コメントの ID は、この予定だけの記号。自分の記号は data.me

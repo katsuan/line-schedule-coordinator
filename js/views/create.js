@@ -1,4 +1,7 @@
+// 予定を作る画面（CreateView）：題・説明とイベント（候補の日）を入れて作る。作ったら予定の画面へ。
+// app.js が ?view=create のとき render を呼ぶ
 const CreateView = (() => {
+  // イベント1つ分の入力欄（何番目か）
   function optionCardHtml(index) {
     return `
       <div class="option-card" data-index="${index}">
@@ -11,6 +14,7 @@ const CreateView = (() => {
       </div>`;
   }
 
+  // 作る画面を描いて、イベントを足す・消す・作るボタンをつなぐ
   function render(root, ctx) {
     root.innerHTML = `
       <header class="page-header">

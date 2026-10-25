@@ -1,5 +1,6 @@
 /**
- * LINE に送る Flex Message（共有・連絡・変更・編集者の招待）を組み立てる。
+ * LINE に送るカード（Flex）を組み立てる：予定の共有・候補ごとの連絡・変更のお知らせ・編集者の招待。
+ * 呼ばれ方：03_routing.js の build○○Flex から（画面が送り先を選んで送る）。部品は 05_flexParts.js。
  */
 
 /** 予定の画面を開く URL（LIFF）。extra は後ろに足す query（例 '&claimEditor=1'） */
@@ -16,6 +17,8 @@ function shortNameList_(names, separator) {
     : names.join(separator);
 }
 
+// 予定を送るカード。これからのイベントごとに日時・メモ・○△× の数。ボタンは「回答する」。
+// 季節の絵文字は通知の1行（altText）にだけ
 function buildEventShareFlex_(eventId) {
   const event = findEventById_(eventId);
   if (!event) {
@@ -36,18 +39,19 @@ function buildEventShareFlex_(eventId) {
   const answeredUserIds = new Set(responses.map((r) => r.userId));
 
   const headerRows = [
-    _createInfoRow_('回答', answeredUserIds.size + '人'),
+    flexInfoRow_('回答', answeredUserIds.size + '人'),
   ];
 
   const optionCards = options.map((opt) => {
     const optResponses = responses.filter((r) => r.optionId === opt.optionId);
+    // その答え（○・△・×）の人数
     const count = (a) => optResponses.filter((r) => r.answer === a).length;
     const commentCount = commentCountByOption[opt.optionId] || 0;
-    const cardRows = [_createEventTimeRow_('日時', opt.startAt, opt.endAt)];
-    if (opt.location) cardRows.push(_createInfoRow_('メモ', opt.location));
+    const cardRows = [flexTimeRow_('日時', opt.startAt, opt.endAt)];
+    if (opt.location) cardRows.push(flexInfoRow_('メモ', opt.location));
     const answerText = `○${count(ANSWER.OK)} △${count(ANSWER.MAYBE)} ×${count(ANSWER.NG)}`
       + (commentCount ? `　💬${commentCount}件` : '');
-    cardRows.push(_createInfoRow_('回答', answerText));
+    cardRows.push(flexInfoRow_('回答', answerText));
     return {
       type: 'box',
       layout: 'vertical',
@@ -70,17 +74,17 @@ function buildEventShareFlex_(eventId) {
       type: 'box',
       layout: 'vertical',
       contents: [
-        _createFlexHeader_(event.title, event.description || ''),
-        _createSeparator_(),
-        { type: 'box', layout: 'vertical', margin: 'md', contents: [_createFlexBody_(headerRows)] },
-        _createSeparator_(),
+        flexHeader_(event.title, event.description || ''),
+        flexSeparator_(),
+        { type: 'box', layout: 'vertical', margin: 'md', contents: [flexBody_(headerRows)] },
+        flexSeparator_(),
         optionCards.length
           ? { type: 'box', layout: 'vertical', margin: 'md', spacing: 'md', contents: optionCards }
           : { type: 'text', text: 'これからのイベントはありません', size: 'sm', color: COLOR.SUB_TEXT, margin: 'md', wrap: true },
       ],
     },
-    footer: answerUrl ? _createFlexButtonFooter_('回答する', answerUrl) : undefined,
-    styles: answerUrl ? _footerStyles_() : undefined,
+    footer: answerUrl ? flexButtonFooter_('回答する', answerUrl) : undefined,
+    styles: answerUrl ? flexFooterStyles_() : undefined,
   };
 
   return {
@@ -90,6 +94,7 @@ function buildEventShareFlex_(eventId) {
   };
 }
 
+// 1つのイベントについて、答えた人へ送る連絡のカード（○△× ごとの名前つき）
 function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionEndAt, optionLocation, optionId) {
   const event = findEventById_(eventId);
   if (!event) {
@@ -104,22 +109,22 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
   const targetTitle = optionTitle || event.title;
 
   const rows = [
-    _createInfoRow_('イベント名', targetTitle),
+    flexInfoRow_('イベント名', targetTitle),
   ];
-  if (optionStartAt) rows.push(_createEventTimeRow_('日時', optionStartAt, optionEndAt));
-  if (optionLocation) rows.push(_createInfoRow_('メモ', optionLocation));
+  if (optionStartAt) rows.push(flexTimeRow_('日時', optionStartAt, optionEndAt));
+  if (optionLocation) rows.push(flexInfoRow_('メモ', optionLocation));
   [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].forEach((ans) => {
     const names = groups[ans];
     if (names && names.length) {
-      rows.push(_createAnswerGroupRow_(ans, names.length, joinNamesForCard_(names, '、')));
+      rows.push(flexAnswerGroupRow_(ans, names.length, joinNamesForCard_(names, '、')));
     }
   });
   if (optionId) {
     const { rows: comments } = sheetRowsAsObjects_(SHEET.COMMENTS);
     const commentCount = comments.filter((c) => c.eventId === eventId && c.optionId === optionId).length;
-    if (commentCount) rows.push(_createInfoRow_('コメント', `💬${commentCount}件`));
+    if (commentCount) rows.push(flexInfoRow_('コメント', `💬${commentCount}件`));
   }
-  rows.push(_createSnapshotNoteRow_());
+  rows.push(flexSnapshotNote_());
 
   const allNames = [ANSWER.OK, ANSWER.MAYBE, ANSWER.NG].reduce((acc, ans) => acc.concat(groups[ans]), []);
   const nameLabel = shortNameList_(allNames, '・');
@@ -137,10 +142,10 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
     body: {
       type: 'box',
       layout: 'vertical',
-      contents: [_createFlexBody_(rows)],
+      contents: [flexBody_(rows)],
     },
-    footer: answerUrl ? _createFlexButtonFooter_('回答を確認する', answerUrl) : undefined,
-    styles: answerUrl ? _footerStyles_() : undefined,
+    footer: answerUrl ? flexButtonFooter_('回答を確認する', answerUrl) : undefined,
+    styles: answerUrl ? flexFooterStyles_() : undefined,
   };
 
   return {
@@ -149,6 +154,7 @@ function buildReminderFlex_(eventId, groups, optionTitle, optionStartAt, optionE
   };
 }
 
+// イベントの日時やメモが変わったことを、答えた人へ知らせるカード
 function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optionEndAt, optionLocation, names) {
   const event = findEventById_(eventId);
   if (!event) {
@@ -159,11 +165,11 @@ function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optio
   const answerUrl = eventPageUrl_(eventId);
 
   const rows = [
-    _createInfoRow_('イベント名', optionTitle || event.title),
+    flexInfoRow_('イベント名', optionTitle || event.title),
   ];
-  if (optionStartAt) rows.push(_createEventTimeRow_('新しい日時', optionStartAt, optionEndAt));
-  if (optionLocation) rows.push(_createInfoRow_('新しいメモ', optionLocation));
-  rows.push(_createInfoRow_('宛先', nameList + '一同'));
+  if (optionStartAt) rows.push(flexTimeRow_('新しい日時', optionStartAt, optionEndAt));
+  if (optionLocation) rows.push(flexInfoRow_('新しいメモ', optionLocation));
+  rows.push(flexInfoRow_('宛先', nameList + '一同'));
 
   const bubble = {
     type: 'bubble',
@@ -171,13 +177,13 @@ function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optio
       type: 'box',
       layout: 'vertical',
       contents: [
-        _createFlexHeader_(event.title, '🔔 予定の内容が変更されました。ご確認ください。'),
-        _createSeparator_(),
-        { type: 'box', layout: 'vertical', margin: 'md', contents: [_createFlexBody_(rows)] },
+        flexHeader_(event.title, '🔔 予定の内容が変更されました。ご確認ください。'),
+        flexSeparator_(),
+        { type: 'box', layout: 'vertical', margin: 'md', contents: [flexBody_(rows)] },
       ],
     },
-    footer: answerUrl ? _createFlexButtonFooter_('内容を確認する', answerUrl) : undefined,
-    styles: answerUrl ? _footerStyles_() : undefined,
+    footer: answerUrl ? flexButtonFooter_('内容を確認する', answerUrl) : undefined,
+    styles: answerUrl ? flexFooterStyles_() : undefined,
   };
 
   return {
@@ -186,6 +192,7 @@ function buildChangeNotificationFlex_(eventId, optionTitle, optionStartAt, optio
   };
 }
 
+// 編集者になってもらうための招待カード（合言葉つきのリンク）。作った人だけが作れる
 function buildEditorInviteFlex_(eventId, userId) {
   const event = findEventById_(eventId);
   if (!event) {
@@ -201,10 +208,10 @@ function buildEditorInviteFlex_(eventId, userId) {
     body: {
       type: 'box',
       layout: 'vertical',
-      contents: [_createFlexHeader_(event.title, '編集をお願いします🙏\nこのリンクからイベントの追加や共有ができるようになります。')],
+      contents: [flexHeader_(event.title, '編集をお願いします🙏\nこのリンクからイベントの追加や共有ができるようになります。')],
     },
-    footer: inviteUrl ? _createFlexButtonFooter_('編集者として参加する', inviteUrl) : undefined,
-    styles: inviteUrl ? _footerStyles_() : undefined,
+    footer: inviteUrl ? flexButtonFooter_('編集者として参加する', inviteUrl) : undefined,
+    styles: inviteUrl ? flexFooterStyles_() : undefined,
   };
   return { altText: event.title + ' の編集をお願いします', contents: bubble };
 }

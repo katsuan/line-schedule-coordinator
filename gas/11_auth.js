@@ -17,6 +17,7 @@ const AUTH = {
   DEBUG_PREFIX: 'debug-user-',
 };
 
+// 画面（LIFF）のチャネル ID。Script Properties の LIFF_CHANNEL_ID、なければ LIFF_URL から読む
 function liffChannelId_() {
   const fromProp = PROPS.getProperty('LIFF_CHANNEL_ID');
   if (fromProp) return String(fromProp).trim();
@@ -24,6 +25,7 @@ function liffChannelId_() {
   return m ? m[1] : AUTH.DEFAULT_CHANNEL_ID;
 }
 
+// 文字の SHA-256 を16進の文字で返す
 function sha256Hex_(text) {
   return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, text, Utilities.Charset.UTF_8)
     .map((b) => ((b + 256) % 256).toString(16).padStart(2, '0'))
