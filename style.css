@@ -347,6 +347,9 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .answer-row .option-meta { margin-bottom: 10px; }
 
 /* ---- シート（Q キットの ls-sheet）の見出しの行と閉じるボタン ---- */
+/* 一覧の見出しのアイコンを押したシートの頭（views/meIcon.js。並べ方は Q キットの .qme-head） */
+.me-sheet-head { margin: 4px 0 10px; }
+.me-sheet-name { margin: 0; font-weight: 800; overflow-wrap: anywhere; }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .sheet-close { border: none; background: none; font-size: 1.3rem; cursor: pointer; color: var(--ls-subtext); min-width: 32px; min-height: 32px; }
 .approve-target { display: flex; align-items: center; gap: 6px; }

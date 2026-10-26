@@ -64,6 +64,9 @@ const ListView = (() => {
       ` : `<p class="ls-empty">${AppUtil.escapeHtml(AppUtil.withSeason('予定はまだありません。「＋ 新規作成」から作れます。'))}</p>`}
     `;
 
+    // 見出しのロゴの右に、本人の LINE のアイコン（views/meIcon.js。Q キットの shared/line-me.js）
+    MeIcon.mount(root, ctx.identity);
+
     // はじめて開いた人にだけ、短い使い方（Q キット。「わかった」で消え、この端末では二度と出さない）
     if (window.LineShareUI && typeof LineShareUI.firstTip === 'function') {
       LineShareUI.firstTip('qurukana', [
