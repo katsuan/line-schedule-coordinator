@@ -2,6 +2,9 @@
 // app.js が最初に initIdentity を呼ぶ。手元で試すとき（localhost）は、この端末だけの仮の ID で動く
 const AppPlatform = (() => {
   let identityPromise = null;
+  // LIFF を起こし終えた（起こせなかった・手元で試すときも）約束。一覧の見出しの本人のアイコン（js/views/meIcon.js）が待つ。LIFF を2回起こさない
+  let liffDone = () => {};
+  const liffReadyPromise = new Promise((resolve) => { liffDone = resolve; });
 
   // 手元で試しているか（file:・localhost・127.0.0.1）
   function isLocalPreviewEnvironment() {
@@ -47,6 +50,7 @@ const AppPlatform = (() => {
       const liffId = config.liffId;
 
       if (isLocalPreviewEnvironment() || !window.liff || !liffId || liffId === 'YOUR_LIFF_ID') {
+        liffDone();
         return debugIdentity();
       }
 
@@ -54,8 +58,10 @@ const AppPlatform = (() => {
         await liff.init({ liffId });
       } catch (err) {
         console.error('liff.init 失敗', err);
+        liffDone();
         return debugIdentity();
       }
+      liffDone();
 
       if (!liff.isLoggedIn()) {
         if (typeof liff.login === 'function') {
@@ -125,5 +131,5 @@ const AppPlatform = (() => {
     }
   }
 
-  return { initIdentity, isLocalPreviewEnvironment, getAccessToken };
+  return { initIdentity, isLocalPreviewEnvironment, getAccessToken, liffReady: () => liffReadyPromise };
 })();
