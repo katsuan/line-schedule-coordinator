@@ -227,3 +227,23 @@ test("「LINE 版で開く」は Q キットと同じ 📱", () => {
     assert.doesNotMatch(read(file), /💬 LINE 版で開く/, file);
   });
 });
+
+test("案内の文が指すボタン・欄の名前は、画面に同じ名前である", () => {
+  const tips = read("js/markup.js");
+  const guide = read("js/views/guide.js");
+  const detail = read("js/views/detail.js");
+  const list = read("js/views/list.js");
+  // 「＋ イベントを追加」は予定の画面のたたみ欄
+  assert.match(tips, /「＋ イベントを追加」/);
+  assert.match(detail, /aria-hidden="true">＋<\/span>イベントを追加<\/summary>/);
+  // 「カードで送る」「🗓️ カレンダー」「＋ 新規作成」
+  assert.match(detail, /is-oqrn" type="button">カードで送る<\/button>/);
+  assert.match(list, /🗓️ カレンダー<\/a>/);
+  assert.match(list, /＋ 新規作成<\/a>/);
+  // 送る前のシートは「送る内容の見本」
+  assert.match(read("js/views/previewModal.js"), /title: '送る内容の見本'/);
+  assert.match(guide, /送る内容の見本/);
+  assert.doesNotMatch(guide + tips, /プレビューを確認/);
+  // 前の名前を案内しない
+  assert.doesNotMatch(guide + tips + list + detail, /LINEで送る|LINE送信|LINEで共有/);
+});

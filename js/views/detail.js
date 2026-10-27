@@ -96,7 +96,7 @@ const DetailView = (() => {
       const answerByUser = {};
       ANSWERS.forEach((a) => (row.respondents[a] || []).forEach((r) => { answerByUser[r.userId] = a; }));
       const enrichedComments = (row.comments || []).map((c) => ({ ...c, answer: answerByUser[c.userId] }));
-      // 「💬 LINEで送る」で使う、○△× ごとの名前
+      // 「カードで送る」（候補ごとの連絡）で使う、○△× ごとの名前
       const groups = {};
       ANSWERS.forEach((a) => {
         const names = (row.respondents[a] || []).map((r) => r.displayName);
