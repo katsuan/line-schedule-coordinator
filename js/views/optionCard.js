@@ -187,8 +187,21 @@ const OptionCard = (() => {
     });
   }
 
+  // 開始を入れたら、完了が空か開始より前のときだけ、完了に開始の1時間後を入れる（作る画面・変える欄・足す欄のどれでも）。
+  // app.js から1回だけ呼ぶ
+  function wireEndFollowsStart(root) {
+    root.addEventListener('change', (e) => {
+      const start = e.target;
+      if (!start.matches || !start.matches('input[type="datetime-local"][class*="-start"]')) return;
+      const end = start.closest('.option-range') && start.closest('.option-range').querySelector('input[type="datetime-local"][class*="-end"]');
+      if (!end) return;
+      const suggested = AppUtil.suggestEndAt(start.value, end.value);
+      if (suggested) end.value = suggested;
+    });
+  }
+
   return {
     metaHtml, titleFieldHtml, rangeLocationFieldsHtml, readFields,
-    choiceButtonsHtml, answerButtonsHtml, statusClass, wireEditForms, wireAnswerButtons, saveChoice, submitOne,
+    choiceButtonsHtml, answerButtonsHtml, statusClass, wireEditForms, wireAnswerButtons, saveChoice, submitOne, wireEndFollowsStart,
   };
 })();

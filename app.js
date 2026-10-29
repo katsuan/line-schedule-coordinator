@@ -2,6 +2,8 @@
 // index.html のいちばん最後に読む。開けなかったときは使い方の画面に、やさしい言葉で出す
 (async () => {
   const root = document.getElementById('app');
+  // 開始を入れたら完了を自動で入れる（どの画面の入力欄でも）
+  OptionCard.wireEndFollowsStart(root);
 
   try {
     const identity = await AppPlatform.initIdentity();
