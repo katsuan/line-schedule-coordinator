@@ -257,3 +257,17 @@ test("開始を入れたとき、完了が空か開始より前なら、開始�
   assert.strictEqual(AppUtil.suggestEndAt("", ""), null);
   assert.strictEqual(AppUtil.suggestEndAt("x", ""), null);
 });
+
+test("キーボード：押せる印（onActivate）は、クリックと Enter・スペースで動く（ほかのキーでは動かない）", () => {
+  const AppUtil = load("AppUtil", "AppUtil");
+  const listeners = {};
+  const el = { addEventListener: (type, fn) => { listeners[type] = fn; } };
+  let count = 0;
+  AppUtil.onActivate(el, () => { count += 1; });
+  listeners.click({});
+  let prevented = 0;
+  const key = (k) => listeners.keydown({ key: k, preventDefault: () => { prevented += 1; } });
+  key("Enter"); key(" "); key("a");
+  assert.strictEqual(count, 3);
+  assert.strictEqual(prevented, 2);
+});

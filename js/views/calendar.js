@@ -54,7 +54,7 @@ const CalendarView = (() => {
           <span class="cal-pill ${STATUS_CLASS[it.myAnswer] || 'dot-none'}">${AppUtil.extractIcon(it.optionTitle || it.eventTitle)}${AppUtil.shortTime(it.startAt).slice(0, 2)}時</span>`).join('');
         const overflow = dayItems.length > shown.length ? `<span class="cal-pill-more">+${dayItems.length - shown.length}</span>` : '';
         return `
-          <div class="cal-cell${isToday ? ' today' : ''}${dayItems.length ? ' has-items' : ''}" data-key="${key}">
+          <div class="cal-cell${isToday ? ' today' : ''}${dayItems.length ? ' has-items' : ''}" data-key="${key}"${dayItems.length ? ` role="button" tabindex="0" aria-label="${month + 1}月${d}日の予定（${dayItems.length}件）"` : ''}>
             <span class="cal-daynum">${d}</span>
             <span class="cal-pills">${pills}${overflow}</span>
           </div>`;
@@ -189,7 +189,7 @@ const CalendarView = (() => {
         btn.setAttribute('aria-checked', String(Number(btn.dataset.weekStart) === weekStart));
       });
       root.querySelectorAll('.cal-cell.has-items').forEach((cell) => {
-        cell.addEventListener('click', () => openDaySheet(cell.dataset.key));
+        AppUtil.onActivate(cell, () => openDaySheet(cell.dataset.key));
       });
     }
 
