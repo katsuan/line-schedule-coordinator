@@ -247,3 +247,13 @@ test("案内の文が指すボタン・欄の名前は、画面に同じ名前�
   // 前の名前を案内しない
   assert.doesNotMatch(guide + tips + list + detail, /LINEで送る|LINE送信|LINEで共有/);
 });
+
+test("開始を入れたとき、完了が空か開始より前なら、開始の1時間後を入れる（入っている完了はそのまま）", () => {
+  const AppUtil = load("AppUtil", "AppUtil");
+  assert.strictEqual(AppUtil.suggestEndAt("2026-11-01T10:00", ""), "2026-11-01T11:00");
+  assert.strictEqual(AppUtil.suggestEndAt("2026-11-01T23:30", ""), "2026-11-02T00:30"); // 日をまたぐ
+  assert.strictEqual(AppUtil.suggestEndAt("2026-11-01T10:00", "2026-11-01T09:00"), "2026-11-01T11:00");
+  assert.strictEqual(AppUtil.suggestEndAt("2026-11-01T10:00", "2026-11-01T15:00"), null);
+  assert.strictEqual(AppUtil.suggestEndAt("", ""), null);
+  assert.strictEqual(AppUtil.suggestEndAt("x", ""), null);
+});

@@ -52,6 +52,14 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
+  // 開始を入れたときの完了のおすすめ：完了が空か開始より前なら、開始の1時間後（入力欄の形）。それ以外は null（入れない）
+  function suggestEndAt(startValue, endValue) {
+    const start = new Date(startValue);
+    if (!startValue || isNaN(start.getTime())) return null;
+    if (endValue && new Date(endValue) > start) return null;
+    return toDatetimeLocalValue(new Date(start.getTime() + 60 * 60 * 1000));
+  }
+
   // Google カレンダーの URL に入れる形「20261025T100000」に
   function toGCalStamp(value) {
     const date = value instanceof Date ? value : new Date(value);
@@ -169,5 +177,5 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     });
   }
 
-  return { hasEnded, getWeekStart, setWeekStart, monthCells, weekHeader, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, shortTime, validateEventFields, relativeDayPillHtml };
+  return { suggestEndAt, hasEnded, getWeekStart, setWeekStart, monthCells, weekHeader, formatDateRange, toDatetimeLocalValue, calendarLinkHtml, shortTime, validateEventFields, relativeDayPillHtml };
 })());
