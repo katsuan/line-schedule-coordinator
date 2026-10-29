@@ -134,7 +134,7 @@ const DetailView = (() => {
   // アイコンを押すと、その人のコメントを出したり隠したりする
   function wireRespondentComments(root) {
     root.querySelectorAll('.avatar-wrap[data-comment-toggle]').forEach((wrap) => {
-      wrap.addEventListener('click', () => {
+      AppUtil.onActivate(wrap, () => {
         const popup = wrap.parentElement.querySelector('.respondent-comment-popup');
         if (popup) popup.hidden = !popup.hidden;
       });

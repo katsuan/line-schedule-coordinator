@@ -1,6 +1,16 @@
 // 知らせと確かめ（Q キットのトースト・下から出る窓）、季節の絵文字、押してから終わるまで待つボタン。
 // AppUtil に足す
 var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() => {
+  // ボタンではない押せる印（role="button" tabindex="0"）を、クリックと Enter・スペースのどちらでも動くようにする
+  function onActivate(el, fn) {
+    el.addEventListener('click', fn);
+    el.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      fn(e);
+    });
+  }
+
   // ボタンを押せなくして、くるくるを出す。返す関数を呼ぶと元に戻る
   function beginButtonLoading(btn) {
     const originalColor = getComputedStyle(btn).color;
@@ -92,5 +102,5 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     }
   }
 
-  return { wireAsyncButton, saveWithButton, beginButtonLoading, notify, notifyError, friendlyReason, ask, withSeason };
+  return { onActivate, wireAsyncButton, saveWithButton, beginButtonLoading, notify, notifyError, friendlyReason, ask, withSeason };
 })());
