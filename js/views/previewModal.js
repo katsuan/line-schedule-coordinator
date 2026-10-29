@@ -3,8 +3,6 @@
  * 呼ばれ方：share.js の sendFlexMessage から。カードの変換は flexPreview.js、シートは views/sheet.js。
  */
 const PreviewModal = (() => {
-  const ANSWER_CLASS = { '○': 'choice-ok', '△': 'choice-maybe', '×': 'choice-ng' };
-
   // 見本のシートを開く。送るなら選んだ中身（ひとこと・送る答え・隠す答え）、やめたら null で終わる Promise
   function show(flex, opts) {
     const presets = (opts && opts.presets) || [];
@@ -65,7 +63,7 @@ const PreviewModal = (() => {
               </div>
               <div class="preview-group-select">
                 ${groupAnswers.map((a) => `
-                  <button type="button" class="answer-toggle-chip ${ANSWER_CLASS[a]} selected" data-answer="${a}">${a} ${groups[a].length}人</button>`).join('')}
+                  <button type="button" class="answer-toggle-chip ${OptionCard.statusClass(a)} selected" data-answer="${a}">${a} ${groups[a].length}人</button>`).join('')}
               </div>
             </div>` : ''}
           <label class="ls-field">
