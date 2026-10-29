@@ -26,6 +26,17 @@
   --qk-ng-soft: #FDEDEB;
   --qk-ng-line: #F5C6C0;
   --qk-fill: #EEEEEE; /* 顔のない人・未回答などの灰色の塗り */
+  /* 自分の答えで色を付けたイベントの行・小さな灰色の札・見出しの上のアイコン（暗い表示では下で暗い色に） */
+  --qk-row-ok: #F3FAF6;
+  --qk-row-ok-line: #CFEBDB;
+  --qk-row-maybe: #FFFBF0;
+  --qk-row-maybe-line: #F5E3BC;
+  --qk-row-ng: #FDF4F3;
+  --qk-row-ng-line: #F3D6D3;
+  --qk-chip: #F0F0F0;
+  --qk-chip-cool: #eef1f6;
+  --qk-chip-urgent: #fdeaea;
+  --qk-on-banner: #fff;
 }
 
 /* Q キットの入力欄の光る輪を、くるかなの色に */
@@ -111,7 +122,7 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .status-badge.status-answered { background: var(--qk-ok-soft); color: var(--qk-ok); }
 .status-badge.status-pending { background: var(--qk-ng-soft); color: var(--qk-ng); }
 .status-badge.status-creator { background: var(--ls-accent-soft); color: var(--ls-accent); }
-.status-badge.status-common { background: #F0F0F0; color: var(--ls-subtext); }
+.status-badge.status-common { background: var(--qk-chip); color: var(--ls-subtext); }
 
 /* ---- イベントの入力（作成・追加・編集） ---- */
 .option-list { display: grid; gap: 12px; }
@@ -139,17 +150,17 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .event-title-banner .event-description { color: var(--ls-accent); opacity: 0.85; margin: 0; }
 .event-title-banner .status-pill,
 .event-title-banner .editors-count-btn,
-.event-title-banner .edit-option-btn { background: #fff; }
+.event-title-banner .edit-option-btn { background: var(--qk-on-banner); }
 .page-header-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .page-header-title-row h1 { flex: 1; min-width: 0; }
 .status-pill { flex-shrink: 0; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; font-weight: bold; }
 .status-pill-creator { background: var(--ls-accent-soft); color: var(--ls-accent); }
-.status-pill-editor { background: #F0F0F0; color: var(--ls-subtext); }
+.status-pill-editor { background: var(--qk-chip); color: var(--ls-subtext); }
 /* 編集者の人数・編集を依頼・承認する の小さなボタン */
 .editors-count-btn {
   flex-shrink: 0;
   border: none;
-  background: #F0F0F0;
+  background: var(--qk-chip);
   color: var(--ls-subtext);
   padding: 3px 10px;
   border-radius: 999px;
@@ -167,9 +178,9 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .summary-list { display: grid; gap: 10px; }
 /* イベントのカード（Q キットの ls-panel）。自分の答えで色を付ける */
 .summary-row { gap: 10px; padding: 14px; }
-.summary-row.choice-ok { background: #F3FAF6; border-color: #CFEBDB; }
-.summary-row.choice-maybe { background: #FFFBF0; border-color: #F5E3BC; }
-.summary-row.choice-ng { background: #FDF4F3; border-color: #F3D6D3; }
+.summary-row.choice-ok { background: var(--qk-row-ok); border-color: var(--qk-row-ok-line); }
+.summary-row.choice-maybe { background: var(--qk-row-maybe); border-color: var(--qk-row-maybe-line); }
+.summary-row.choice-ng { background: var(--qk-row-ng); border-color: var(--qk-row-ng-line); }
 /* 終わったイベントは、たたんだ1行に */
 .summary-row-collapsed > summary { font-size: 0.85rem; color: var(--ls-subtext); cursor: pointer; padding: 8px 0; }
 .option-meta-title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -184,11 +195,11 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 600;
-  background: #eef1f6;
+  background: var(--qk-chip-cool);
   color: var(--ls-subtext);
   vertical-align: middle;
 }
-.date-pill-urgent { background: #fdeaea; color: #c0392b; }
+.date-pill-urgent { background: var(--qk-chip-urgent); color: #c0392b; }
 .cal-link {
   display: inline-flex;
   align-items: center;
@@ -199,6 +210,13 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
   width: fit-content;
 }
 .cal-link:hover { color: var(--ls-text); }
+
+/* 小さなボタン・リンク：見た目はそのまま、押せる範囲だけ 44px ほどに広げる（指で押しやすく） */
+.edit-option-btn, .editors-count-btn, .cal-link, .comment-add-toggle { position: relative; }
+.edit-option-btn::after, .editors-count-btn::after, .cal-link::after, .comment-add-toggle::after { content: ""; position: absolute; }
+.edit-option-btn::after { inset: -11px; }
+.editors-count-btn::after { inset: -11px -2px; }
+.cal-link::after, .comment-add-toggle::after { inset: -13px -2px; }
 
 /* ○△× のボタンと人数 */
 .summary-answer-row { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px; }
@@ -462,6 +480,26 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 /* 送る内容の見本で、ここからは送れないときの一言（見本の上） */
 .preview-outside { text-align: left; }
 .ls-sheet-actions.is-stacked { grid-template-columns: minmax(0, 1fr); }
+
+/* 暗い表示：行の背景や灰色の札を暗い色に（文字は Q キットが明るくするので、背景が明るいままだと読めない） */
+@media (prefers-color-scheme: dark) {
+  :root[data-ls-dark="auto"] {
+    --qk-fill: var(--ls-surface-sub);
+    --qk-row-ok: color-mix(in srgb, var(--qk-ok) 14%, var(--ls-surface));
+    --qk-row-ok-line: color-mix(in srgb, var(--qk-ok) 40%, var(--ls-surface));
+    --qk-row-maybe: color-mix(in srgb, var(--qk-maybe) 14%, var(--ls-surface));
+    --qk-row-maybe-line: color-mix(in srgb, var(--qk-maybe) 40%, var(--ls-surface));
+    --qk-row-ng: color-mix(in srgb, var(--qk-ng) 14%, var(--ls-surface));
+    --qk-row-ng-line: color-mix(in srgb, var(--qk-ng) 40%, var(--ls-surface));
+    --qk-chip: var(--ls-surface-sub);
+    --qk-chip-cool: var(--ls-surface-sub);
+    --qk-chip-urgent: color-mix(in srgb, var(--qk-ng) 22%, var(--ls-surface));
+    --qk-on-banner: var(--ls-surface-sub);
+  }
+  /* 暗い見出しの上の青い文字は、少し明るい青に */
+  :root[data-ls-dark="auto"] .event-description,
+  :root[data-ls-dark="auto"] .status-pill-creator { color: color-mix(in srgb, var(--ls-accent) 55%, #fff); }
+}
 
 /* 暗い表示でも、送る内容の見本（LINE のトークの見た目）は明るいまま（使い心地の決まり A3） */
 @media (prefers-color-scheme: dark) {
