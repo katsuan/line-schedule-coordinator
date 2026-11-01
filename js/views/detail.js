@@ -96,7 +96,7 @@ const DetailView = (() => {
       const answerByUser = {};
       ANSWERS.forEach((a) => (row.respondents[a] || []).forEach((r) => { answerByUser[r.userId] = a; }));
       const enrichedComments = (row.comments || []).map((c) => ({ ...c, answer: answerByUser[c.userId] }));
-      // 「カードで送る」（候補ごとの連絡）で使う、○△× ごとの名前
+      // 「カードでおくるん」（候補ごとの連絡）で使う、○△× ごとの名前
       const groups = {};
       ANSWERS.forEach((a) => {
         const names = (row.respondents[a] || []).map((r) => r.displayName);
@@ -113,7 +113,7 @@ const DetailView = (() => {
                 ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
                 ${OptionComments.commentAddToggleHtml(opt.optionId)}
               </span>
-              ${canEdit && totalCount ? `<button type="button" class="ls-button line is-oqrn remind-btn" data-row="${rowIndex}">カードで送る</button>` : ''}
+              ${canEdit && totalCount ? `<button type="button" class="ls-button line is-oqrn remind-btn" data-row="${rowIndex}">カードでおくるん</button>` : ''}
             </div>
           </div>
           <details class="respondents-fold">
@@ -141,7 +141,7 @@ const DetailView = (() => {
     });
   }
 
-  // イベントごとの「カードで送る」（答えた人への連絡）をつなぐ
+  // イベントごとの「カードでおくるん」（答えた人への連絡）をつなぐ
   function wireRemindButtons(root, eventTitle, eventId) {
     root.querySelectorAll('.remind-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
@@ -164,7 +164,7 @@ const DetailView = (() => {
         } catch (err) {
           AppUtil.notifyError('連絡を送れませんでした', err);
         } finally {
-          btn.textContent = 'カードで送る';
+          btn.textContent = 'カードでおくるん';
           btn.disabled = false;
         }
       });
@@ -202,7 +202,7 @@ const DetailView = (() => {
         <div class="sendbar-spacer"></div>
         <div class="ls-sendbar">
           <div class="ls-sendbar-inner">
-            <button id="share-event" class="ls-send line is-oqrn" type="button">カードで送る</button>
+            <button id="share-event" class="ls-send line is-oqrn" type="button">カードでおくるん</button>
           </div>
         </div>` : ''}
     `;

@@ -236,8 +236,8 @@ test("案内の文が指すボタン・欄の名前は、画面に同じ名前�
   // 「＋ イベントを追加」は予定の画面のたたみ欄
   assert.match(tips, /「＋ イベントを追加」/);
   assert.match(detail, /aria-hidden="true">＋<\/span>イベントを追加<\/summary>/);
-  // 「カードで送る」「🗓️ カレンダー」「＋ 新規作成」
-  assert.match(detail, /is-oqrn" type="button">カードで送る<\/button>/);
+  // 「カードでおくるん」「🗓️ カレンダー」「＋ 新規作成」
+  assert.match(detail, /is-oqrn" type="button">カードでおくるん<\/button>/);
   assert.match(list, /🗓️ カレンダー<\/a>/);
   assert.match(list, /＋ 新規作成<\/a>/);
   // 送る前のシートは「送る内容の見本」

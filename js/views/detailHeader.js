@@ -122,7 +122,7 @@ const DetailHeader = (() => {
           replyBtn.type = 'button';
           replyBtn.id = 'reply-approved-btn';
           // 許可したことを、依頼した人にカードで知らせる（カードの「予定を開く」からすぐ編集できる）
-          // 下の帯の「カードで送る」（予定を送る）と並ぶので、何を送るかを書く。マークでカードとわかる
+          // 下の帯の「カードでおくるん」（予定を送る）と並ぶので、何を送るかを書く。マークでカードとわかる
           replyBtn.className = 'editors-count-btn is-oqrn';
           replyBtn.textContent = '許可を知らせる';
           approveBtn.replaceWith(replyBtn);
