@@ -14,8 +14,46 @@ function groupBy_(items, key) {
   return map;
 }
 
-// getEvent_ 相当（自分の回答状況・権限判定・編集者一覧）と getSummary_ 相当（全員の回答集計）を
-// まとめて1回のシート読み込みで返す。detail画面が2回APIを呼んで同じシートを二重に読んでいたのを解消。
+// 外に出す人の形（本物の userId ではなく、この予定だけの記号。名前がなければ「(名前未取得)」）
+function publicPerson_(eventId, userById, uid) {
+  const u = userById.get(uid) || {};
+  return {
+    userId: publicIdOf_(eventId, uid),
+    displayName: u.displayName || '(名前未取得)',
+    pictureUrl: u.pictureUrl || '',
+  };
+}
+
+// イベント1つ分の集計：○△× ごとに答えた人・人数・コメント（古い順）
+function optionSummary_(opt, optResponses, optComments, personOf) {
+  const byAnswer = { [ANSWER.OK]: [], [ANSWER.MAYBE]: [], [ANSWER.NG]: [] };
+  optResponses.forEach((r) => {
+    if (byAnswer[r.answer]) byAnswer[r.answer].push(personOf(r.userId));
+  });
+  const comments = optComments
+    .slice()
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    .map((c) => ({
+      commentId: c.commentId,
+      ...personOf(c.userId),
+      text: c.text,
+      createdAt: c.createdAt,
+    }));
+  return {
+    option: stripRowMeta_(opt),
+    counts: {
+      [ANSWER.OK]: byAnswer[ANSWER.OK].length,
+      [ANSWER.MAYBE]: byAnswer[ANSWER.MAYBE].length,
+      [ANSWER.NG]: byAnswer[ANSWER.NG].length,
+    },
+    commentCount: comments.length,
+    comments,
+    respondents: byAnswer,
+  };
+}
+
+// 予定の画面に出すもの：予定・イベントごとの集計・自分の答え・作成者／編集者か・編集者の名前（ID はみな記号）。
+// 画面が1回呼ぶだけで足りるよう、自分のようすと全員の集計をまとめて、シートは1回ずつ読む
 function getSummary_(payload) {
   const { eventId, userId } = payload;
   const event = findEventById_(eventId);
@@ -28,10 +66,9 @@ function getSummary_(payload) {
   const { rows: users } = sheetRowsAsObjects_(SHEET.USERS);
 
   const userById = new Map(users.map((u) => [u.userId, u]));
-  // userId の人の行（なければ空）
-  const userOf = (uid) => userById.get(uid) || {};
   // 外に出すのは本物の userId ではなく、この予定だけの記号（11_auth.js）
   const pid = (uid) => publicIdOf_(eventId, uid);
+  const personOf = (uid) => publicPerson_(eventId, userById, uid);
   const responsesByOption = groupBy_(responses, 'optionId');
   const commentsByOption = groupBy_(comments, 'optionId');
 
@@ -39,51 +76,14 @@ function getSummary_(payload) {
   const myAnswers = {};
   responses.forEach((r) => { if (r.userId === userId) myAnswers[r.optionId] = r.answer; });
 
-  const summary = options.map((opt) => {
-    const optResponses = responsesByOption.get(opt.optionId) || [];
-    const byAnswer = { [ANSWER.OK]: [], [ANSWER.MAYBE]: [], [ANSWER.NG]: [] };
-    optResponses.forEach((r) => {
-      if (byAnswer[r.answer]) {
-        const u = userOf(r.userId);
-        byAnswer[r.answer].push({
-          userId: pid(r.userId),
-          displayName: u.displayName || '(名前未取得)',
-          pictureUrl: u.pictureUrl || '',
-        });
-      }
-    });
-    const optComments = (commentsByOption.get(opt.optionId) || [])
-      .slice()
-      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-      .map((c) => {
-        const u = userOf(c.userId);
-        return {
-          commentId: c.commentId,
-          userId: pid(c.userId),
-          displayName: u.displayName || '(名前未取得)',
-          pictureUrl: u.pictureUrl || '',
-          text: c.text,
-          createdAt: c.createdAt,
-        };
-      });
-    return {
-      option: stripRowMeta_(opt),
-      counts: {
-        [ANSWER.OK]: byAnswer[ANSWER.OK].length,
-        [ANSWER.MAYBE]: byAnswer[ANSWER.MAYBE].length,
-        [ANSWER.NG]: byAnswer[ANSWER.NG].length,
-      },
-      commentCount: optComments.length,
-      comments: optComments,
-      respondents: byAnswer,
-    };
-  });
+  const summary = options.map((opt) => optionSummary_(
+    opt, responsesByOption.get(opt.optionId) || [], commentsByOption.get(opt.optionId) || [], personOf
+  ));
 
   const editors = editorIdsOf_(event).map((id) => {
-    const u = userById.get(id);
-    return { userId: pid(id), displayName: (u && u.displayName) || '(名前未取得)' };
+    const { userId: publicId, displayName } = personOf(id);
+    return { userId: publicId, displayName };
   });
-  const creatorUser = userById.get(event.creatorUserId);
 
   // 予定の行にある作成者・編集者の本物の ID は外さない
   const { creatorUserId, editorUserIds, ...publicEvent } = stripRowMeta_(event);
@@ -96,11 +96,7 @@ function getSummary_(payload) {
     hasAnswered: options.length > 0 && options.every((opt) => myAnswers[opt.optionId] !== undefined),
     myAnswers,
     editors,
-    creator: {
-      userId: pid(event.creatorUserId),
-      displayName: (creatorUser && creatorUser.displayName) || '(名前未取得)',
-      pictureUrl: (creatorUser && creatorUser.pictureUrl) || '',
-    },
+    creator: personOf(event.creatorUserId),
     totalRespondents: answeredUserIds.size,
     summary,
   };

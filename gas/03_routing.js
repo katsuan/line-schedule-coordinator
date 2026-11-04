@@ -14,7 +14,7 @@ function routeAction_(action, payload) {
     case 'getSummary': return getSummary_(payload);
     case 'listMyEvents': return listMyEvents_(payload);
     case 'listMyOptions': return listMyOptions_(payload);
-    case 'buildShareFlex': return buildShareFlex_(payload);
+    case 'buildShareFlex': return buildEventShareFlex_(payload.eventId);
     case 'buildReminderFlex': return buildReminderFlex_(payload.eventId, payload.groups, payload.optionTitle, payload.optionStartAt, payload.optionEndAt, payload.optionLocation, payload.optionId);
     case 'buildEditorInviteFlex': return buildEditorInviteFlex_(payload.eventId, payload.userId);
     case 'buildChangeNotificationFlex': return buildChangeNotificationFlex_(payload.eventId, payload.optionTitle, payload.optionStartAt, payload.optionEndAt, payload.optionLocation, payload.names);

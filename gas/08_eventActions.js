@@ -1,6 +1,6 @@
 /**
- * 予定（EVENTS）とイベント（EVENT_OPTIONS）を作る・変える・消す。編集者になる・編集を許可する。
- * 呼ばれ方：03_routing.js から（書きこむ操作は 01_entry.js で鍵を持って1つずつ）。回答は 09_responseActions.js。
+ * 予定（EVENTS）とイベント（EVENT_OPTIONS）を作る・変える・消す。
+ * 呼ばれ方：03_routing.js から（書きこむ操作は 01_entry.js で鍵を持って1つずつ）。回答は 09_responseActions.js、編集者は 13_editorActions.js。
  */
 
 // 新しい予定とイベントを作る。返すもの：{ eventId }
@@ -145,66 +145,6 @@ function updateOption_(payload) {
   return { ok: true };
 }
 
-// 招待のリンク（合言葉つき）から開いた人を、編集者にする
-function claimEditor_(payload) {
-  const { eventId, userId, displayName, pictureUrl } = payload;
-  if (!eventId || !userId) {
-    throw new Error('eventId / userId は必須です');
-  }
-  const event = findEventById_(eventId);
-  if (!event) {
-    throw new Error('イベントが見つかりません');
-  }
-
-  upsertUser_(userId, displayName, pictureUrl);
-
-  if (!isEditorOrCreator_(event, userId)) {
-    // 編集者になれるのは、作成者が送った招待のリンク（合言葉つき）から開いた人だけ
-    if (String(payload.inviteKey || '') !== editorInviteKey_(eventId)) {
-      throw new Error('編集者になるには、作成者からの招待のリンクが必要です');
-    }
-    const ids = editorIdsOf_(event);
-    ids.push(userId);
-    updateRowObject_(SHEET.EVENTS, event._rowIndex, {
-      ...event,
-      editorUserIds: ids.join(','),
-      updatedAt: new Date(),
-    });
-  }
-
-  return { ok: true };
-}
-
-// 作った人が、編集を頼んだ人（記号で届く）を編集者にする。
-// （claimEditor_ は招待のリンクから自分でなるほう）
-function approveEditRequest_(payload) {
-  const { eventId, userId } = payload;
-  // 依頼のリンクに入っているのは、本物の ID ではなく、その予定の記号（11_auth.js）
-  const targetUserId = userIdFromPublicId_(eventId, payload.targetUserId);
-  if (!eventId || !userId || !targetUserId) {
-    throw new Error('eventId / userId / targetUserId は必須です');
-  }
-  const event = findEventById_(eventId);
-  if (!event) {
-    throw new Error('イベントが見つかりません');
-  }
-  if (event.creatorUserId !== userId) {
-    throw new Error('編集権限を許可できるのは作成者のみです');
-  }
-
-  if (!isEditorOrCreator_(event, targetUserId)) {
-    const ids = editorIdsOf_(event);
-    ids.push(targetUserId);
-    updateRowObject_(SHEET.EVENTS, event._rowIndex, {
-      ...event,
-      editorUserIds: ids.join(','),
-      updatedAt: new Date(),
-    });
-  }
-
-  return { ok: true };
-}
-
 // 予定と、そのイベント・回答・コメントを全部消す（作った人だけ）
 function deleteEvent_(payload) {
   const { eventId, userId } = payload;
@@ -226,10 +166,4 @@ function deleteEvent_(payload) {
   deleteRows_(SHEET.EVENTS, [event._rowIndex]);
 
   return { ok: true };
-}
-
-// 予定を送るカードを返す（06_message.js の buildEventShareFlex_）
-function buildShareFlex_(payload) {
-  const { eventId } = payload;
-  return buildEventShareFlex_(eventId);
 }
