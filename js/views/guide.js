@@ -56,7 +56,7 @@ const GuideView = (() => {
       <section class="guide-section">
         <p class="guide-label">👤 参加者のとき</p>
         <h2 class="guide-section-title">予定に回答する</h2>
-        <div class="ls-panel guide-step-card">
+        <div class="ls-panel">
           <div class="guide-step-list">
             ${stepItem(1, '届いたメッセージの「回答する」を開く', '幹事から届いたカード形式のメッセージから、そのまま開けます。')}
             ${stepItem(2, '候補ごとに○△×をタップ', '複数の候補日があれば、それぞれに回答します。あとから何度でも変更できます。')}
@@ -84,7 +84,7 @@ const GuideView = (() => {
       <section class="guide-section">
         <p class="guide-label">🎌 幹事のとき</p>
         <h2 class="guide-section-title">予定をつくって共有する</h2>
-        <div class="ls-panel guide-step-card">
+        <div class="ls-panel">
           <div class="guide-step-list">
             ${stepItem(1, '一覧の「新規作成」', 'タイトルと、候補日時を1つ以上入力します（複数候補もOK）。')}
             ${stepItem(2, '「カードでおくるん」で参加者に送る', '送る前に、送る内容の見本を見られます。')}

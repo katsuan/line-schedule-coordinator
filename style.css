@@ -46,8 +46,8 @@ input[type="datetime-local"].ls-input { appearance: none; -webkit-appearance: no
 textarea.ls-input.is-short { min-height: 64px; }
 /* パネル・シートの中の段落は、すき間を Q キット（grid の gap）にまかせる */
 :where(.ls-panel, .ls-sheet-card) > p { margin: 0; }
-/* 余白は 8 の倍数に（Q キットのページの左右とすき間の 12px を、くるかなでは 16px に） */
-#app.ls-stack { gap: 16px; padding: 8px 16px 24px; }
+/* ページの上の余白は 8（Q キットの ls-page は 4。左右・下・すき間は Q キットのまま） */
+#app.ls-stack { padding-top: 8px; }
 
 /* ---- ページ ---- */
 #app { min-height: 100vh; align-content: start; }
@@ -64,14 +64,12 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .event-description { color: var(--ls-subtext); font-size: 0.9rem; white-space: pre-wrap; }
 
 /* ---- 線アイコン（Q キットの ls-icon）の大きさ。ボタンの中は Q キットにまかせ、くるかなだけの小さな所をここで ---- */
-.ls-icon-button > .ls-icon, .sheet-close > .ls-icon { width: 20px; height: 20px; }
-.option-card-icon > .ls-icon { width: 20px; height: 20px; }
+.ls-icon-button > .ls-icon, .sheet-close > .ls-icon, .option-card-icon > .ls-icon { width: 20px; height: 20px; }
 .edit-option-btn > .ls-icon { width: 18px; height: 18px; }
 .comment-delete-btn > .ls-icon { width: 16px; height: 16px; }
 /* 文の前の小さな印（場所・コメントを追加・読みこみ中の一言・開けなかった知らせ）。字との間は 4 */
 .option-meta-location > .ls-icon, .comment-add-toggle > .ls-icon, .loading-tip > .ls-icon, .guide-notice > .ls-icon { width: 14px; height: 14px; margin-right: 4px; }
 .cal-open-link > .ls-icon { width: 14px; height: 14px; margin-left: 4px; }
-.sheet-close { display: inline-grid; place-items: center; }
 
 /* ---- 読みこみ中 ---- */
 .loading { display: grid; gap: 16px; margin-top: 8px; color: var(--ls-subtext); }
@@ -144,17 +142,17 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
   background: var(--ls-surface-sub);
 }
 .option-card-head { display: flex; align-items: center; gap: 8px; }
-.option-card-icon { font-size: 1.1rem; flex-shrink: 0; }
+.option-card-icon { font-size: 1.1rem; flex-shrink: 0; } /* font-size は入れ物の高さを決めている */
 .option-title-input { flex: 1; min-width: 0; font-weight: bold; }
 .option-range .ls-label { font-size: 0.7rem; font-weight: normal; }
 .option-range .ls-field { gap: 4px; }
-.option-range .ls-input { min-width: 0; padding: 8px 8px; }
+.option-range .ls-input { min-width: 0; padding: 8px; }
 .option-edit-form { display: grid; gap: 8px; margin-top: 8px; }
 .option-edit-actions { display: flex; gap: 8px; }
 .option-edit-actions .ls-button { flex: 1; }
 
 /* ---- 予定のページ ---- */
-.event-title-banner { background: var(--ls-accent-soft); border-radius: var(--ls-radius-md); padding: 16px 16px; margin-top: 4px; }
+.event-title-banner { background: var(--ls-accent-soft); border-radius: var(--ls-radius-md); padding: 16px; margin-top: 4px; }
 .event-title-banner h1 { color: var(--ls-accent); }
 .event-title-banner .event-description { color: var(--ls-accent); opacity: 0.85; margin: 0; }
 .event-title-banner .status-pill,
@@ -181,13 +179,14 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 /* カードを送る札（おくるんのマークを文字の前に） */
 .editors-count-btn.is-oqrn { display: inline-flex; align-items: center; background: var(--ls-line-green, #06c755); color: #fff; }
 .editors-count-btn.edit-request-chip-pending { background: var(--ls-accent-soft); color: var(--ls-accent); }
-.edit-option-btn { flex-shrink: 0; border: none; background: none; cursor: pointer; font-size: 0.9rem; padding: 4px 4px; }
+/* font-size はボタンの高さを決めている（中はアイコンだけでも、行の高さがこの字の大きさから決まる） */
+.edit-option-btn { flex-shrink: 0; border: none; background: none; cursor: pointer; font-size: 0.9rem; padding: 4px; }
 
 .summary-section { display: grid; gap: 8px; }
 .summary-section > .event-meta { margin: 0; }
 .summary-list { display: grid; gap: 8px; }
 /* イベントのカード（Q キットの ls-panel）。自分の答えで色を付ける */
-.summary-row { gap: 8px; padding: 16px; }
+.summary-row { gap: 8px; }
 .summary-row.choice-ok { background: var(--qk-row-ok); border-color: var(--qk-row-ok-line); }
 .summary-row.choice-maybe { background: var(--qk-row-maybe); border-color: var(--qk-row-maybe-line); }
 .summary-row.choice-ng { background: var(--qk-row-ng); border-color: var(--qk-row-ng-line); }
@@ -248,12 +247,13 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
   transition: transform 0.1s ease;
 }
 .choice-btn.selected { transform: scale(1.08); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-.choice-btn.choice-ok { background: var(--qk-ok-soft); color: var(--qk-ok); border-color: var(--qk-ok-line); }
-.choice-btn.choice-ok.selected { background: var(--qk-ok); border-color: var(--qk-ok); color: #fff; }
-.choice-btn.choice-maybe { background: var(--qk-maybe-soft); color: var(--qk-maybe-ink); border-color: var(--qk-maybe-line); }
-.choice-btn.choice-maybe.selected { background: var(--qk-maybe); border-color: var(--qk-maybe); color: #fff; }
-.choice-btn.choice-ng { background: var(--qk-ng-soft); color: var(--qk-ng); border-color: var(--qk-ng-line); }
-.choice-btn.choice-ng.selected { background: var(--qk-ng); border-color: var(--qk-ng); color: #fff; }
+/* ○△× の色（○△× のボタンと、送る見本の ○△× のチップで同じ。選ぶと濃い色で塗る） */
+:is(.choice-btn, .answer-toggle-chip).choice-ok { background: var(--qk-ok-soft); color: var(--qk-ok); border-color: var(--qk-ok-line); }
+:is(.choice-btn, .answer-toggle-chip).choice-ok.selected { background: var(--qk-ok); border-color: var(--qk-ok); color: #fff; }
+:is(.choice-btn, .answer-toggle-chip).choice-maybe { background: var(--qk-maybe-soft); color: var(--qk-maybe-ink); border-color: var(--qk-maybe-line); }
+:is(.choice-btn, .answer-toggle-chip).choice-maybe.selected { background: var(--qk-maybe); border-color: var(--qk-maybe); color: #fff; }
+:is(.choice-btn, .answer-toggle-chip).choice-ng { background: var(--qk-ng-soft); color: var(--qk-ng); border-color: var(--qk-ng-line); }
+:is(.choice-btn, .answer-toggle-chip).choice-ng.selected { background: var(--qk-ng); border-color: var(--qk-ng); color: #fff; }
 /* 回答した人へ LINE で送る小さなボタン（Q キットのボタンを小さく） */
 .ls-button.remind-btn { flex-shrink: 0; min-height: 32px; padding: 0 16px; font-size: 0.75rem; }
 
@@ -263,7 +263,7 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
   align-items: flex-start;
   gap: 8px;
   margin-top: 8px;
-  padding: 8px 8px;
+  padding: 8px;
   background: var(--ls-surface-sub);
   border-radius: 8px;
 }
@@ -272,7 +272,7 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .comment-list-more summary { font-size: 0.7rem; color: var(--ls-subtext); cursor: pointer; }
 .option-comment-author { font-size: 0.7rem; color: var(--ls-subtext); }
 .option-comment-text { font-size: 0.9rem; word-break: break-word; }
-.comment-delete-btn { flex-shrink: 0; border: none; background: none; color: var(--ls-subtext); cursor: pointer; font-size: 0.9rem; line-height: 1; }
+.comment-delete-btn { flex-shrink: 0; border: none; background: none; color: var(--ls-subtext); cursor: pointer; line-height: 1; }
 .comment-add-toggle {
   border: none;
   background: none;
@@ -284,13 +284,13 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
   white-space: nowrap;
 }
 .comment-add-form { display: flex; gap: 8px; margin-top: 8px; }
-.comment-add-form .ls-input { flex: 1; min-height: 44px; padding: 8px 8px; }
+.comment-add-form .ls-input { flex: 1; min-height: 44px; padding: 8px; }
 .comment-count { color: var(--ls-subtext); }
 
 /* 回答者（たたんでおき、開くと ○△× ごとに顔を横に並べる） */
 .respondents-fold > summary { font-size: 0.8rem; color: var(--ls-subtext); cursor: pointer; }
 .respondent-label { font-size: 0.75rem; color: var(--ls-subtext); margin: 0 0 4px; }
-.respondent-group { border: 1.5px solid var(--ls-line); border-radius: 8px; padding: 8px 8px; margin-top: 8px; }
+.respondent-group { border: 1.5px solid var(--ls-line); border-radius: 8px; padding: 8px; margin-top: 8px; }
 .respondent-group.choice-ok { border-color: var(--qk-ok-line); }
 .respondent-group.choice-maybe { border-color: var(--qk-maybe-line); }
 .respondent-group.choice-ng { border-color: var(--qk-ng-line); }
@@ -345,7 +345,7 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .cal-weekday.is-sun { color: #d9534f; }
 .cal-weekday.is-sat { color: var(--ls-accent-ink); }
 .cal-week-start { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 4px; font-size: 0.8rem; color: var(--ls-subtext); }
-.cal-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; border-radius: 8px; overflow: hidden; cursor: default; }
+.cal-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; overflow: hidden; cursor: default; }
 .cal-cell.has-items { cursor: pointer; background: var(--ls-surface); }
 .cal-cell.today .cal-daynum {
   background: var(--ls-accent);
@@ -358,7 +358,7 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
   justify-content: center;
 }
 .cal-daynum { font-size: 0.8rem; }
-.cal-pills { display: flex; flex-direction: column; gap: 0; align-items: center; min-height: 12px; }
+.cal-pills { display: flex; flex-direction: column; align-items: center; min-height: 12px; }
 .cal-pill { font-size: 0.5rem; line-height: 1.4; padding: 0 4px; border-radius: 5px; background: var(--qk-fill); color: var(--ls-text); white-space: nowrap; }
 .cal-pill-more { font-size: 0.5rem; color: var(--ls-subtext); }
 .cal-item-list { display: grid; gap: 8px; }
@@ -379,7 +379,7 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .me-sheet-head { margin: 4px 0 8px; }
 .me-sheet-name { margin: 0; font-weight: 800; overflow-wrap: anywhere; }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.sheet-close { border: none; background: none; font-size: 1.3rem; cursor: pointer; color: var(--ls-subtext); min-width: 32px; min-height: 32px; }
+.sheet-close { display: inline-grid; place-items: center; border: none; background: none; cursor: pointer; color: var(--ls-subtext); min-width: 32px; min-height: 32px; }
 .approve-target { display: flex; align-items: center; gap: 8px; }
 
 /* ---- 送信内容プレビュー ---- */
@@ -409,7 +409,7 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .flex-preview-card { background: #F7F8FA; border-radius: 10px; padding: 8px 16px; margin: 8px 0; }
 .flex-preview-card .flex-preview-title { margin-top: 0; }
 .flex-preview-sep { border: none; border-top: 1px solid var(--ls-line); margin: 8px 0; }
-.flex-preview-answer { padding: 8px 8px; border-radius: 6px; }
+.flex-preview-answer { padding: 8px; border-radius: 6px; }
 .flex-preview-answer.choice-ok { background: var(--qk-ok-soft); }
 .flex-preview-answer.choice-maybe { background: var(--qk-maybe-soft); }
 .flex-preview-answer.choice-ng { background: var(--qk-ng-soft); }
@@ -432,16 +432,10 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
   font-weight: bold;
   cursor: pointer;
 }
-.answer-toggle-chip.choice-ok { background: var(--qk-ok-soft); color: var(--qk-ok); border-color: var(--qk-ok-line); }
-.answer-toggle-chip.choice-ok.selected { background: var(--qk-ok); border-color: var(--qk-ok); color: #fff; }
-.answer-toggle-chip.choice-maybe { background: var(--qk-maybe-soft); color: var(--qk-maybe-ink); border-color: var(--qk-maybe-line); }
-.answer-toggle-chip.choice-maybe.selected { background: var(--qk-maybe); border-color: var(--qk-maybe); color: #fff; }
-.answer-toggle-chip.choice-ng { background: var(--qk-ng-soft); color: var(--qk-ng); border-color: var(--qk-ng-line); }
-.answer-toggle-chip.choice-ng.selected { background: var(--qk-ng); border-color: var(--qk-ng); color: #fff; }
 
 /* ---- 使い方（はじめの画面） ---- */
 .guide-notice { background: #FDF3F2; color: #D93025; border: 1px solid #F3D4D1; border-radius: 10px; padding: 8px 16px; font-size: 0.85rem; }
-.guide-hero { text-align: center; margin: 8px 0 8px; }
+.guide-hero { text-align: center; margin: 8px 0; }
 .guide-hero-icon { display: block; width: 64px; height: 64px; margin: 0 auto 8px; }
 .guide-hero-logo { display: block; width: auto; height: 32px; margin: 0 auto; }
 .guide-hero-copy { margin: 8px 0 16px; }
@@ -451,7 +445,6 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .guide-label { font-size: 0.72rem; font-weight: bold; color: var(--ls-accent); margin: 0 0 8px; }
 .guide-section-title { margin: 0 0 8px; }
 .guide-section .ls-panel + .ls-panel { margin-top: 8px; }
-.guide-step-card { gap: 16px; padding: 16px 16px; }
 .guide-step-list { display: flex; flex-direction: column; gap: 16px; }
 .guide-step-list-divider { padding-top: 16px; border-top: 1px solid var(--ls-line); }
 .guide-step-item { display: flex; gap: 16px; align-items: flex-start; }
@@ -473,12 +466,12 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .guide-answer-demo { display: flex; justify-content: center; gap: 24px; padding-top: 16px; border-top: 1px solid var(--ls-line); }
 .guide-answer-demo-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .guide-answer-demo-item .choice-btn { display: inline-flex; align-items: center; justify-content: center; pointer-events: none; }
-.guide-role-card { gap: 8px; padding: 16px 16px; }
+.guide-role-card { gap: 8px; }
 .guide-role-card .status-badge { justify-self: start; }
 .guide-role-can { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .guide-role-can li { font-size: 0.85rem; color: var(--ls-subtext); padding-left: 24px; position: relative; }
 .guide-role-can li::before { content: "✓"; position: absolute; left: 0; color: var(--ls-accent); font-weight: bold; }
-.guide-faq-item { gap: 4px; padding: 16px 16px; }
+.guide-faq-item { gap: 4px; }
 .guide-faq-q { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.86rem; }
 .guide-faq-q .status-badge { flex-shrink: 0; }
 
@@ -514,10 +507,7 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
   /* 暗い見出しの上の青い文字は、少し明るい青に */
   :root[data-ls-dark="auto"] .event-description,
   :root[data-ls-dark="auto"] .status-pill-creator { color: color-mix(in srgb, var(--ls-accent) 55%, #fff); }
-}
-
-/* 暗い表示でも、送る内容の見本（LINE のトークの見た目）は明るいまま（使い心地の決まり A3） */
-@media (prefers-color-scheme: dark) {
+  /* 送る内容の見本（LINE のトークの見た目）は明るいまま（使い心地の決まり A3） */
   :root[data-ls-dark="auto"] .preview-scope {
     --ls-surface: #ffffff;
     --ls-surface-sub: #ffffff;
