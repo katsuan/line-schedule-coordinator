@@ -1,6 +1,19 @@
 // 予定を作る画面（CreateView）：題・説明とイベント（候補の日）を入れて作る。作ったら予定の画面へ。
 // app.js が ?view=create のとき render を呼ぶ
 const CreateView = (() => {
+  // 入れたイベントから、作るものを選ぶ。何も入れていないカード（足しただけで使わなかった）は数えないが、
+  // 一部だけ入れたカードは知らせて止める（黙って消えると、抜けたことに気づけないため）。
+  // よければ { options }、だめなら { error: 知らせる文 }
+  function pickOptions(title, allFields) {
+    const isBlank = (opt) => !opt.title && !opt.startAt && !opt.endAt && !opt.location;
+    const options = allFields.filter((opt) => !isBlank(opt));
+    if (!title || !options.length) {
+      return { error: '予定のタイトルと、イベント（タイトル・開始・完了とも）を1件以上入力してください' };
+    }
+    const fieldError = options.map(AppUtil.validateEventFields).find(Boolean);
+    return fieldError ? { error: fieldError } : { options };
+  }
+
   // イベント1つ分の入力欄（何番目か）
   function optionCardHtml(index) {
     return `
@@ -36,8 +49,7 @@ const CreateView = (() => {
     const optionList = root.querySelector('#option-list');
     let index = 1;
 
-    // カードが1枚だけのときは削除ボタンを押しても何も起きず分かりにくいため、
-    // そもそも押せない（非表示）状態にしておく。
+    // カードが1枚だけのときは、消すボタンを出さない（押しても何も起きず、わかりにくいため）
     const updateRemoveButtons = () => {
       const cards = optionList.querySelectorAll('.option-card');
       const onlyOne = cards.length <= 1;
@@ -77,19 +89,9 @@ const CreateView = (() => {
       const description = root.querySelector('#f-description').value.trim();
 
       const optionCards = Array.from(optionList.querySelectorAll('.option-card'));
-      const allFields = optionCards.map((card) => OptionCard.readFields(card, 'option'));
-      // 何も入力されていないカード（追加だけして使わなかった等）は無視するが、
-      // 一部だけ入力されたカードは不備として弾く（黙って消えるとデータ欠落に気づけないため）。
-      const isBlank = (opt) => !opt.title && !opt.startAt && !opt.endAt && !opt.location;
-      const options = allFields.filter((opt) => !isBlank(opt));
-
-      if (!title || !options.length) {
-        AppUtil.notify('予定のタイトルと、イベント（タイトル・開始・完了とも）を1件以上入力してください');
-        return;
-      }
-      const fieldError = options.map(AppUtil.validateEventFields).find(Boolean);
-      if (fieldError) {
-        AppUtil.notify(fieldError);
+      const { options, error } = pickOptions(title, optionCards.map((card) => OptionCard.readFields(card, 'option')));
+      if (error) {
+        AppUtil.notify(error);
         return;
       }
 
@@ -108,5 +110,5 @@ const CreateView = (() => {
     });
   }
 
-  return { render };
+  return { render, pickOptions };
 })();

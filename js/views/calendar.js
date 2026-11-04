@@ -1,5 +1,6 @@
 // カレンダーの画面（CalendarView）：月のマスに自分のイベントの印、下にこれからの一覧。日を押すとその日の予定と ○△×。
-// app.js が ?view=calendar のとき render を呼ぶ。週のはじまりは AppUtil（dates.js）
+// app.js が ?view=calendar のとき render を呼ぶ。週のはじまりは AppUtil（dates.js）。
+// 画面の中の状態（イベント・見ている月・週のはじまり）は render で作る view にまとめ、下の関数に渡す
 const CalendarView = (() => {
   // 自分の答えの色（日付の小さな印と、一覧の札で同じ）
   const STATUS_CLASS = { '○': 'dot-ok', '△': 'dot-maybe', '×': 'dot-ng' };
@@ -16,62 +17,52 @@ const CalendarView = (() => {
     return dayKey(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
-  // 自分のイベントを読んで、カレンダーの画面を描く
-  async function render(root, ctx) {
-    root.innerHTML = AppUtil.loadingHtml();
-    let { items } = await AppApi.listMyOptions({ userId: ctx.identity.userId });
-    items.sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
+  // イベントを日ごとに分ける（マスの印 → イベントの並び）
+  function byDayMap(items) {
+    const map = {};
+    items.forEach((it) => {
+      const key = dateKey(it.startAt);
+      (map[key] = map[key] || []).push(it);
+    });
+    return map;
+  }
 
-    const today = new Date();
-    let viewYear = today.getFullYear();
-    let viewMonth = today.getMonth();
-    let weekStart = AppUtil.getWeekStart();
-
-    // イベントを日ごとに分ける（マスの印 → イベントの並び）
-    function byDayMap() {
-      const map = {};
-      items.forEach((it) => {
-        const key = dateKey(it.startAt);
-        (map[key] = map[key] || []).push(it);
-      });
-      return map;
-    }
-
-    // 月のマス（曜日の見出しと日。イベントのある日は時刻の札）の HTML
-    function monthGridHtml(year, month, byDay) {
-      const cells = AppUtil.monthCells(year, month, weekStart);
-
-      const weekHeader = AppUtil.weekHeader(weekStart)
-        .map((w) => `<div class="cal-weekday${w.dow === 0 ? ' is-sun' : w.dow === 6 ? ' is-sat' : ''}">${w.label}</div>`).join('');
-
-      const dayCells = cells.map((d) => {
-        if (!d) return '<div class="cal-cell empty"></div>';
-        const key = dayKey(year, month, d);
-        const dayItems = byDay[key] || [];
-        const isToday = year === today.getFullYear() && month === today.getMonth() && d === today.getDate();
-        const shown = dayItems.slice(0, 2);
-        const pills = shown.map((it) => `
+  // 日のマス1つ（イベントのある日は時刻の札。3つめからは「+数」）
+  function dayCellHtml(view, year, month, d, byDay) {
+    if (!d) return '<div class="cal-cell empty"></div>';
+    const key = dayKey(year, month, d);
+    const dayItems = byDay[key] || [];
+    const today = view.today;
+    const isToday = year === today.getFullYear() && month === today.getMonth() && d === today.getDate();
+    const shown = dayItems.slice(0, 2);
+    const pills = shown.map((it) => `
           <span class="cal-pill ${STATUS_CLASS[it.myAnswer] || 'dot-none'}">${AppUtil.extractIcon(it.optionTitle || it.eventTitle)}${AppUtil.shortTime(it.startAt).slice(0, 2)}時</span>`).join('');
-        const overflow = dayItems.length > shown.length ? `<span class="cal-pill-more">+${dayItems.length - shown.length}</span>` : '';
-        return `
+    const overflow = dayItems.length > shown.length ? `<span class="cal-pill-more">+${dayItems.length - shown.length}</span>` : '';
+    return `
           <div class="cal-cell${isToday ? ' today' : ''}${dayItems.length ? ' has-items' : ''}" data-key="${key}"${dayItems.length ? ` role="button" tabindex="0" aria-label="${month + 1}月${d}日の予定（${dayItems.length}件）"` : ''}>
             <span class="cal-daynum">${d}</span>
             <span class="cal-pills">${pills}${overflow}</span>
           </div>`;
-      }).join('');
+  }
 
-      return `<div class="cal-grid-header">${weekHeader}</div><div class="cal-grid">${dayCells}</div>`;
-    }
+  // 月のマス（曜日の見出しと日）の HTML
+  function monthGridHtml(view, year, month) {
+    const byDay = byDayMap(view.items);
+    const weekHeader = AppUtil.weekHeader(view.weekStart)
+      .map((w) => `<div class="cal-weekday${w.dow === 0 ? ' is-sun' : w.dow === 6 ? ' is-sat' : ''}">${w.label}</div>`).join('');
+    const dayCells = AppUtil.monthCells(year, month, view.weekStart).map((d) => dayCellHtml(view, year, month, d, byDay)).join('');
+    return `<div class="cal-grid-header">${weekHeader}</div><div class="cal-grid">${dayCells}</div>`;
+  }
 
-    // これからのイベントの一覧の HTML（自分の答えの札つき）
-    function listHtml() {
-      const upcoming = items.filter((it) => !AppUtil.hasEnded(it));
-      if (!upcoming.length) return '<p class="ls-empty">今後の予定はありません。</p>';
-      return upcoming.map((it) => {
-        const statusText = it.myAnswer ? STATUS_LABEL[it.myAnswer] : '未回答';
-        const rowClass = OptionCard.statusClass(it.myAnswer);
-        const badgeClass = STATUS_CLASS[it.myAnswer] || 'dot-none';
-        return `
+  // これからのイベントの一覧の HTML（自分の答えの札つき）
+  function listHtml(items) {
+    const upcoming = items.filter((it) => !AppUtil.hasEnded(it));
+    if (!upcoming.length) return '<p class="ls-empty">今後の予定はありません。</p>';
+    return upcoming.map((it) => {
+      const statusText = it.myAnswer ? STATUS_LABEL[it.myAnswer] : '未回答';
+      const rowClass = OptionCard.statusClass(it.myAnswer);
+      const badgeClass = STATUS_CLASS[it.myAnswer] || 'dot-none';
+      return `
           <button type="button" class="ls-panel summary-row cal-item ${rowClass}" data-key="${dateKey(it.startAt)}">
             <div class="option-meta-title-row">
               <span class="option-meta-title">${AppUtil.titleIconHtml(it.optionTitle || it.eventTitle)}</span>
@@ -80,61 +71,59 @@ const CalendarView = (() => {
             <div class="option-meta-info-row">
               <span class="option-meta-date">${AppUtil.formatDateRange(it.startAt, it.endAt)}</span>
             </div>
-            ${it.location ? `<div class="option-meta-info-row"><span class="option-meta-location">${AppUtil.icon('place')}${AppUtil.escapeHtml(it.location)}</span></div>` : ''}
+            ${OptionCard.locationRowHtml(it.location)}
           </button>`;
-      }).join('');
-    }
+    }).join('');
+  }
 
-    // その日のシートに出す1つのイベント（○△× のボタン・カレンダー追加・予定を開く）
-    function daySheetItemHtml(it) {
-      return `
+  // その日のシートに出す1つのイベント（○△× のボタン・カレンダー追加・予定を開く）
+  function daySheetItemHtml(it) {
+    return `
         <div class="answer-row" data-option-id="${AppUtil.escapeHtml(it.optionId)}" data-event-id="${AppUtil.escapeHtml(it.eventId)}">
           <div class="option-meta">
             <div class="option-meta-title">${AppUtil.titleIconHtml(it.optionTitle || it.eventTitle)}</div>
-            <div class="option-meta-info-row option-meta-info-row-split">
-              <span class="option-meta-date">${AppUtil.formatDateRange(it.startAt, it.endAt)}</span>
-              ${AppUtil.calendarLinkHtml(it.optionTitle || it.eventTitle, '', it.startAt, it.endAt, it.location)}
-            </div>
-            ${it.location ? `<div class="option-meta-info-row"><span class="option-meta-location">${AppUtil.icon('place')}${AppUtil.escapeHtml(it.location)}</span></div>` : ''}
+            ${OptionCard.dateRowHtml(it.optionTitle || it.eventTitle, it.startAt, it.endAt, it.location)}
+            ${OptionCard.locationRowHtml(it.location)}
           </div>
           <span class="answer-choices" data-option-id="${AppUtil.escapeHtml(it.optionId)}">
             ${OptionCard.choiceButtonsHtml(it.optionId, { [it.optionId]: it.myAnswer })}
           </span>
           <a class="cal-open-link" href="?event=${encodeURIComponent(it.eventId)}">この予定を開く${AppUtil.icon('next')}</a>
         </div>`;
-    }
+  }
 
-    // その日の予定のシートを開き、○△× を押したら保存する
-    function openDaySheet(key) {
-      const dayItems = items.filter((it) => dateKey(it.startAt) === key);
-      if (!dayItems.length) return;
+  // その日の予定のシートを開き、○△× を押したら保存する（保存できたら画面を描きなおす）
+  function openDaySheet(view, key) {
+    const dayItems = view.items.filter((it) => dateKey(it.startAt) === key);
+    if (!dayItems.length) return;
 
-      const dayLabel = new Date(dayItems[0].startAt).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
-      const sheet = Sheet.open({ title: `${dayLabel}の予定`, bodyHtml: dayItems.map(daySheetItemHtml).join('') });
+    const dayLabel = new Date(dayItems[0].startAt).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
+    const sheet = Sheet.open({ title: `${dayLabel}の予定`, bodyHtml: dayItems.map(daySheetItemHtml).join('') });
 
-      let saving = false;
-      sheet.el.querySelectorAll('.answer-choices').forEach((container) => {
-        container.addEventListener('click', async (e) => {
-          const btn = e.target.closest('.choice-btn');
-          if (!btn || saving) return;
-          const optionId = container.dataset.optionId;
-          const eventId = container.closest('.answer-row').dataset.eventId;
-          const value = btn.dataset.value;
-          saving = true;
-          const saved = await OptionCard.saveChoice(container, btn, () => OptionCard.submitOne(ctx, eventId, optionId, value));
-          saving = false;
-          if (saved) {
-            const item = items.find((it) => it.optionId === optionId);
-            if (item) item.myAnswer = value;
-            paint();
-          }
-        });
+    let saving = false;
+    sheet.el.querySelectorAll('.answer-choices').forEach((container) => {
+      container.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.choice-btn');
+        if (!btn || saving) return;
+        const optionId = container.dataset.optionId;
+        const eventId = container.closest('.answer-row').dataset.eventId;
+        const value = btn.dataset.value;
+        saving = true;
+        const saved = await OptionCard.saveChoice(container, btn, () => OptionCard.submitOne(view.ctx, eventId, optionId, value));
+        saving = false;
+        if (saved) {
+          const item = view.items.find((it) => it.optionId === optionId);
+          if (item) item.myAnswer = value;
+          paint(view);
+        }
       });
-    }
+    });
+  }
 
-    // 画面全体（見出し・月の切りかえ・週のはじまり・一覧）を描いて、ボタンをつなぐ
-    function paint() {
-      root.innerHTML = `
+  // 画面全体（見出し・月の切りかえ・週のはじまり・一覧）を描いて、ボタンをつなぐ
+  function paint(view) {
+    const root = view.root;
+    root.innerHTML = `
         <header class="page-header">
           <a class="ls-back" href="?view=list">一覧へ</a>
           <h1>カレンダー</h1>
@@ -153,48 +142,55 @@ const CalendarView = (() => {
           </div>
         </div>
         <h2>今後の予定一覧</h2>
-        <div class="cal-item-list">${listHtml()}</div>
+        <div class="cal-item-list">${listHtml(view.items)}</div>
       `;
-      paintGrid();
+    paintGrid(view);
 
-      root.querySelectorAll('.cal-item').forEach((btn) => {
-        btn.addEventListener('click', () => openDaySheet(btn.dataset.key));
+    root.querySelectorAll('.cal-item').forEach((btn) => {
+      btn.addEventListener('click', () => openDaySheet(view, btn.dataset.key));
+    });
+
+    root.querySelector('#cal-prev').addEventListener('click', () => shiftMonth(view, -1));
+    root.querySelector('#cal-next').addEventListener('click', () => shiftMonth(view, 1));
+    root.querySelectorAll('[data-week-start]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        view.weekStart = Number(btn.dataset.weekStart) === 1 ? 1 : 0;
+        AppUtil.setWeekStart(view.weekStart);
+        paintGrid(view);
       });
-
-      root.querySelector('#cal-prev').addEventListener('click', () => shiftMonth(-1));
-      root.querySelector('#cal-next').addEventListener('click', () => shiftMonth(1));
-      root.querySelectorAll('[data-week-start]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          weekStart = Number(btn.dataset.weekStart) === 1 ? 1 : 0;
-          AppUtil.setWeekStart(weekStart);
-          paintGrid();
-        });
-      });
-    }
-
-    // 見ている月を前後に（年をまたぐときは年も）
-    function shiftMonth(delta) {
-      const next = new Date(viewYear, viewMonth + delta, 1);
-      viewYear = next.getFullYear();
-      viewMonth = next.getMonth();
-      paintGrid();
-    }
-
-    // 見ている月のマスだけ描きなおす
-    function paintGrid() {
-      const byDay = byDayMap();
-      root.querySelector('#cal-month-label').textContent = `${viewYear}年${viewMonth + 1}月`;
-      root.querySelector('#cal-grid-container').innerHTML = monthGridHtml(viewYear, viewMonth, byDay);
-      root.querySelectorAll('[data-week-start]').forEach((btn) => {
-        btn.setAttribute('aria-checked', String(Number(btn.dataset.weekStart) === weekStart));
-      });
-      root.querySelectorAll('.cal-cell.has-items').forEach((cell) => {
-        AppUtil.onActivate(cell, () => openDaySheet(cell.dataset.key));
-      });
-    }
-
-    paint();
+    });
   }
 
-  return { render };
+  // 見ている月を前後に（年をまたぐときは年も）
+  function shiftMonth(view, delta) {
+    const next = new Date(view.year, view.month + delta, 1);
+    view.year = next.getFullYear();
+    view.month = next.getMonth();
+    paintGrid(view);
+  }
+
+  // 見ている月のマスだけ描きなおす
+  function paintGrid(view) {
+    const root = view.root;
+    root.querySelector('#cal-month-label').textContent = `${view.year}年${view.month + 1}月`;
+    root.querySelector('#cal-grid-container').innerHTML = monthGridHtml(view, view.year, view.month);
+    root.querySelectorAll('[data-week-start]').forEach((btn) => {
+      btn.setAttribute('aria-checked', String(Number(btn.dataset.weekStart) === view.weekStart));
+    });
+    root.querySelectorAll('.cal-cell.has-items').forEach((cell) => {
+      AppUtil.onActivate(cell, () => openDaySheet(view, cell.dataset.key));
+    });
+  }
+
+  // 自分のイベントを読んで、カレンダーの画面を描く（はじめは今月）
+  async function render(root, ctx) {
+    root.innerHTML = AppUtil.loadingHtml();
+    const { items } = await AppApi.listMyOptions({ userId: ctx.identity.userId });
+    items.sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
+
+    const today = new Date();
+    paint({ root, ctx, items, today, year: today.getFullYear(), month: today.getMonth(), weekStart: AppUtil.getWeekStart() });
+  }
+
+  return { render, byDayMap, dateKey };
 })();

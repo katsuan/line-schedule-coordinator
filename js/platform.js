@@ -131,5 +131,5 @@ const AppPlatform = (() => {
     }
   }
 
-  return { initIdentity, isLocalPreviewEnvironment, getAccessToken, liffReady: () => liffReadyPromise };
+  return { initIdentity, getAccessToken, liffReady: () => liffReadyPromise };
 })();

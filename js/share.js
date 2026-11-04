@@ -1,6 +1,6 @@
 /**
  * LINE にカードを送る流れ（AppShare）：送る前の見本を見せる → 送り先を選ぶ → 送ったあとのシート。
- * 中身：予定・連絡・変更・招待・紹介・編集の依頼・許可のお知らせを送る関数。カードは GAS か、ここで作る。
+ * 中身：予定・連絡・変更・招待・紹介・編集の依頼・許可のお知らせを送る関数。カードは GAS か、js/cards.js（AppCards）で作る。
  * 呼ばれ方：予定の画面（detail.js・detailHeader.js・optionCard.js）のボタンから。見本の画面は views/previewModal.js、カードの変換は flexPreview.js。
  */
 const AppShare = (() => {
@@ -17,36 +17,6 @@ const AppShare = (() => {
   async function lineAppUrl() {
     const config = await AppConfig.load();
     return config.liffId ? `https://liff.line.me/${config.liffId}${window.location.search}` : '';
-  }
-
-  // カードの下のボタン（画面を開くだけ。あとで押されても困らない）。URL がなければボタンなし
-  function buttonFooter(label, uri) {
-    if (!uri) return undefined;
-    return {
-      type: 'box',
-      layout: 'vertical',
-      spacing: 'sm',
-      paddingAll: 'lg',
-      contents: [{
-        type: 'box',
-        layout: 'vertical',
-        backgroundColor: '#0284C7',
-        cornerRadius: 'xxl',
-        paddingAll: 'md',
-        action: { type: 'uri', label, uri },
-        contents: [{ type: 'text', text: label, color: '#ffffff', align: 'center', weight: 'bold', size: 'md' }],
-      }],
-    };
-  }
-
-  // カードのボタンの上に区切りの線を引く設定（ボタンがなければなし）
-  function footerStyles(uri) {
-    return uri ? { footer: { separator: true, separatorColor: '#EEEEEE' } } : undefined;
-  }
-
-  // 予定の画面を開く URL（LIFF）。extra は後ろに足す query
-  function eventPageUrl(liffId, eventId, extra) {
-    return liffId ? `https://liff.line.me/${liffId}?event=${encodeURIComponent(eventId)}${extra || ''}` : '';
   }
 
   // 送り先を選んで送る。送れたら true（やめたら false）
@@ -117,69 +87,13 @@ const AppShare = (() => {
   // くるかなを紹介するカードを送る
   async function shareApp() {
     const config = await AppConfig.load();
-    const liffUrl = config.liffId ? `https://liff.line.me/${config.liffId}` : '';
-    const flex = {
-      altText: 'くるかな：候補の日に ○△× で答えるだけの日程調整',
-      contents: {
-        type: 'bubble',
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          paddingBottom: 'md',
-          contents: [
-            { type: 'text', text: '🗓️ 日程調整', weight: 'bold', size: 'lg', color: '#111111' },
-            {
-              type: 'text', size: 'sm', color: '#8C8C8C', wrap: true, margin: 'md',
-              text: 'Botの追加なしで、候補日をつくって共有するだけ。○△×で回答が集まります。',
-            },
-          ],
-        },
-        footer: buttonFooter('使ってみる', liffUrl),
-        styles: footerStyles(liffUrl),
-      },
-    };
-    return sendFlexMessage(flex, { sentTitle: 'くるかなを紹介しました' });
+    return sendFlexMessage(AppCards.appIntro(config.liffId), { sentTitle: 'くるかなを紹介しました' });
   }
 
-  // 編集権限の依頼Flexを生成して送る（送信先は依頼者自身がピッカーで選ぶ＝作成者のトークへ）。
-  // 「許可する」は作成者側でLIFFを開いてapproveEditRequestを叩くuriリンク（postbackはBotなし構成では使えないため不採用）。
+  // 編集権限の依頼のカードを送る（送り先は依頼した人がピッカーで選ぶ＝作成者のトークへ）
   async function requestEditAccess(eventId, eventTitle, requester, creator) {
     const config = await AppConfig.load();
-    const approveUrl = eventPageUrl(config.liffId, eventId, '&approveEditor=1'
-      + `&requesterId=${encodeURIComponent(requester.userId)}`
-      + `&requesterName=${encodeURIComponent(requester.displayName || '')}`
-      + `&requesterPic=${encodeURIComponent(requester.pictureUrl || '')}`);
-    const flex = {
-      altText: `${eventTitle} の編集権限を依頼します`,
-      contents: {
-        type: 'bubble',
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          paddingBottom: 'md',
-          contents: [
-            { type: 'text', text: '🔑 編集権限の依頼', weight: 'bold', size: 'lg', color: '#111111' },
-            { type: 'text', text: eventTitle, size: 'sm', color: '#8C8C8C', wrap: true, margin: 'md' },
-            {
-              type: 'box', layout: 'baseline', spacing: 'sm', margin: 'md',
-              contents: [
-                { type: 'text', text: '依頼者', size: 'sm', color: '#8C8C8C', flex: 2 },
-                { type: 'text', text: requester.displayName || '(名前未取得)', size: 'sm', color: '#111111', flex: 5, wrap: true },
-              ],
-            },
-            {
-              type: 'box', layout: 'baseline', spacing: 'sm', margin: 'sm',
-              contents: [
-                { type: 'text', text: '依頼先', size: 'sm', color: '#8C8C8C', flex: 2 },
-                { type: 'text', text: creator.displayName || '(名前未取得)', size: 'sm', color: '#111111', flex: 5, wrap: true },
-              ],
-            },
-          ],
-        },
-        footer: buttonFooter('許可する', approveUrl),
-        styles: footerStyles(approveUrl),
-      },
-    };
+    const flex = AppCards.editRequest(config.liffId, eventId, eventTitle, requester, creator);
     return sendFlexMessage(flex, {
       sentTitle: '依頼を送りました',
       target: {
@@ -190,8 +104,8 @@ const AppShare = (() => {
     });
   }
 
-  // sendMessagesにはchat_message.write権限が必要（shareTargetPickerと異なり、
-  // ピッカーでの選択という同意ステップがないため）。未確定なら明示的にリクエストする。
+  // 選ばずにそのまま送る（sendMessages）には、トークに書く許し（chat_message.write）がいる。
+  // 送り先を選ぶ画面とちがって、選ぶことで同意したことにならないため。まだ決まっていなければ聞く
   async function ensureSendMessagePermission_() {
     try {
       if (!window.liff || !liff.permission || typeof liff.permission.query !== 'function') return true;
@@ -209,41 +123,10 @@ const AppShare = (() => {
     }
   }
 
-  // 編集を許可したお知らせ（カード）。依頼した人が「予定を開く」からすぐ編集できるように。
-  // 同じトークで開いていれば（sendMessages が使えれば）選ばずにそのまま送り、そうでなければ送り先を選んで送る
-  function approvedMessage(liffId, eventId, eventTitle, requesterName) {
-    const url = eventPageUrl(liffId, eventId);
-    return {
-      type: 'flex',
-      altText: `✅ ${eventTitle} の編集を許可しました`,
-      contents: {
-        type: 'bubble',
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          paddingBottom: 'md',
-          contents: [
-            { type: 'text', text: '✅ 編集を許可しました', weight: 'bold', size: 'lg', color: '#111111' },
-            { type: 'text', text: eventTitle, size: 'sm', color: '#8C8C8C', wrap: true, margin: 'md' },
-            {
-              type: 'box', layout: 'baseline', spacing: 'sm', margin: 'md',
-              contents: [
-                { type: 'text', text: '編集できる人', size: 'sm', color: '#8C8C8C', flex: 3 },
-                { type: 'text', text: requesterName || '依頼した人', size: 'sm', color: '#111111', flex: 5, wrap: true },
-              ],
-            },
-          ],
-        },
-        footer: buttonFooter('予定を開く', url),
-        styles: footerStyles(url),
-      },
-    };
-  }
-
   // 許可したことを知らせるカードを送る（同じトークで開いていれば選ばずに、そうでなければ送り先を選んで）。送れたら true
   async function sendApprovedCard(eventId, eventTitle, requesterName) {
     const config = await AppConfig.load();
-    const messages = [approvedMessage(config.liffId, eventId, eventTitle, requesterName)];
+    const messages = [AppCards.approved(config.liffId, eventId, eventTitle, requesterName)];
     try {
       const sendAvailable = window.liff && liff.isApiAvailable && liff.isApiAvailable('sendMessages');
       if (sendAvailable) {

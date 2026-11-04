@@ -6,10 +6,15 @@ const OptionCard = (() => {
   const ANSWERS = ['○', '△', '×'];
   const ANSWER_CLASS = { '○': 'choice-ok', '△': 'choice-maybe', '×': 'choice-ng' };
 
+  // ○△× のボタン1つ（自分の答えなら印）
+  function choiceButtonHtml(answer, selected) {
+    return `<button type="button" class="choice-btn ${ANSWER_CLASS[answer]} ${selected ? 'selected' : ''}" data-value="${answer}">${answer}</button>`;
+  }
+
   // ○△× のボタン（自分の答えに印）
   function choiceButtonsHtml(optionId, myAnswers) {
     return ANSWERS.map((a) => `
-      <button type="button" class="choice-btn ${ANSWER_CLASS[a]} ${myAnswers[optionId] === a ? 'selected' : ''}" data-value="${a}">${a}</button>`).join('');
+      ${choiceButtonHtml(a, myAnswers[optionId] === a)}`).join('');
   }
 
   // 答えに合う色のクラス（答えがなければ status-none）
@@ -23,7 +28,7 @@ const OptionCard = (() => {
       <div class="answer-buttons" data-option-id="${AppUtil.escapeHtml(optionId)}">
         ${ANSWERS.map((a) => `
           <span class="choice-count-wrap">
-            <button type="button" class="choice-btn ${ANSWER_CLASS[a]} ${myAnswer === a ? 'selected' : ''}" data-value="${a}">${a}</button>
+            ${choiceButtonHtml(a, myAnswer === a)}
             ${counts ? `<span class="choice-count">${counts[a] || 0}</span>` : ''}
           </span>`).join('')}
       </div>`;
@@ -61,6 +66,20 @@ const OptionCard = (() => {
     };
   }
 
+  // 日時と「カレンダー追加」の1行（予定の画面のイベントと、カレンダーのその日のシートで同じ）
+  function dateRowHtml(title, startAt, endAt, location) {
+    return `
+          <div class="option-meta-info-row option-meta-info-row-split">
+            <span class="option-meta-date">${AppUtil.formatDateRange(startAt, endAt)}</span>
+            ${AppUtil.calendarLinkHtml(title, '', startAt, endAt, location)}
+          </div>`;
+  }
+
+  // 場所の1行（場所がなければ何も出さない）
+  function locationRowHtml(location) {
+    return location ? `<div class="option-meta-info-row"><span class="option-meta-location">${AppUtil.icon('place')}${AppUtil.escapeHtml(location)}</span></div>` : '';
+  }
+
   // イベントの題・日時・場所の表示と、変える欄（変えられる人だけ）
   function metaHtml(opt, canEdit, comments, myUserId) {
     return `
@@ -70,11 +89,8 @@ const OptionCard = (() => {
             <div class="option-meta-title">${AppUtil.titleIconHtml(opt.title || '(タイトルなし)')} ${AppUtil.relativeDayPillHtml(opt.startAt)}</div>
             ${canEdit ? `<button type="button" class="edit-option-btn" aria-label="編集">${AppUtil.icon('edit')}</button>` : ''}
           </div>
-          <div class="option-meta-info-row option-meta-info-row-split">
-            <span class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</span>
-            ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
-          </div>
-          ${opt.location ? `<div class="option-meta-info-row"><span class="option-meta-location">${AppUtil.icon('place')}${AppUtil.escapeHtml(opt.location)}</span></div>` : ''}
+          ${dateRowHtml(opt.title, opt.startAt, opt.endAt, opt.location)}
+          ${locationRowHtml(opt.location)}
           ${OptionComments.commentsListHtml(comments, myUserId)}
           ${OptionComments.commentAddFormHtml(opt.optionId)}
         </div>
@@ -201,7 +217,7 @@ const OptionCard = (() => {
   }
 
   return {
-    metaHtml, titleFieldHtml, rangeLocationFieldsHtml, readFields,
+    metaHtml, dateRowHtml, locationRowHtml, titleFieldHtml, rangeLocationFieldsHtml, readFields,
     choiceButtonsHtml, answerButtonsHtml, statusClass, wireEditForms, wireAnswerButtons, saveChoice, submitOne, wireEndFollowsStart,
   };
 })();

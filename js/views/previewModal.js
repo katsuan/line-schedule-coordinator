@@ -3,6 +3,65 @@
  * 呼ばれ方：share.js の sendFlexMessage から。カードの変換は flexPreview.js、シートは views/sheet.js。
  */
 const PreviewModal = (() => {
+  // シートの中身：見本・送信ヘッダーのチップ・○△× の選択・ひとこと・送るボタン（送れないときは「LINE 版で開く」）
+  function bodyHtml({ canSend, headerTitle, lines, presets, groupAnswers, groups, target, appUrl }) {
+    return `
+      ${canSend ? '' : `<p class="ls-outside-text preview-outside">ここでは見本だけ。送るときは下から開いてね。</p>`}
+      <p class="event-meta">※実際の見え方は端末によって異なります</p>
+      <p class="preview-scope-label">👇 プレビュー範囲（実際に送信される内容）</p>
+      <div class="preview-scope">
+        <div class="flex-preview-wrap">
+          ${headerTitle ? `
+            <div class="preview-header-banner" id="preview-header-banner">
+              <strong>${AppUtil.escapeHtml(headerTitle)}</strong>
+              <span id="preview-header-label"></span>
+              <span id="preview-header-comment"></span>
+            </div>` : ''}
+          <div class="flex-preview">
+            ${FlexPreview.renderPreviewLinesHtml(lines)}
+          </div>
+        </div>
+        <div class="preview-chat-bubble" id="preview-chat-bubble" hidden></div>
+      </div>
+      ${presets.length ? `
+        <div class="ls-field">
+          <span class="ls-label">送信ヘッダー（任意）</span>
+          <div class="ls-chips">
+            ${presets.map((p, i) => `<button type="button" class="ls-chip is-small preset-chip" data-index="${i}" aria-pressed="false">${AppUtil.escapeHtml(p)}</button>`).join('')}
+          </div>
+        </div>` : ''}
+      ${groupAnswers.length ? `
+        <div class="ls-field">
+          <div class="preview-section-header">
+            <span class="ls-label">回答者</span>
+            <label class="preview-checkbox-label-inline">
+              <input type="checkbox" id="preview-hide-names">
+              名前を隠す（人数のみ表示）
+            </label>
+          </div>
+          <div class="preview-group-select">
+            ${groupAnswers.map((a) => `
+              <button type="button" class="answer-toggle-chip ${OptionCard.statusClass(a)} selected" data-answer="${a}">${a} ${groups[a].length}人</button>`).join('')}
+          </div>
+        </div>` : ''}
+      <label class="ls-field">
+        <span class="ls-label">コメントを追加（任意）</span>
+        <textarea id="preview-comment" rows="2" class="ls-input is-short" placeholder="自由にコメントを入力できます"></textarea>
+      </label>
+      <label class="preview-checkbox-label-inline">
+        <input type="checkbox" id="preview-comment-as-chat" checked>
+        コメントをチャット形式で送信する（OFFでカードに埋め込む）
+      </label>
+      ${canSend && target && target.note ? `<p class="event-meta">${AppUtil.escapeHtml(target.note)}</p>` : ''}
+      <div class="ls-sheet-actions${canSend && !(target && target.displayName) ? '' : ' is-stacked'}">
+        ${canSend ? `
+          <button type="button" class="ls-button line is-oqrn" id="preview-confirm">
+            ${target && target.displayName ? `${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}${AppUtil.escapeHtml(target.displayName)} に送る` : 'カードでおくるん'}
+          </button>` : (appUrl ? `<a class="ls-button is-primary" href="${AppUtil.escapeHtml(appUrl)}">📱 LINE 版で開く</a>` : '')}
+        <button type="button" class="ls-sheet-cancel" id="preview-cancel">やめる</button>
+      </div>`;
+  }
+
   // 見本のシートを開く。送るなら選んだ中身（ひとこと・送る答え・隠す答え）、やめたら null で終わる Promise
   function show(flex, opts) {
     const presets = (opts && opts.presets) || [];
@@ -27,61 +86,7 @@ const PreviewModal = (() => {
       const sheet = Sheet.open({
         title: '送る内容の見本',
         onDismiss: () => resolve(null),
-        bodyHtml: `
-          ${canSend ? '' : `<p class="ls-outside-text preview-outside">ここでは見本だけ。送るときは下から開いてね。</p>`}
-          <p class="event-meta">※実際の見え方は端末によって異なります</p>
-          <p class="preview-scope-label">👇 プレビュー範囲（実際に送信される内容）</p>
-          <div class="preview-scope">
-            <div class="flex-preview-wrap">
-              ${headerTitle ? `
-                <div class="preview-header-banner" id="preview-header-banner">
-                  <strong>${AppUtil.escapeHtml(headerTitle)}</strong>
-                  <span id="preview-header-label"></span>
-                  <span id="preview-header-comment"></span>
-                </div>` : ''}
-              <div class="flex-preview">
-                ${FlexPreview.renderPreviewLinesHtml(lines)}
-              </div>
-            </div>
-            <div class="preview-chat-bubble" id="preview-chat-bubble" hidden></div>
-          </div>
-          ${presets.length ? `
-            <div class="ls-field">
-              <span class="ls-label">送信ヘッダー（任意）</span>
-              <div class="ls-chips">
-                ${presets.map((p, i) => `<button type="button" class="ls-chip is-small preset-chip" data-index="${i}" aria-pressed="false">${AppUtil.escapeHtml(p)}</button>`).join('')}
-              </div>
-            </div>` : ''}
-          ${groupAnswers.length ? `
-            <div class="ls-field">
-              <div class="preview-section-header">
-                <span class="ls-label">回答者</span>
-                <label class="preview-checkbox-label-inline">
-                  <input type="checkbox" id="preview-hide-names">
-                  名前を隠す（人数のみ表示）
-                </label>
-              </div>
-              <div class="preview-group-select">
-                ${groupAnswers.map((a) => `
-                  <button type="button" class="answer-toggle-chip ${OptionCard.statusClass(a)} selected" data-answer="${a}">${a} ${groups[a].length}人</button>`).join('')}
-              </div>
-            </div>` : ''}
-          <label class="ls-field">
-            <span class="ls-label">コメントを追加（任意）</span>
-            <textarea id="preview-comment" rows="2" class="ls-input is-short" placeholder="自由にコメントを入力できます"></textarea>
-          </label>
-          <label class="preview-checkbox-label-inline">
-            <input type="checkbox" id="preview-comment-as-chat" checked>
-            コメントをチャット形式で送信する（OFFでカードに埋め込む）
-          </label>
-          ${canSend && target && target.note ? `<p class="event-meta">${AppUtil.escapeHtml(target.note)}</p>` : ''}
-          <div class="ls-sheet-actions${canSend && !(target && target.displayName) ? '' : ' is-stacked'}">
-            ${canSend ? `
-              <button type="button" class="ls-button line is-oqrn" id="preview-confirm">
-                ${target && target.displayName ? `${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}${AppUtil.escapeHtml(target.displayName)} に送る` : 'カードでおくるん'}
-              </button>` : (opts.appUrl ? `<a class="ls-button is-primary" href="${AppUtil.escapeHtml(opts.appUrl)}">📱 LINE 版で開く</a>` : '')}
-            <button type="button" class="ls-sheet-cancel" id="preview-cancel">やめる</button>
-          </div>`,
+        bodyHtml: bodyHtml({ canSend, headerTitle, lines, presets, groupAnswers, groups, target, appUrl: opts && opts.appUrl }),
       });
       const overlay = sheet.el; // シートの外側（中身をここから探す）
 

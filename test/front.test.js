@@ -187,7 +187,7 @@ test("編集を許可したお知らせは、予定を開くボタンつきの�
   };
   const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "" }, liff }, liff,
     AppConfig: { load: async () => ({ liffId: "2009927582-abc" }) }, AppUtil: { ask() {} }, PreviewModal: {}, FlexPreview: {} });
-  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js/share.js"), "utf8") + "\n;globalThis.AppShare = AppShare;", context);
+  vm.runInContext(read("js/cards.js") + "\n" + read("js/share.js") + "\n;globalThis.AppShare = AppShare;", context);
   const ok = await context.AppShare.sendApprovedCard("EVT_1", "🍖 BBQ", "たろう");
   assert.strictEqual(ok, true);
   const messages = JSON.parse(JSON.stringify(sent[0]));
@@ -235,7 +235,7 @@ test("案内の文が指すボタン・欄の名前は、画面に同じ名前�
   const list = read("js/views/list.js");
   // 「イベントを追加」は予定の画面のたたみ欄（頭は線アイコン。案内の文には印を書かない）
   assert.match(tips, /「イベントを追加」/);
-  assert.match(detail, /data-icon="add" aria-hidden="true"><\/span>イベントを追加<\/summary>/);
+  assert.match(detail, /icon\('add', 'ls-fold-icon'\)\}イベントを追加<\/summary>/);
   // 「カードでおくるん」「カレンダー」「新規作成」
   assert.match(detail, /is-oqrn" type="button">カードでおくるん<\/button>/);
   assert.match(list, /icon\('calendar'\)\}カレンダー<\/a>/);
@@ -271,4 +271,122 @@ test("キーボード：押せる印（onActivate）は、クリックと Enter�
   key("Enter"); key(" "); key("a");
   assert.strictEqual(count, 3);
   assert.strictEqual(prevented, 2);
+});
+
+test("紹介・編集の依頼のカード：LINE が受けつける形、ボタンは画面を開くだけ。依頼のリンクに本物の userId は入らない", () => {
+  const { checkMessages } = require(path.join(__dirname, "../../q-oqrn/tools/qtest/fake-gas.js"));
+  const AppCards = load("js/cards.js", "AppCards");
+  const intro = AppCards.appIntro("2009927582-abc");
+  const request = AppCards.editRequest("2009927582-abc", "EVT_1", "🍖 BBQ",
+    { userId: "p_ab12", displayName: "た&ろう", pictureUrl: "https://profile.line-scdn.net/x" }, { displayName: "はな" });
+  [intro, request].forEach((card) => {
+    const messages = JSON.parse(JSON.stringify([{ type: "flex", altText: card.altText, contents: card.contents }]));
+    assert.deepStrictEqual(checkMessages(messages).filter((p) => p.level === "error"), []);
+    const actions = JSON.stringify(messages).match(/"action":\{[^}]*\}/g) || [];
+    assert.strictEqual(actions.length, 1);
+    assert.match(actions[0], /"type":"uri"/);
+  });
+  const uri = request.contents.footer.contents[0].action.uri;
+  const params = new URL(uri).searchParams;
+  assert.strictEqual(params.get("event"), "EVT_1");
+  assert.strictEqual(params.get("approveEditor"), "1");
+  assert.strictEqual(params.get("requesterId"), "p_ab12");
+  assert.strictEqual(params.get("requesterName"), "た&ろう");
+  assert.doesNotMatch(uri, /U[0-9a-f]{32}/);
+  // LIFF の ID がないときは、ボタンなしのカード（押しても開けないボタンを出さない）
+  assert.strictEqual(AppCards.appIntro("").contents.footer, undefined);
+  assert.strictEqual(AppCards.approved("", "EVT_1", "t", "x").contents.footer, undefined);
+});
+
+test("一覧のタブ：未回答（終わった予定は出さない）・回答済み・自分が作成。はじめは予定のある最初のタブ", () => {
+  const ListView = load("js/views/list.js", "ListView");
+  const events = [
+    { eventId: "A", isCreator: false, hasAnswered: false, isPast: false },
+    { eventId: "B", isCreator: false, hasAnswered: false, isPast: true },
+    { eventId: "C", isCreator: false, hasAnswered: true },
+    { eventId: "D", isCreator: true, hasAnswered: true },
+  ];
+  const ids = (r) => Object.fromEntries(r.tabs.map((t) => [t.key, t.list.map((e) => e.eventId).join("")]));
+  const r = ListView.groupEvents(events);
+  assert.deepStrictEqual(ids(r), { unanswered: "A", answered: "C", created: "D" });
+  assert.strictEqual(r.defaultTab, "unanswered");
+  assert.strictEqual(ListView.groupEvents(events.slice(2)).defaultTab, "answered");
+  assert.strictEqual(ListView.groupEvents([events[3]]).defaultTab, "created");
+  assert.strictEqual(ListView.groupEvents([]).defaultTab, "unanswered");
+});
+
+test("予定を作る：空のイベントは数えない、一部だけ入れたイベントは知らせて止める", () => {
+  const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "" } } });
+  vm.runInContext(utilCode() + "\n" + read("js/views/create.js") + "\n;globalThis.CreateView = CreateView;", context);
+  const { CreateView } = context;
+  const blank = { title: "", startAt: "", endAt: "", location: "" };
+  const full = { title: "BBQ", startAt: "2026-11-01T10:00", endAt: "2026-11-01T12:00", location: "" };
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(CreateView.pickOptions("8月", [full, blank]))), { options: [full] });
+  assert.match(CreateView.pickOptions("", [full]).error, /タイトル/);
+  assert.match(CreateView.pickOptions("8月", [blank]).error, /1件以上/);
+  assert.match(CreateView.pickOptions("8月", [full, { ...blank, location: "公園" }]).error, /タイトル・開始・完了/);
+  assert.match(CreateView.pickOptions("8月", [{ ...full, endAt: "2026-11-01T09:00" }]).error, /完了は開始より後/);
+});
+
+test("日付の見せ方：同じ日なら終わりは時刻だけ、7日以内は「今日・明日・○日後」の札", () => {
+  const AppUtil = load("AppUtil", "AppUtil");
+  assert.strictEqual(AppUtil.formatDateRange("2026-11-01T10:00", "2026-11-01T12:30"), "2026/11/01 10:00 〜 12:30");
+  assert.strictEqual(AppUtil.formatDateRange("2026-11-01T22:00", "2026-11-02T01:00"), "2026/11/01 22:00 〜 2026/11/02 01:00");
+  assert.strictEqual(AppUtil.formatDateRange("2026-11-01T10:00", ""), "2026/11/01 10:00");
+  assert.strictEqual(AppUtil.formatDateRange("", ""), "");
+  const day = (n) => { const d = new Date(); d.setDate(d.getDate() + n); d.setHours(12, 0, 0, 0); return d.toISOString(); };
+  assert.match(AppUtil.relativeDayPillHtml(day(0)), /date-pill-urgent">今日</);
+  assert.match(AppUtil.relativeDayPillHtml(day(1)), /date-pill-urgent">明日</);
+  assert.match(AppUtil.relativeDayPillHtml(day(3)), /class="date-pill">3日後</);
+  assert.strictEqual(AppUtil.relativeDayPillHtml(day(8)), "");
+  assert.strictEqual(AppUtil.relativeDayPillHtml(day(-1)), "");
+});
+
+test("カレンダー追加：Google カレンダーの画面を開くリンク（終わりがなければ1時間）", () => {
+  const AppUtil = load("AppUtil", "AppUtil");
+  const href = (html) => new URL(html.match(/href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
+  const url = href(AppUtil.calendarLinkHtml("BBQ", "", "2026-11-01T10:00", "", "河原"));
+  assert.strictEqual(url.origin + url.pathname, "https://calendar.google.com/calendar/render");
+  assert.strictEqual(url.searchParams.get("text"), "BBQ");
+  assert.strictEqual(url.searchParams.get("dates"), "20261101T100000/20261101T110000");
+  assert.strictEqual(url.searchParams.get("location"), "河原");
+  assert.match(AppUtil.calendarLinkHtml("BBQ", "", "2026-11-01T10:00", "", ""), /target="_blank" rel="noopener"/);
+  assert.strictEqual(AppUtil.calendarLinkHtml("BBQ", "", "", "", ""), "");
+});
+
+test("題の頭の絵文字：あればそれを、なければ 🗓️（カレンダーの札と題の見出しで同じ決まり）", () => {
+  const AppUtil = load("AppUtil", "AppUtil");
+  assert.strictEqual(AppUtil.extractIcon("🍖 BBQ"), "🍖");
+  assert.strictEqual(AppUtil.extractIcon("BBQ"), "🗓️");
+  assert.strictEqual(AppUtil.titleIconHtml("  🍖  BBQ "), "🍖 BBQ");
+  assert.strictEqual(AppUtil.titleIconHtml("🍖"), "🍖");
+  assert.strictEqual(AppUtil.titleIconHtml("BBQ & 花火"), "🗓️ BBQ &amp; 花火");
+  assert.strictEqual(AppUtil.titleIconHtml(""), "🗓️ ");
+});
+
+test("カレンダー：イベントを、始まりの日のマスに分ける", () => {
+  const CalendarView = load("js/views/calendar.js", "CalendarView");
+  const map = CalendarView.byDayMap([
+    { optionId: "a", startAt: "2026-11-07T18:00" },
+    { optionId: "b", startAt: "2026-11-07T09:00" },
+    { optionId: "c", startAt: "2026-12-01T00:00" },
+  ]);
+  assert.deepStrictEqual(Object.keys(map), ["2026-10-7", "2026-11-1"]);
+  assert.strictEqual(map["2026-10-7"].map((it) => it.optionId).join(","), "a,b");
+  assert.strictEqual(CalendarView.dateKey("2026-01-31T23:59"), "2026-0-31");
+});
+
+test("答えた人の顔：自分 → コメントした人 → ほかの人 の順。名前・コメントの文字は HTML の外に出ない", () => {
+  const context = vm.createContext({ URL, URLSearchParams, console, window: { location: { search: "" } }, OptionCard: { statusClass: (a) => "c" + a } });
+  vm.runInContext(utilCode() + "\n" + read("js/views/respondents.js") + "\n;globalThis.Respondents = Respondents;", context);
+  const row = {
+    respondents: { "○": [{ userId: "p_a", displayName: "あ" }, { userId: "p_b", displayName: XSS }, { userId: "p_me", displayName: "自分" }], "△": [], "×": [] },
+    comments: [{ userId: "p_b", text: XSS }],
+  };
+  const html = context.Respondents.groupsHtml(row, "p_me");
+  const order = [...html.matchAll(/<span>([^<]*?)(?:（自分）)?<\/span>/g)].map((m) => m[1]);
+  assert.deepStrictEqual(order, ["自分", XSS.replace(/</g, "&lt;").replace(/>/g, "&gt;"), "あ"]);
+  assert.ok(!html.includes("<img"));
+  assert.strictEqual((html.match(/data-comment-toggle/g) || []).length, 1);
+  assert.strictEqual((html.match(/empty-respondents/g) || []).length, 2);
 });

@@ -30,29 +30,32 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
     return `<span class="avatar${cls}"${style}>${url ? '' : initial}</span>`;
   }
 
-  // Q キットの線アイコン（ui.css の .ls-icon。名前は q-oqrn/shared/kit.html の一覧）。文字の色・大きさで出る
-  function icon(name) {
-    return `<span class="ls-icon" data-icon="${escapeHtml(name)}" aria-hidden="true"></span>`;
+  // Q キットの線アイコン（ui.css の .ls-icon。名前は q-oqrn/shared/kit.html の一覧）。文字の色・大きさで出る。
+  // cls：いっしょに付けるクラス（たたみ欄の頭の ls-fold-icon など）
+  function icon(name, cls) {
+    return `<span class="ls-icon${cls ? ' ' + escapeHtml(cls) : ''}" data-icon="${escapeHtml(name)}" aria-hidden="true"></span>`;
   }
 
   const EMOJI_REGEX = /\p{Extended_Pictographic}/u;
 
-  // 題の1文字目が絵文字ならそれを、なければ 🗓️ を返す
-  function extractIcon(title) {
+  // 題を、頭の絵文字（なければ ''）と残りの文字に分ける
+  function splitTitle(title) {
     const trimmed = String(title || '').trim();
     const firstChar = Array.from(trimmed)[0] || '';
-    return (firstChar && EMOJI_REGEX.test(firstChar)) ? firstChar : '🗓️';
+    if (firstChar && EMOJI_REGEX.test(firstChar)) return { emoji: firstChar, rest: trimmed.slice(firstChar.length).trim() };
+    return { emoji: '', rest: trimmed };
+  }
+
+  // 題の1文字目が絵文字ならそれを、なければ 🗓️ を返す
+  function extractIcon(title) {
+    return splitTitle(title).emoji || '🗓️';
   }
 
   // 題を「絵文字　題」の HTML にする（絵文字がなければ 🗓️ を前に）
   function titleIconHtml(title) {
-    const trimmed = String(title || '').trim();
-    const firstChar = Array.from(trimmed)[0] || '';
-    if (firstChar && EMOJI_REGEX.test(firstChar)) {
-      const rest = trimmed.slice(firstChar.length).trim();
-      return rest ? `${firstChar} ${escapeHtml(rest)}` : firstChar;
-    }
-    return `🗓️ ${escapeHtml(trimmed)}`;
+    const { emoji, rest } = splitTitle(title);
+    if (!emoji) return `🗓️ ${escapeHtml(rest)}`;
+    return rest ? `${emoji} ${escapeHtml(rest)}` : emoji;
   }
 
   const TIPS = [
@@ -80,5 +83,5 @@ var AppUtil = Object.assign(typeof AppUtil === 'undefined' ? {} : AppUtil, (() =
       </div>`;
   }
 
-  return { escapeHtml, safeImageUrl, loadingHtml, titleIconHtml, extractIcon, avatarHtml, icon };
+  return { escapeHtml, loadingHtml, titleIconHtml, extractIcon, avatarHtml, icon };
 })());

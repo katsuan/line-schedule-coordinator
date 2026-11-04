@@ -1,22 +1,22 @@
 // 予定の一覧（ListView）：未回答・回答済み・自分が作成 のタブ。予定がなければあいさつ。
 // app.js が ?view=list のとき render を呼ぶ
 const ListView = (() => {
+  // 予定をタブに分ける：未回答（終わった予定は出さない）・回答済み・自分が作成。はじめに開くのは、予定のある最初のタブ
+  function groupEvents(events) {
+    const tabs = [
+      { key: 'unanswered', label: '未回答', list: events.filter((e) => !e.isCreator && !e.hasAnswered && !e.isPast) },
+      { key: 'answered', label: '回答済み', list: events.filter((e) => !e.isCreator && e.hasAnswered) },
+      { key: 'created', label: '自分が作成', list: events.filter((e) => e.isCreator) },
+    ];
+    const defaultTab = (tabs.find((t) => t.list.length) || tabs[0]).key;
+    return { tabs, defaultTab };
+  }
+
   // 自分の予定を読んで、一覧の画面を描く
   async function render(root, ctx) {
     root.innerHTML = AppUtil.loadingHtml();
     const { events } = await AppApi.listMyEvents({ userId: ctx.identity.userId });
-
-    const groups = {
-      unanswered: events.filter((e) => !e.isCreator && !e.hasAnswered && !e.isPast),
-      answered: events.filter((e) => !e.isCreator && e.hasAnswered),
-      created: events.filter((e) => e.isCreator),
-    };
-
-    const tabs = [
-      { key: 'unanswered', label: '未回答', list: groups.unanswered },
-      { key: 'answered', label: '回答済み', list: groups.answered },
-      { key: 'created', label: '自分が作成', list: groups.created },
-    ];
+    const { tabs, defaultTab } = groupEvents(events);
 
     // 予定の札（作成者・回答済み・未回答）
     const statusBadge = (e) => {
@@ -37,8 +37,6 @@ const ListView = (() => {
           </a>
         </li>`).join('')}</ul>`;
     };
-
-    const defaultTab = tabs.find((t) => t.list.length)?.key || 'unanswered';
 
     root.innerHTML = `
       <header class="page-header">
@@ -95,5 +93,5 @@ const ListView = (() => {
     activate(defaultTab);
   }
 
-  return { render };
+  return { render, groupEvents };
 })();

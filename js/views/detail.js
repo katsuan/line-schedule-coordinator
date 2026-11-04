@@ -1,5 +1,5 @@
 // 予定の画面（DetailView）：見出し・イベントごとの ○△× と答えた人・コメント・カードで送る。
-// app.js が ?event= のとき render を呼ぶ。見出しは detailHeader.js、イベントの行は optionCard.js・optionComments.js
+// app.js が ?event= のとき render を呼ぶ。見出しは detailHeader.js、イベントの行は optionCard.js・optionComments.js、答えた人の顔は respondents.js
 const DetailView = (() => {
   // 予定を読んで画面を描く。opts.silent なら読みこみ中の箱を出さずに描きなおす
   async function render(root, ctx, opts) {
@@ -54,40 +54,6 @@ const DetailView = (() => {
 
   const ANSWERS = ['○', '△', '×'];
 
-  // ○△× ごとの回答者の顔。自分 → コメントした人 → ほかの人 の順。コメントした人の顔を押すとコメントが出る
-  function respondentGroupsHtml(row, myUserId) {
-    const commentTextByUser = {};
-    (row.comments || []).forEach((c) => {
-      (commentTextByUser[c.userId] = commentTextByUser[c.userId] || []).push(c.text);
-    });
-    // 答えた人の並べ順（自分 → コメントのある人 → ほか）
-    const rank = (r) => (r.userId === myUserId ? 2 : commentTextByUser[r.userId] ? 1 : 0);
-    // 答えた人1人分（アイコンと名前。コメントがあれば押すと出る）
-    const respondentHtml = (r, answer) => {
-      const comments = commentTextByUser[r.userId];
-      const isMe = r.userId === myUserId;
-      return `<span class="respondent${isMe ? ' me' : ''}">
-        <span class="avatar-wrap"${comments ? ' role="button" tabindex="0" data-comment-toggle="1"' : ''}>
-          ${AppUtil.avatarHtml(r.displayName, r.pictureUrl, answer)}
-          ${comments ? '<span class="avatar-comment-badge">💬</span>' : ''}
-        </span>
-        <span>${AppUtil.escapeHtml(r.displayName)}${isMe ? '（自分）' : ''}</span>
-        ${comments ? `<span class="respondent-comment-popup" hidden>${comments.map((t) => AppUtil.escapeHtml(t)).join('<br>')}</span>` : ''}
-      </span>`;
-    };
-    return ANSWERS.map((answer) => {
-      const list = row.respondents[answer] || [];
-      const sorted = [...list].sort((a, b) => rank(b) - rank(a));
-      return `
-        <div class="respondent-group ${OptionCard.statusClass(answer)}">
-          <p class="respondent-label">${answer}</p>
-          ${list.length
-            ? `<div class="respondent-list">${sorted.map((r) => respondentHtml(r, answer)).join('')}</div>`
-            : '<p class="empty-respondents">なし</p>'}
-        </div>`;
-    }).join('');
-  }
-
   // イベントごとの行（日時・○△× のボタンと数・答えた人・連絡のボタン）の HTML
   function summaryRowsHtml(event, summary, canEdit, myUserId, myAnswers) {
     myAnswers = myAnswers || {};
@@ -118,7 +84,7 @@ const DetailView = (() => {
           </div>
           <details class="respondents-fold">
             <summary>回答者を見る（${totalCount}人）</summary>
-            ${respondentGroupsHtml(row, myUserId)}
+            ${Respondents.groupsHtml(row, myUserId)}
           </details>
         </div>`;
       if (!AppUtil.hasEnded(opt)) return card;
@@ -129,16 +95,6 @@ const DetailView = (() => {
           ${card}
         </details>`;
     }).join('');
-  }
-
-  // アイコンを押すと、その人のコメントを出したり隠したりする
-  function wireRespondentComments(root) {
-    root.querySelectorAll('.avatar-wrap[data-comment-toggle]').forEach((wrap) => {
-      AppUtil.onActivate(wrap, () => {
-        const popup = wrap.parentElement.querySelector('.respondent-comment-popup');
-        if (popup) popup.hidden = !popup.hidden;
-      });
-    });
   }
 
   // イベントごとの「カードでおくるん」（答えた人への連絡）をつなぐ
@@ -185,7 +141,7 @@ const DetailView = (() => {
       </section>
       ${canEdit ? `
         <details class="ls-fold">
-          <summary><span class="ls-icon ls-fold-icon" data-icon="add" aria-hidden="true"></span>イベントを追加</summary>
+          <summary>${AppUtil.icon('add', 'ls-fold-icon')}イベントを追加</summary>
           <div class="ls-fold-body">
             <p class="ls-hint">追加すると、既に回答した人も新しいイベントへの回答が必要になります。</p>
             <div class="option-card">
@@ -208,7 +164,7 @@ const DetailView = (() => {
     `;
 
     wireRemindButtons(root, data.event.title, ctx.eventId);
-    wireRespondentComments(root);
+    Respondents.wireComments(root);
     DetailHeader.wireEventEdit(root, ctx, refresh);
     DetailHeader.wireEditAccessSection(root, ctx, data);
     OptionCard.wireAnswerButtons(root, ctx, refresh);
