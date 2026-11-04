@@ -152,7 +152,7 @@ const CalendarView = (() => {
             <button type="button" class="ls-chip is-small" role="radio" data-week-start="0">日曜</button>
           </div>
         </div>
-        <h2>今後の予定一覧</h2>
+        <h2>これからの予定</h2>
         <div class="cal-item-list">${listHtml()}</div>
       `;
       paintGrid();

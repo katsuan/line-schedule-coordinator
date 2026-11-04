@@ -113,7 +113,7 @@ const DetailView = (() => {
                 ${row.commentCount ? `<span class="comment-count">💬 ${row.commentCount}</span>` : ''}
                 ${OptionComments.commentAddToggleHtml(opt.optionId)}
               </span>
-              ${canEdit && totalCount ? `<button type="button" class="ls-button line is-oqrn remind-btn" data-row="${rowIndex}">カードでおくるん</button>` : ''}
+              ${canEdit && totalCount ? `<button type="button" class="ls-button is-oqrn remind-btn" data-row="${rowIndex}">カードでおくるん</button>` : ''}
             </div>
           </div>
           <details class="respondents-fold">

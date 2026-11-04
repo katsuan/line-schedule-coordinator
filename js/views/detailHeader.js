@@ -22,9 +22,9 @@ const DetailHeader = (() => {
   // 見出しの HTML（題・札・編集のボタン・題と説明を変える欄）
   function headerHtml(event, data, canEdit, ctx) {
     const statusPill = data.isCreator
-      ? '<span class="status-pill status-pill-creator">作成者</span>'
+      ? '<span class="status-pill">作成者</span>'
       : data.isEditor
-        ? '<span class="status-pill status-pill-editor">編集者</span>'
+        ? '<span class="status-pill">編集者</span>'
         : '';
     const editors = data.editors || [];
     const showRequestChip = !canEdit && !data.isCreator && data.creator;
