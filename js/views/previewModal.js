@@ -29,7 +29,8 @@ const PreviewModal = (() => {
         onDismiss: () => resolve(null),
         bodyHtml: `
           ${canSend ? '' : `<p class="ls-outside-text preview-outside">ここでは見本だけ。送るときは下から開いてね。</p>`}
-          <p class="event-meta">下の枠の中が送る内容です。見え方は端末によって少しちがいます。</p>
+          <p class="event-meta">※実際の見え方は端末によって異なります</p>
+          <p class="preview-scope-label">👇 プレビュー範囲（実際に送信される内容）</p>
           <div class="preview-scope">
             <div class="flex-preview-wrap">
               ${headerTitle ? `

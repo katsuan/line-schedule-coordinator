@@ -18,12 +18,12 @@ const ListView = (() => {
       { key: 'created', label: '自分が作成', list: groups.created },
     ];
 
-    // 予定の右の小さな文字（作成者・回答済み・未回答）。色は付けず、まだ答えていないものだけ濃く
+    // 予定の札（作成者・回答済み・未回答）
     const statusBadge = (e) => {
-      if (e.isCreator) return '<span class="row-status">作成者</span>';
+      if (e.isCreator) return '<span class="status-badge status-creator">作成者</span>';
       return e.hasAnswered
-        ? '<span class="row-status">回答済み</span>'
-        : '<span class="row-status is-todo">未回答</span>';
+        ? '<span class="status-badge status-answered">✓ 回答済み</span>'
+        : '<span class="status-badge status-pending">未回答</span>';
     };
 
     // 予定の並びの HTML（なければ「該当する予定はありません」）
@@ -43,10 +43,11 @@ const ListView = (() => {
     root.innerHTML = `
       <header class="page-header">
         <div class="ls-brand">
-          <h1 class="ls-brand-name"><img class="ls-brand-icon" src="icon.svg" alt="" width="30" height="30">くるかな</h1>
+          <p class="ls-brand-name"><img class="ls-brand-icon" src="icon.svg" alt="" width="30" height="30">くるかな</p>
           <img class="ls-brand-logo" src="logo.svg" alt="QuruKana" width="103" height="28">
         </div>
         <p class="ls-brand-copy">来れる日を、○△×でそろえよう</p>
+        <h1 class="page-subtitle">自分の予定</h1>
         <div class="header-actions">
           <a class="ls-button" href="?view=calendar">🗓️ カレンダー</a>
           <a class="ls-button is-primary" href="?view=create">＋ 新規作成</a>
