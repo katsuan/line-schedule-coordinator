@@ -7,26 +7,26 @@
  * 呼ばれ方：views/list.js の render から mount(root, identity)
  */
 const MeIcon = (() => {
-  // シートの行（文字だけ。テストで中身を確かめる）。st：{ me（{ name, picture } か null）, loggedIn }
+  // シートの行（icon は Q キットの線アイコンの名前、text は文字。テストで中身を確かめる）。st：{ me（{ name, picture } か null）, loggedIn }
   function rows(st) {
     const s = st || {};
     const name = s.me && s.me.name ? s.me.name : '';
     if (!s.loggedIn) {
       return [
-        { icon: '👤', text: 'まだ LINE にログインしていません' },
+        { icon: 'user', text: 'まだ LINE にログインしていません' },
       ];
     }
     return [
-      { icon: '✅', text: `${name ? `${name} さん` : 'LINE'}でログインしています` },
-      { icon: '🙋', text: '○△× とコメントには、この名前とアイコンが出ます' },
-      { icon: '📱', text: '予定と回答は LINE のアカウントごとに残るので、LINE 版でもブラウザ版でも同じものが見られます' },
+      { icon: 'done', text: `${name ? `${name} さん` : 'LINE'}でログインしています` },
+      { icon: 'user', text: '○△× とコメントには、この名前とアイコンが出ます' },
+      { icon: 'app', text: '予定と回答は LINE のアカウントごとに残るので、LINE 版でもブラウザ版でも同じものが見られます' },
     ];
   }
 
   // シートの中身の HTML（名前は文字として入れる）。頭のアイコンは、回答者の一覧と同じ丸（AppUtil.avatarHtml）
   function bodyHtml(st) {
     const me = st.me || {};
-    const list = rows(st).map((row) => `<li><span aria-hidden="true">${AppUtil.escapeHtml(row.icon)}</span><span>${AppUtil.escapeHtml(row.text)}</span></li>`).join('');
+    const list = rows(st).map((row) => `<li>${AppUtil.icon(row.icon)}<span>${AppUtil.escapeHtml(row.text)}</span></li>`).join('');
     return `
       <div class="qme-head me-sheet-head">
         ${AppUtil.avatarHtml(me.name || '?', me.picture || '')}

@@ -11,7 +11,7 @@ const Sheet = (() => {
       <div class="ls-sheet-card" role="dialog" aria-modal="true" aria-label="${AppUtil.escapeHtml(title)}">
         <div class="sheet-head">
           <p class="ls-sheet-title">${AppUtil.escapeHtml(title)}</p>
-          <button type="button" class="sheet-close" aria-label="閉じる">×</button>
+          <button type="button" class="sheet-close" aria-label="閉じる">${AppUtil.icon('close')}</button>
         </div>
         ${bodyHtml}
       </div>`;

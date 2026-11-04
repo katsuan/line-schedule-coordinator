@@ -6,9 +6,9 @@ const CreateView = (() => {
     return `
       <div class="option-card" data-index="${index}">
         <div class="option-card-head">
-          <span class="option-card-icon">🗓️</span>
+          <span class="option-card-icon">${AppUtil.icon('calendar')}</span>
           ${OptionCard.titleFieldHtml('option', null, 'イベント名（例: BBQ）')}
-          <button type="button" class="ls-icon-button btn-remove-option" aria-label="このイベントを消す">×</button>
+          <button type="button" class="ls-icon-button btn-remove-option" aria-label="このイベントを消す">${AppUtil.icon('close')}</button>
         </div>
         ${OptionCard.rangeLocationFieldsHtml('option')}
       </div>`;
@@ -27,7 +27,7 @@ const CreateView = (() => {
         <div class="ls-field">
           <span class="ls-label">イベント</span>
           <div id="option-list" class="option-list">${optionCardHtml(0)}</div>
-          <button type="button" id="add-option" class="ls-button">＋ イベントを追加</button>
+          <button type="button" id="add-option" class="ls-button">${AppUtil.icon('add')}イベントを追加</button>
         </div>
         <button type="submit" class="ls-button is-primary is-block">作成する</button>
       </form>

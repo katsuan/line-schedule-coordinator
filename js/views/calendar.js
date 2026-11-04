@@ -80,7 +80,7 @@ const CalendarView = (() => {
             <div class="option-meta-info-row">
               <span class="option-meta-date">${AppUtil.formatDateRange(it.startAt, it.endAt)}</span>
             </div>
-            ${it.location ? `<div class="option-meta-info-row"><span class="option-meta-location">📍 ${AppUtil.escapeHtml(it.location)}</span></div>` : ''}
+            ${it.location ? `<div class="option-meta-info-row"><span class="option-meta-location">${AppUtil.icon('place')}${AppUtil.escapeHtml(it.location)}</span></div>` : ''}
           </button>`;
       }).join('');
     }
@@ -95,12 +95,12 @@ const CalendarView = (() => {
               <span class="option-meta-date">${AppUtil.formatDateRange(it.startAt, it.endAt)}</span>
               ${AppUtil.calendarLinkHtml(it.optionTitle || it.eventTitle, '', it.startAt, it.endAt, it.location)}
             </div>
-            ${it.location ? `<div class="option-meta-info-row"><span class="option-meta-location">📍 ${AppUtil.escapeHtml(it.location)}</span></div>` : ''}
+            ${it.location ? `<div class="option-meta-info-row"><span class="option-meta-location">${AppUtil.icon('place')}${AppUtil.escapeHtml(it.location)}</span></div>` : ''}
           </div>
           <span class="answer-choices" data-option-id="${AppUtil.escapeHtml(it.optionId)}">
             ${OptionCard.choiceButtonsHtml(it.optionId, { [it.optionId]: it.myAnswer })}
           </span>
-          <a class="cal-open-link" href="?event=${encodeURIComponent(it.eventId)}">この予定を開く →</a>
+          <a class="cal-open-link" href="?event=${encodeURIComponent(it.eventId)}">この予定を開く${AppUtil.icon('next')}</a>
         </div>`;
     }
 
@@ -140,9 +140,9 @@ const CalendarView = (() => {
           <h1>カレンダー</h1>
         </header>
         <div class="cal-nav">
-          <button type="button" id="cal-prev" class="ls-icon-button" aria-label="前の月">←</button>
+          <button type="button" id="cal-prev" class="ls-icon-button" aria-label="前の月">${AppUtil.icon('back')}</button>
           <span id="cal-month-label" class="cal-month-label"></span>
-          <button type="button" id="cal-next" class="ls-icon-button" aria-label="次の月">→</button>
+          <button type="button" id="cal-next" class="ls-icon-button" aria-label="次の月">${AppUtil.icon('next')}</button>
         </div>
         <div id="cal-grid-container"></div>
         <div class="cal-week-start">

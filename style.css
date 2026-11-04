@@ -63,6 +63,16 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .event-meta { color: var(--ls-subtext); font-size: 0.8rem; }
 .event-description { color: var(--ls-subtext); font-size: 0.9rem; white-space: pre-wrap; }
 
+/* ---- 線アイコン（Q キットの ls-icon）の大きさ。ボタンの中は Q キットにまかせ、くるかなだけの小さな所をここで ---- */
+.ls-icon-button > .ls-icon, .sheet-close > .ls-icon { width: 20px; height: 20px; }
+.option-card-icon > .ls-icon { width: 20px; height: 20px; color: var(--ls-subtext); }
+.edit-option-btn > .ls-icon { width: 18px; height: 18px; color: var(--ls-subtext); }
+.comment-delete-btn > .ls-icon { width: 16px; height: 16px; }
+/* 文の前の小さな印（場所・コメントを追加・読みこみ中の一言・開けなかった知らせ）。字との間は 4 */
+.option-meta-location > .ls-icon, .comment-add-toggle > .ls-icon, .loading-tip > .ls-icon, .guide-notice > .ls-icon { width: 14px; height: 14px; margin-right: 4px; }
+.cal-open-link > .ls-icon { width: 14px; height: 14px; margin-left: 4px; }
+.sheet-close { display: inline-grid; place-items: center; }
+
 /* ---- 読みこみ中 ---- */
 .loading { display: grid; gap: 16px; margin-top: 8px; color: var(--ls-subtext); }
 .loading-head { min-height: 64px; }

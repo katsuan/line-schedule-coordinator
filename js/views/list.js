@@ -49,8 +49,8 @@ const ListView = (() => {
         <p class="ls-brand-copy">来れる日を、○△×でそろえよう</p>
         <h1 class="page-subtitle">自分の予定</h1>
         <div class="header-actions">
-          <a class="ls-button" href="?view=calendar">🗓️ カレンダー</a>
-          <a class="ls-button is-primary" href="?view=create">＋ 新規作成</a>
+          <a class="ls-button" href="?view=calendar">${AppUtil.icon('calendar')}カレンダー</a>
+          <a class="ls-button is-primary" href="?view=create">${AppUtil.icon('add')}新規作成</a>
         </div>
       </header>
       ${events.length ? `
@@ -61,7 +61,7 @@ const ListView = (() => {
             </button>`).join('')}
         </div>
         ${tabs.map((t) => `<div class="tab-panel" data-panel="${t.key}" role="tabpanel" hidden>${itemsHtml(t.list)}</div>`).join('')}
-      ` : `<p class="ls-empty">${AppUtil.escapeHtml(AppUtil.withSeason('予定はまだありません。「＋ 新規作成」から作れます。'))}</p>`}
+      ` : `<p class="ls-empty">${AppUtil.escapeHtml(AppUtil.withSeason('予定はまだありません。「新規作成」から作れます。'))}</p>`}
     `;
 
     // 見出しのロゴの右に、本人の LINE のアイコン（views/meIcon.js。Q キットの shared/line-me.js）
@@ -70,7 +70,7 @@ const ListView = (() => {
     // はじめて開いた人にだけ、短い使い方（Q キット。「わかった」で消え、この端末では二度と出さない）
     if (window.LineShareUI && typeof LineShareUI.firstTip === 'function') {
       LineShareUI.firstTip('qurukana', [
-        '「＋ 新規作成」で、候補の日をいくつか入れます',
+        '「新規作成」で、候補の日をいくつか入れます',
         '「カードでおくるん」で、みんなに ○△× で答えてもらえます',
         '答えは押したときに保存されます。あとから変えてもOK',
       ], root.querySelector('.ls-tabs, .ls-empty'));

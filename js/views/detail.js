@@ -185,20 +185,20 @@ const DetailView = (() => {
       </section>
       ${canEdit ? `
         <details class="ls-fold">
-          <summary><span class="ls-fold-icon" aria-hidden="true">＋</span>イベントを追加</summary>
+          <summary><span class="ls-icon ls-fold-icon" data-icon="add" aria-hidden="true"></span>イベントを追加</summary>
           <div class="ls-fold-body">
             <p class="ls-hint">追加すると、既に回答した人も新しいイベントへの回答が必要になります。</p>
             <div class="option-card">
               <div class="option-card-head">
-                <span class="option-card-icon">🗓️</span>
+                <span class="option-card-icon">${AppUtil.icon('calendar')}</span>
                 ${OptionCard.titleFieldHtml('new-option')}
               </div>
               ${OptionCard.rangeLocationFieldsHtml('new-option')}
-              <button id="add-option-btn" class="ls-button is-primary is-block" type="button">＋ このカードの内容でイベントを追加する</button>
+              <button id="add-option-btn" class="ls-button is-primary is-block" type="button">${AppUtil.icon('add')}このカードの内容でイベントを追加する</button>
             </div>
           </div>
         </details>
-        ${data.isCreator ? '<button id="delete-event" class="ls-button is-danger is-block" type="button">🗑 予定を消す</button>' : ''}
+        ${data.isCreator ? `<button id="delete-event" class="ls-button is-danger is-block" type="button">${AppUtil.icon('delete')}予定を消す</button>` : ''}
         <div class="sendbar-spacer"></div>
         <div class="ls-sendbar">
           <div class="ls-sendbar-inner">

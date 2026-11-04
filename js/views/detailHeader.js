@@ -34,8 +34,8 @@ const DetailHeader = (() => {
         <div class="page-header-top-row">
           <a class="ls-back" href="?view=list">一覧へ</a>
           <div class="page-header-top-actions">
-            <button type="button" id="share-app-btn" class="ls-icon-button" aria-label="このアプリを紹介する">📣</button>
-            <button type="button" id="refresh-event" class="ls-icon-button" aria-label="最新の状態に更新">🔄</button>
+            <button type="button" id="share-app-btn" class="ls-icon-button" aria-label="このアプリを紹介する">${AppUtil.icon('share')}</button>
+            <button type="button" id="refresh-event" class="ls-icon-button" aria-label="最新の状態に更新">${AppUtil.icon('refresh')}</button>
           </div>
         </div>
         <div id="event-header-view" class="event-title-banner">
@@ -45,8 +45,8 @@ const DetailHeader = (() => {
             ${editors.length ? `<button type="button" id="toggle-editors" class="editors-count-btn">編集者${editors.length}人</button>` : ''}
             ${showRequestChip ? `<button type="button" id="request-edit-btn" class="editors-count-btn">🔑 編集を依頼</button>` : ''}
             ${showApproveChip ? `<button type="button" id="approve-edit-btn" class="editors-count-btn edit-request-chip-pending">🔑 承認する</button>` : ''}
-            ${data.isCreator ? `<button type="button" id="invite-editor" class="edit-option-btn" aria-label="編集者を招待する">👥</button>` : ''}
-            ${canEdit ? `<button type="button" id="edit-event-btn" class="edit-option-btn" aria-label="予定を編集">✏️</button>` : ''}
+            ${data.isCreator ? `<button type="button" id="invite-editor" class="edit-option-btn" aria-label="編集者を招待する">${AppUtil.icon('team')}</button>` : ''}
+            ${canEdit ? `<button type="button" id="edit-event-btn" class="edit-option-btn" aria-label="予定を編集">${AppUtil.icon('edit')}</button>` : ''}
           </div>
           ${editors.length ? `<p id="editors-list" class="event-meta" hidden>編集者: ${editors.map((ed) => AppUtil.escapeHtml(ed.displayName)).join('、')}</p>` : ''}
           ${event.description ? `<p class="event-description">${AppUtil.escapeHtml(event.description)}</p>` : ''}

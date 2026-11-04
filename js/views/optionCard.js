@@ -43,7 +43,7 @@ const OptionCard = (() => {
         <label class="ls-field"><span class="ls-label">開始</span><input type="datetime-local" class="ls-input ${prefix}-start" value="${AppUtil.toDatetimeLocalValue(values.startAt)}"></label>
         <label class="ls-field"><span class="ls-label">完了</span><input type="datetime-local" class="ls-input ${prefix}-end" value="${AppUtil.toDatetimeLocalValue(values.endAt)}"></label>
       </div>
-      <input type="text" class="ls-input ${prefix}-location" value="${AppUtil.escapeHtml(values.location || '')}" placeholder="📍 場所・持ち物など（任意）">`;
+      <input type="text" class="ls-input ${prefix}-location" value="${AppUtil.escapeHtml(values.location || '')}" placeholder="場所・持ち物など（任意）">`;
   }
 
   // イベント名・開始・完了・場所の入力欄をまとめて
@@ -68,13 +68,13 @@ const OptionCard = (() => {
         <div class="option-meta-view">
           <div class="option-meta-title-row">
             <div class="option-meta-title">${AppUtil.titleIconHtml(opt.title || '(タイトルなし)')} ${AppUtil.relativeDayPillHtml(opt.startAt)}</div>
-            ${canEdit ? `<button type="button" class="edit-option-btn" aria-label="編集">✏️</button>` : ''}
+            ${canEdit ? `<button type="button" class="edit-option-btn" aria-label="編集">${AppUtil.icon('edit')}</button>` : ''}
           </div>
           <div class="option-meta-info-row option-meta-info-row-split">
             <span class="option-meta-date">${AppUtil.formatDateRange(opt.startAt, opt.endAt)}</span>
             ${AppUtil.calendarLinkHtml(opt.title, '', opt.startAt, opt.endAt, opt.location)}
           </div>
-          ${opt.location ? `<div class="option-meta-info-row"><span class="option-meta-location">📍 ${AppUtil.escapeHtml(opt.location)}</span></div>` : ''}
+          ${opt.location ? `<div class="option-meta-info-row"><span class="option-meta-location">${AppUtil.icon('place')}${AppUtil.escapeHtml(opt.location)}</span></div>` : ''}
           ${OptionComments.commentsListHtml(comments, myUserId)}
           ${OptionComments.commentAddFormHtml(opt.optionId)}
         </div>

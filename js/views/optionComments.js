@@ -16,7 +16,7 @@ const OptionComments = (() => {
           <span class="option-comment-author">${AppUtil.escapeHtml(comment.displayName)}${isMine ? '（自分）' : ''}</span>
           <span class="option-comment-text">${AppUtil.escapeHtml(comment.text)}</span>
         </div>
-        ${isMine ? `<button type="button" class="comment-delete-btn" data-comment-id="${AppUtil.escapeHtml(comment.commentId)}" aria-label="コメントを消す">×</button>` : ''}
+        ${isMine ? `<button type="button" class="comment-delete-btn" data-comment-id="${AppUtil.escapeHtml(comment.commentId)}" aria-label="コメントを消す">${AppUtil.icon('close')}</button>` : ''}
       </div>`;
   }
 
@@ -38,7 +38,7 @@ const OptionComments = (() => {
 
   // 「コメントを追加」のボタン
   function commentAddToggleHtml(optionId) {
-    return `<button type="button" class="comment-add-toggle" data-option-id="${AppUtil.escapeHtml(optionId)}">💬 コメントを追加</button>`;
+    return `<button type="button" class="comment-add-toggle" data-option-id="${AppUtil.escapeHtml(optionId)}">${AppUtil.icon('message-circle')}コメントを追加</button>`;
   }
 
   // コメントを書く欄と保存のボタン（はじめは隠す）

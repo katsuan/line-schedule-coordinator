@@ -233,13 +233,14 @@ test("案内の文が指すボタン・欄の名前は、画面に同じ名前�
   const guide = read("js/views/guide.js");
   const detail = read("js/views/detail.js");
   const list = read("js/views/list.js");
-  // 「＋ イベントを追加」は予定の画面のたたみ欄
-  assert.match(tips, /「＋ イベントを追加」/);
-  assert.match(detail, /aria-hidden="true">＋<\/span>イベントを追加<\/summary>/);
-  // 「カードでおくるん」「🗓️ カレンダー」「＋ 新規作成」
+  // 「イベントを追加」は予定の画面のたたみ欄（頭は線アイコン。案内の文には印を書かない）
+  assert.match(tips, /「イベントを追加」/);
+  assert.match(detail, /data-icon="add" aria-hidden="true"><\/span>イベントを追加<\/summary>/);
+  // 「カードでおくるん」「カレンダー」「新規作成」
   assert.match(detail, /is-oqrn" type="button">カードでおくるん<\/button>/);
-  assert.match(list, /🗓️ カレンダー<\/a>/);
-  assert.match(list, /＋ 新規作成<\/a>/);
+  assert.match(list, /icon\('calendar'\)\}カレンダー<\/a>/);
+  assert.match(list, /icon\('add'\)\}新規作成<\/a>/);
+  assert.doesNotMatch(guide + tips + list, /「＋ |「🗓️ |「💬 /);
   // 送る前のシートは「送る内容の見本」
   assert.match(read("js/views/previewModal.js"), /title: '送る内容の見本'/);
   assert.match(guide, /送る内容の見本/);

@@ -33,13 +33,13 @@ const GuideView = (() => {
 
   // 「予定をはじめる」のボタン
   function ctaHtml() {
-    return `<a class="ls-button is-primary is-block" href="?view=list">＋ 予定をはじめる</a>`;
+    return `<a class="ls-button is-primary is-block" href="?view=list">${AppUtil.icon('add')}予定をはじめる</a>`;
   }
 
   // 使い方の画面を描く（opts.error があれば上に知らせ）
   function render(root, ctx, opts) {
     const notice = opts && opts.error
-      ? `<div class="guide-notice">⚠️ ページを開けませんでした。${AppUtil.escapeHtml(AppUtil.friendlyReason(opts.error))}下のボタンから一覧も見られます。</div>`
+      ? `<div class="guide-notice">${AppUtil.icon('warn')}ページを開けませんでした。${AppUtil.escapeHtml(AppUtil.friendlyReason(opts.error))}下のボタンから一覧も見られます。</div>`
       : '';
 
     root.innerHTML = `
@@ -76,7 +76,7 @@ const GuideView = (() => {
             </div>
           </div>
           <div class="guide-step-list guide-step-list-divider">
-            ${stepItem(3, '伝えたいことがあれば「💬 コメントを追加」', '例えば「19時以降なら参加できます」など、○△×だけで伝えきれないことを書き添えられます。他の参加者にも見えます。')}
+            ${stepItem(3, '伝えたいことがあれば「コメントを追加」', '例えば「19時以降なら参加できます」など、○△×だけで伝えきれないことを書き添えられます。他の参加者にも見えます。')}
           </div>
         </div>
       </section>
@@ -86,7 +86,7 @@ const GuideView = (() => {
         <h2 class="guide-section-title">予定をつくって共有する</h2>
         <div class="ls-panel guide-step-card">
           <div class="guide-step-list">
-            ${stepItem(1, '一覧の「＋ 新規作成」', 'タイトルと、候補日時を1つ以上入力します（複数候補もOK）。')}
+            ${stepItem(1, '一覧の「新規作成」', 'タイトルと、候補日時を1つ以上入力します（複数候補もOK）。')}
             ${stepItem(2, '「カードでおくるん」で参加者に送る', '送る前に、送る内容の見本を見られます。')}
             ${stepItem(3, '予定ページで回答状況をいつでも確認', '候補ごとの人数・回答者・コメントがまとまって見られます。')}
           </div>
@@ -116,7 +116,7 @@ const GuideView = (() => {
       <section class="guide-section">
         <p class="guide-label">💡 知っておくと便利</p>
         <h2 class="guide-section-title">よくある操作</h2>
-        ${faqItem('common', '共通', '複数の予定をまとめて見たい', '一覧の「🗓️ カレンダー」から月表示で確認できます。日付をタップすると、その日の候補にその場で回答できます。')}
+        ${faqItem('common', '共通', '複数の予定をまとめて見たい', '一覧の「カレンダー」から月表示で確認できます。日付をタップすると、その日の候補にその場で回答できます。')}
         ${faqItem('organizer', '幹事', '連絡するとき、名前を出したくない', '「カードでおくるん」の見本の画面で「名前を隠す（人数のみ表示）」にチェックすると、○10人／△5人のように人数だけが伝わる形式に変わります。')}
         ${faqItem('organizer', '幹事', 'コメントの届き方を選びたい', '送る内容の見本の「コメントをチャット形式で送信する」がONなら、予定カードとは別の普通のメッセージとして届きます。OFFにすると、予定カードの中に埋め込んで1通にまとめられます。')}
         ${faqItem('organizer', '幹事', '予定の内容が変わったとき', '日時やメモを変えると、すでに回答している人がいれば「変更を回答者に知らせますか？」と聞かれます。「知らせる」を選ぶと、知らせるカードの見本が出て、そのまま送れます。')}
