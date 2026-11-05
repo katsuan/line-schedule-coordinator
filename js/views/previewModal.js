@@ -57,7 +57,7 @@ const PreviewModal = (() => {
         ${canSend ? `
           <button type="button" class="ls-button line is-oqrn" id="preview-confirm">
             ${target && target.displayName ? `${AppUtil.avatarHtml(target.displayName, target.pictureUrl)}${AppUtil.escapeHtml(target.displayName)} に送る` : 'カードでおくるん'}
-          </button>` : (appUrl ? `<a class="ls-button is-primary" href="${AppUtil.escapeHtml(appUrl)}">📱 LINE 版で開く</a>` : '')}
+          </button>` : (appUrl ? `<a class="ls-button is-primary" href="${AppUtil.escapeHtml(appUrl)}"><span class="ls-icon" data-icon="app" aria-hidden="true"></span>LINE 版で開く</a>` : '')}
         <button type="button" class="ls-sheet-cancel" id="preview-cancel">やめる</button>
       </div>`;
   }

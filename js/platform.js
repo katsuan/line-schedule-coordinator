@@ -55,7 +55,15 @@ const AppPlatform = (() => {
       }
 
       try {
-        await liff.init({ liffId });
+        // LIFF を起こすのは Q キット（shared/liff.js の LineShareLiff.init。10秒で終わらなければ、起こせなかったあつかい）
+        const kit = window.LineShareLiff;
+        if (kit) {
+          window.LINE_SHARE_CONFIG = Object.assign({}, window.LINE_SHARE_CONFIG, { liffId });
+          const result = await kit.init({ login: 'none' });
+          if (!result.ready) throw new Error(result.reason || 'failed');
+        } else {
+          await liff.init({ liffId });
+        }
       } catch (err) {
         console.error('liff.init 失敗', err);
         liffDone();
@@ -71,7 +79,7 @@ const AppPlatform = (() => {
             return new Promise(() => {}); // どちらかを選ぶとページを移るので解決しない
           }
           // ログイン後は今のページ（?event= 付き）に戻す。指定しないと LIFF の入口に戻り、開いていた予定から外れる
-          liff.login({ redirectUri: loginReturnUrl() });
+          login();
           return new Promise(() => {}); // ログインリダイレクトへ遷移するため解決しない
         }
         return debugIdentity();
@@ -94,32 +102,23 @@ const AppPlatform = (() => {
   }
 
   // ブラウザ版で開いたとき：だれの回答かを LINE で分けるので、LINE 版で開くかログインするかを選ぶ（ひっくり・おくるんと同じ考え方）。
-  // LINE 版で開くときは、開いていた予定（?event=）もそのまま持っていく
+  // シートは Q キットのもの（shared/liff.js の outsideChoice）。LINE 版で開くときは、開いていた予定（?event=）もそのまま持っていく
   function showOutsideChoice(liffId) {
-    const sheet = document.createElement('div');
-    sheet.className = 'ls-sheet outside-choice';
-    sheet.innerHTML = `
-      <div class="ls-sheet-card outside-choice-card" role="dialog" aria-modal="true" aria-labelledby="outsideChoiceTitle">
-        <img src="icon.svg" alt="" width="56" height="56">
-        <p id="outsideChoiceTitle" class="ls-sheet-title">ブラウザ版で開いています</p>
-        <p class="ls-hint">くるかなは、LINE の名前で ○△× を答えます。下のどちらかで使えます。</p>
-        <a class="ls-outside-button is-app">📱 LINE 版で開く</a>
-        <button class="ls-outside-button" type="button">🔑 ログインして使う</button>
-      </div>`;
-    sheet.querySelector('a').setAttribute('href', `https://liff.line.me/${encodeURIComponent(liffId)}${window.location.search}`);
-    sheet.querySelector('button').addEventListener('click', () => {
-      liff.login({ redirectUri: loginReturnUrl() });
+    window.LineShareLiff?.outsideChoice({
+      icon: 'icon.svg',
+      text: 'くるかなは、LINE の名前で ○△× を答えます。下のどちらかで使えます。',
+      appUrl: () => `https://liff.line.me/${encodeURIComponent(liffId)}${window.location.search}`,
+      loginLabel: 'ログインして使う',
     });
-    document.body.appendChild(sheet);
   }
 
-  // ログインの受け渡しで付く一時的なパラメータは外す（おくるんの shared/liff.js と同じ）
-  function loginReturnUrl() {
-    const url = new URL(window.location.href);
-    ['code', 'state', 'liffClientId', 'liffRedirectUri', 'error', 'error_description', 'friendship_status_changed'].forEach((key) => {
-      url.searchParams.delete(key);
-    });
-    return url.toString();
+  // このブラウザのまま LINE でログインして、今のページ（?event= 付き）に戻る（Q キットの LineShareLiff.login）
+  function login() {
+    if (window.LineShareLiff) {
+      window.LineShareLiff.login();
+      return;
+    }
+    liff.login({ redirectUri: window.location.href });
   }
 
   // GAS に本人を確かめてもらうための LINE のログイン証明（ローカルで試すときはない）

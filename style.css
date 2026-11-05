@@ -475,12 +475,6 @@ h2 { font-size: 1rem; color: var(--ls-subtext); margin: 8px 0 0; }
 .guide-faq-q { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 0.86rem; }
 .guide-faq-q .status-badge { flex-shrink: 0; }
 
-/* ---- ブラウザ版で開いたとき（js/platform.js の showOutsideChoice） ---- */
-.outside-choice { z-index: 1000; align-items: center; }
-/* 文は左そろえ、ボタンは横いっぱい */
-.outside-choice-card { gap: 8px; width: min(100%, 360px); text-align: left; }
-.outside-choice-card .ls-outside-button { width: 100%; min-height: 48px; font-size: 15px; font-weight: 800; }
-
 /* 送る内容の見本で、ここからは送れないときの一言（見本の上） */
 .preview-outside { text-align: left; }
 .ls-sheet-actions.is-stacked { grid-template-columns: minmax(0, 1fr); }
