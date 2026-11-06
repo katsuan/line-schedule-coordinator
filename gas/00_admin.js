@@ -19,7 +19,7 @@ function checkSetup() {
 }
 
 /**
- * 自己点検の設定（selfcheck.js が読む）。シートの見出しは 04_sheetStore.js の SCHEMA と同じ
+ * 自己点検の設定（selfcheck.js が読む）。シートの見出しは 04_sheet_store.js の SCHEMA と同じ
  */
 var Q_SELF_CHECK = {
   properties: ['SPREADSHEET_ID', 'LIFF_URL'],

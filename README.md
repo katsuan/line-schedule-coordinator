@@ -22,7 +22,7 @@ Q はカレンダー（綴じ具と日付の点、真ん中の1日だけ ○）�
 
 - `index.html`：画面。`app.js`：画面の入口（どの画面を出すか決める）。`style.css`：見た目
 - `js/`：役わりごとの部品。`markup.js`（画面に出す文字と小さな部品）・`dates.js`（日付と時刻・カレンダー）・`notice.js`（知らせ・確かめ・待つボタン）の3つで `AppUtil` を作る。送る流れは `share.js`、画面で作るカード（紹介・編集の依頼・許可のお知らせ）は `cards.js`。画面ごとの部品は `views/`（CLAUDE.md にくわしく）
-- `gas/`：GAS（番号＋役わり）。`00_admin.js` は人がエディタで実行するもの（`checkSetup`＝使う前の確かめ）と、どの順に何をするか。`01_entry.js` は入口（`doPost`）。予定とイベントは `08_eventActions.js`、回答とコメントは `09_responseActions.js`、集計は `10_summary.js`、編集者は `13_editorActions.js`。`season.js`・`selfcheck.js` は Q キットの写し（中身は元と同じ）
+- `gas/`：GAS（番号＋役わり）。`00_admin.js` は人がエディタで実行するもの（`checkSetup`＝使う前の確かめ）と、どの順に何をするか。`01_entry.js` は入口（`doPost`）。予定とイベントは `08_event_actions.js`、回答とコメントは `09_response_actions.js`、集計は `10_summary.js`、編集者は `13_editor_actions.js`。`season.js`・`selfcheck.js` は Q キットの写し（中身は元と同じ）
 - テストは、公開しない別の所に置いています（公開の前に GitHub Actions が読んで動かします）
 - コメント：どのファイルも先頭に「何のためか・中に何があるか・どこから呼ばれるか」、どの関数も前に「何をするか」
 

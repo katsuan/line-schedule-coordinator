@@ -1,6 +1,6 @@
 /**
  * 予定（EVENTS）とイベント（EVENT_OPTIONS）を作る・変える・消す。
- * 呼ばれ方：03_routing.js から（書きこむ操作は 01_entry.js で鍵を持って1つずつ）。回答は 09_responseActions.js、編集者は 13_editorActions.js。
+ * 呼ばれ方：03_routing.js から（書きこむ操作は 01_entry.js で鍵を持って1つずつ）。回答は 09_response_actions.js、編集者は 13_editor_actions.js。
  */
 
 // 新しい予定とイベントを作る。返すもの：{ eventId }

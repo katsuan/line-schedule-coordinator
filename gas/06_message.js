@@ -1,6 +1,6 @@
 /**
  * LINE に送るカード（Flex）を組み立てる：予定の共有・候補ごとの連絡・変更のお知らせ・編集者の招待。
- * 呼ばれ方：03_routing.js の build○○Flex から（画面が送り先を選んで送る）。部品は 05_flexParts.js。
+ * 呼ばれ方：03_routing.js の build○○Flex から（画面が送り先を選んで送る）。部品は 05_flex_parts.js。
  */
 
 /** 予定の画面を開く URL（LIFF）。extra は後ろに足す query（例 '&claimEditor=1'） */
