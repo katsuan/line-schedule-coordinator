@@ -14,9 +14,9 @@ Q はカレンダー（綴じ具と日付の点、真ん中の1日だけ ○）�
 
 ## 見た目（Q キット）
 
-部品（見出しの行・カード・タブ・入力欄・ボタン・開閉・下から出るシート・下の送る帯・トースト）はおくるんの Q キット（`https://katsuan.github.io/line-share/shared/ui.css`・`ui.js`。使い方はおくるんの README）。`style.css` には、くるかなの色と字（`:root` の `--ls-accent` など）と、くるかなにしかない見た目（○△× のボタン・回答者の顔・コメント・カレンダー・送信内容プレビュー・使い方の画面）だけを置く。
+部品（見出しの行・カード・タブ・入力欄・ボタン・開閉・下から出るシート・下の送る帯・トースト）はおくるんの Q キット（`https://katsuan.github.io/oqrn/shared/ui.css`・`ui.js`。使い方はおくるんの README）。`style.css` には、くるかなの色と字（`:root` の `--ls-accent` など）と、くるかなにしかない見た目（○△× のボタン・回答者の顔・コメント・カレンダー・送信内容プレビュー・使い方の画面）だけを置く。
 
-公開は GitHub Actions（`.github/workflows/pages.yml`。中身は Q 共通の line-share の `q-pages.yml`）。push すると、テストと check-code が通ったときだけ Pages に出す。読みこむ JS・CSS の `?v=` は公開のときに付くので、手で付けなくてよい。
+公開は GitHub Actions（`.github/workflows/pages.yml`。中身は Q 共通の oqrn の `q-pages.yml`）。push すると、テストと check-code が通ったときだけ Pages に出す。読みこむ JS・CSS の `?v=` は公開のときに付くので、手で付けなくてよい。
 
 ### ファイルの並べ方（おくるんの `docs/structure.md` にそろえる）
 
