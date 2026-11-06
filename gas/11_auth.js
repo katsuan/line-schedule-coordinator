@@ -12,7 +12,7 @@ const AUTH = {
   VERIFY_URL: 'https://api.line.me/oauth2/v2.1/verify',
   PROFILE_URL: 'https://api.line.me/v2/profile',
   // LIFF のチャネル ID（LIFF ID の「-」の前）。Script Properties の LIFF_CHANNEL_ID があればそちら
-  DEFAULT_CHANNEL_ID: '2009927582',
+  DEFAULT_CHANNEL_ID: '2012187502',
   CACHE_SECONDS: 600,
   DEBUG_PREFIX: 'debug-user-',
 };

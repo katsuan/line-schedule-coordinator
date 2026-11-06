@@ -2,9 +2,9 @@
 
 来れる日を、○△×でそろえよう。LINE LIFF + Google Apps Script (GAS) + Spreadsheet で作る、Botなし日程調整。
 
-公開URL: https://katsuan.github.io/line-schedule-coordinator/ （LINE では https://liff.line.me/2009927582-qytzPvoy ）
+公開URL: https://katsuan.github.io/qurukana/ （LINE では https://liff.line.me/2012187502-a9XgrS1M ）
 
-おくるん（OQRN）と同じ Q のツールのなかま（「く」を Q にした名前。GitHub のリポジトリ名は line-schedule-coordinator のまま、ローカルのフォルダは `~/GitHub/q-qurukana`）。
+おくるん（OQRN）と同じ Q のツールのなかま（「く」を Q にした名前。GitHub のリポジトリ名は qurukana（前は line-schedule-coordinator）、ローカルのフォルダは `~/GitHub/q-qurukana`）。
 おくるんの「ほかのツール」に並び、画面の下の「📤 くるかなを紹介する」から紹介カードを送れる。
 
 ## アイコン・ロゴ・OGP

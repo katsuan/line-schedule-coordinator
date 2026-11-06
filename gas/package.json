@@ -1,5 +1,5 @@
 {
-  "name": "line-schedule-coordinator-gas",
+  "name": "qurukana-gas",
   "private": true,
   "scripts": {
     "clasp:login": "clasp login",
